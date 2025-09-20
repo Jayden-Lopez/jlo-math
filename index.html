@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jordan's Personalized Math Practice</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -673,6 +678,21 @@
     </div>
 
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAs7_DlWthyuWVVLbYCo7SQHHt2Siw_DH0",
+            authDomain: "jordan-math-practice.firebaseapp.com",
+            projectId: "jordan-math-practice",
+            storageBucket: "jordan-math-practice.firebasestorage.app",
+            messagingSenderId: "1011552332362",
+            appId: "1:1011552332362:web:8bc57f83156212d63094b3"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const userId = 'jordan'; // Simple user ID for Jordan
+        
         // Question banks for each topic
         const questions = {
             fractions: [
@@ -1355,11 +1375,127 @@
                 topicStats: topicStats,
                 lastUpdated: new Date().toISOString()
             };
+            
+            // Save to Firebase
+            saveToFirebase(progressData);
+            
+            // Also save locally as backup
             try {
                 localStorage.setItem('jordanMathProgress', JSON.stringify(progressData));
             } catch(e) {
-                // localStorage might not be available
+                console.log('LocalStorage not available');
             }
+        }
+
+        function saveToFirebase(data) {
+            // Add timestamp and calculate projected level
+            const projectedLevel = calculateProjectedLevel();
+            const firebaseData = {
+                ...data,
+                projectedLevel: projectedLevel,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Save to Firestore
+            db.collection('users').doc(userId).set(firebaseData, { merge: true })
+                .then(() => {
+                    console.log('Progress saved to cloud');
+                })
+                .catch(error => {
+                    console.error('Error saving to Firebase:', error);
+                });
+        }
+
+        function loadProgressFromFirebase() {
+            db.collection('users').doc(userId).get()
+                .then(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        // Load progress from Firebase
+                        completedProblems = data.completedProblems || 0;
+                        totalAttempts = data.totalAttempts || 0;
+                        correctCount = data.correctCount || 0;
+                        topicStats = data.topicStats || topicStats;
+                        
+                        // Update UI
+                        updateProgress();
+                        updateParentDashboard();
+                        
+                        // Show sync status
+                        showSyncStatus('✅ Progress loaded from cloud');
+                    } else {
+                        // No saved data yet
+                        console.log('No previous progress found');
+                        showSyncStatus('🆕 Starting fresh');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading from Firebase:', error);
+                    // Try to load from localStorage as fallback
+                    loadProgressFromLocal();
+                    showSyncStatus('⚠️ Offline mode - using local data');
+                });
+        }
+
+        function showSyncStatus(message) {
+            // Create or update sync status indicator
+            let statusDiv = document.getElementById('syncStatus');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'syncStatus';
+                statusDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; z-index: 1000; animation: fadeIn 0.5s;';
+                document.body.appendChild(statusDiv);
+            }
+            statusDiv.textContent = message;
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                if (statusDiv) {
+                    statusDiv.style.display = 'none';
+                }
+            }, 3000);
+        }
+
+        function calculateProjectedLevel() {
+            const baseLevel = 460;
+            let levelBoost = 0;
+            
+            // Calculate boost based on different factors
+            levelBoost += Math.min(completedProblems * 0.5, 20);
+            
+            const overallAccuracy = totalAttempts > 0 ? (correctCount / totalAttempts) : 0;
+            if (overallAccuracy >= 0.9) levelBoost += 30;
+            else if (overallAccuracy >= 0.8) levelBoost += 20;
+            else if (overallAccuracy >= 0.7) levelBoost += 10;
+            else if (overallAccuracy >= 0.6) levelBoost += 5;
+            
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted >= 3) {
+                    const accuracy = stats.correct / stats.attempted;
+                    if (accuracy >= 0.8) {
+                        if (['fractions', 'operations', 'algebra', 'geometry', 'measurement', 'word-problems'].includes(topic)) {
+                            levelBoost += 4;
+                        }
+                        if (['ratios', 'integers', 'expressions'].includes(topic)) {
+                            levelBoost += 8;
+                        }
+                    }
+                }
+            });
+            
+            if (completedProblems >= 10 && overallAccuracy >= 0.7) {
+                levelBoost += 10;
+            }
+            
+            ['ratios', 'integers', 'expressions'].forEach(topic => {
+                if (topicStats[topic].attempted > 0) {
+                    levelBoost += 5;
+                }
+            });
+            
+            return Math.min(baseLevel + Math.round(levelBoost), 650);
         }
 
         function loadProgressFromLocal() {
@@ -1620,13 +1756,43 @@
 
         // Initialize dashboard on load
         window.onload = function() {
-            loadProgressFromLocal();
-            updateParentDashboard();
+            // Load progress from Firebase first
+            loadProgressFromFirebase();
+            
+            // Set up real-time sync
+            db.collection('users').doc(userId)
+                .onSnapshot(doc => {
+                    if (doc.exists) {
+                        const data = doc.data();
+                        // Don't update if this device just made the change
+                        if (data.lastUpdated && new Date(data.lastUpdated).getTime() > Date.now() - 5000) {
+                            return; // Skip if update was within last 5 seconds from this device
+                        }
+                        
+                        // Update from another device's changes
+                        completedProblems = data.completedProblems || completedProblems;
+                        totalAttempts = data.totalAttempts || totalAttempts;
+                        correctCount = data.correctCount || correctCount;
+                        topicStats = data.topicStats || topicStats;
+                        
+                        updateProgress();
+                        updateParentDashboard();
+                        showSyncStatus('🔄 Progress synced from another device');
+                    }
+                });
+            
             // Update time every minute
             setInterval(() => {
                 const timeElapsed = Math.floor((Date.now() - startTime) / 60000);
                 document.getElementById('timeSpent').textContent = timeElapsed + 'm';
             }, 60000);
+            
+            // Save to Firebase periodically (every 30 seconds)
+            setInterval(() => {
+                if (totalAttempts > 0) {
+                    saveProgressToLocal();
+                }
+            }, 30000);
         };
     </script>
 </body>
