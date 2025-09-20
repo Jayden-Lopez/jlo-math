@@ -372,6 +372,10 @@
                     <div class="value">460</div>
                 </div>
                 <div class="score-box">
+                    <div class="label">Projected Level</div>
+                    <div class="value" id="projectedLevel" style="color: #10b981;">460</div>
+                </div>
+                <div class="score-box">
                     <div class="label">Target Level</div>
                     <div class="value">600+</div>
                 </div>
@@ -1266,8 +1270,117 @@
             progressBar.style.width = percentage + '%';
             progressBar.textContent = Math.round(percentage) + '%';
             
+            // Update projected level
+            updateProjectedLevel();
+            
             if (completedProblems >= 10 && completedProblems % 10 === 0) {
                 alert('🎉 Great job! You reached your goal of 10 problems!');
+            }
+        }
+
+        function updateProjectedLevel() {
+            const baseLevel = 460;
+            let levelBoost = 0;
+            
+            // Calculate boost based on different factors
+            
+            // 1. Problems completed (up to +20 points)
+            levelBoost += Math.min(completedProblems * 0.5, 20);
+            
+            // 2. Overall accuracy bonus (up to +30 points)
+            const overallAccuracy = totalAttempts > 0 ? (correctCount / totalAttempts) : 0;
+            if (overallAccuracy >= 0.9) levelBoost += 30;
+            else if (overallAccuracy >= 0.8) levelBoost += 20;
+            else if (overallAccuracy >= 0.7) levelBoost += 10;
+            else if (overallAccuracy >= 0.6) levelBoost += 5;
+            
+            // 3. Topic mastery bonus (up to +50 points)
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted >= 3) {
+                    const accuracy = stats.correct / stats.attempted;
+                    if (accuracy >= 0.8) {
+                        // Foundation topics worth 4 points each
+                        if (['fractions', 'operations', 'algebra', 'geometry', 'measurement', 'word-problems'].includes(topic)) {
+                            levelBoost += 4;
+                        }
+                        // Grade 6 topics worth 8 points each (harder content)
+                        if (['ratios', 'integers', 'expressions'].includes(topic)) {
+                            levelBoost += 8;
+                        }
+                    }
+                }
+            });
+            
+            // 4. Consistency bonus (up to +10 points)
+            if (completedProblems >= 10 && overallAccuracy >= 0.7) {
+                levelBoost += 10;
+            }
+            
+            // 5. Challenge bonus for attempting Grade 6 content (+5 per topic tried)
+            ['ratios', 'integers', 'expressions'].forEach(topic => {
+                if (topicStats[topic].attempted > 0) {
+                    levelBoost += 5;
+                }
+            });
+            
+            // Calculate and display projected level
+            const projectedLevel = Math.min(baseLevel + Math.round(levelBoost), 650);
+            const projectedElement = document.getElementById('projectedLevel');
+            projectedElement.textContent = projectedLevel;
+            
+            // Color code based on improvement
+            if (projectedLevel >= 600) {
+                projectedElement.style.color = '#10b981'; // Green - at target!
+                projectedElement.innerHTML = projectedLevel + ' 🎯';
+            } else if (projectedLevel >= 550) {
+                projectedElement.style.color = '#f59e0b'; // Orange - getting close
+                projectedElement.innerHTML = projectedLevel + ' 📈';
+            } else if (projectedLevel >= 500) {
+                projectedElement.style.color = '#3b82f6'; // Blue - good progress
+                projectedElement.innerHTML = projectedLevel + ' ⬆️';
+            } else {
+                projectedElement.style.color = '#8b5cf6'; // Purple - starting out
+            }
+            
+            // Save progress to localStorage for persistence
+            saveProgressToLocal();
+        }
+
+        function saveProgressToLocal() {
+            const progressData = {
+                completedProblems: completedProblems,
+                totalAttempts: totalAttempts,
+                correctCount: correctCount,
+                topicStats: topicStats,
+                lastUpdated: new Date().toISOString()
+            };
+            try {
+                localStorage.setItem('jordanMathProgress', JSON.stringify(progressData));
+            } catch(e) {
+                // localStorage might not be available
+            }
+        }
+
+        function loadProgressFromLocal() {
+            try {
+                const saved = localStorage.getItem('jordanMathProgress');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    // Only load if from same day
+                    const savedDate = new Date(data.lastUpdated).toDateString();
+                    const today = new Date().toDateString();
+                    if (savedDate === today) {
+                        completedProblems = data.completedProblems || 0;
+                        totalAttempts = data.totalAttempts || 0;
+                        correctCount = data.correctCount || 0;
+                        topicStats = data.topicStats || topicStats;
+                        updateProgress();
+                        updateParentDashboard();
+                    }
+                }
+            } catch(e) {
+                // localStorage might not be available
             }
         }
 
@@ -1371,7 +1484,9 @@
             report += `Correct Answers: ${correctCount}\n`;
             report += `Accuracy Rate: ${accuracy}%\n`;
             report += `Time Spent: ${timeElapsed} minutes\n`;
-            report += `IXL Math Level: 460 (Target: 600+)\n\n`;
+            report += `Current IXL Level: 460\n`;
+            report += `Projected Level: ${document.getElementById('projectedLevel').textContent}\n`;
+            report += `Target Level: 600+\n\n`;
             
             report += `PERFORMANCE BY TOPIC\n`;
             report += `--------------------\n`;
@@ -1505,6 +1620,7 @@
 
         // Initialize dashboard on load
         window.onload = function() {
+            loadProgressFromLocal();
             updateParentDashboard();
             // Update time every minute
             setInterval(() => {
