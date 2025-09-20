@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jordan's Personalized Math Practice</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            color: #34495e;
+        }
+
+        .score-display {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .score-box .label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .score-box .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .topic-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .topic-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .topic-card.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .topic-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .topic-title {
+            font-weight: 600;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .topic-level {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .skill-tag {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6b6b;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .practice-area {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .practice-area.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .question-container {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .question-text {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .hint-box {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 3px solid #ffd93d;
+            display: none;
+        }
+
+        .hint-box.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .answer-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .answer-btn {
+            padding: 15px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .answer-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .answer-btn.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .answer-btn.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .answer-input {
+            padding: 15px;
+            font-size: 1.2em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .feedback-message {
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .feedback-message.correct {
+            background: linear-gradient(135deg, #d4edda 0%, #a8e6cf 100%);
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .feedback-message.incorrect {
+            background: linear-gradient(135deg, #f8d7da 0%, #ffb3ba 100%);
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .progress-tracker {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00c9ff 0%, #92fe9d 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .step-explanation {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border-left: 4px solid #2196F3;
+        }
+
+        .step {
+            margin-bottom: 15px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .step::before {
+            content: attr(data-step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #2196F3;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 500px; }
+        }
+
+        @media (max-width: 768px) {
+            .topic-selector {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Jordan's Math Practice Zone</h1>
+            <p>Based on your IXL Diagnostic Results - September 17, 2025</p>
+            <div class="score-display">
+                <div class="score-box">
+                    <div class="label">Overall Math Level</div>
+                    <div class="value">460</div>
+                </div>
+                <div class="score-box">
+                    <div class="label">Target Level</div>
+                    <div class="value">600+</div>
+                </div>
+                <div class="score-box">
+                    <div class="label">Problems Completed</div>
+                    <div class="value" id="completedCount">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <h2 style="color: #2c3e50; margin-bottom: 20px;">Choose a Topic to Practice:</h2>
+            
+            <div class="topic-selector">
+                <div class="topic-card" onclick="selectTopic('fractions')">
+                    <span class="skill-tag">Need Work</span>
+                    <div class="topic-icon">🥧</div>
+                    <div class="topic-title">Fractions</div>
+                    <div class="topic-level">Level: 520</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('operations')">
+                    <span class="skill-tag">Focus Area</span>
+                    <div class="topic-icon">➕</div>
+                    <div class="topic-title">Operations</div>
+                    <div class="topic-level">Level: 500</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('algebra')">
+                    <div class="topic-icon">🔤</div>
+                    <div class="topic-title">Algebra</div>
+                    <div class="topic-level">Level: 480</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('word-problems')">
+                    <div class="topic-icon">📖</div>
+                    <div class="topic-title">Word Problems</div>
+                    <div class="topic-level">Level: 480</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('geometry')">
+                    <span class="skill-tag">Need Work</span>
+                    <div class="topic-icon">📐</div>
+                    <div class="topic-title">Geometry</div>
+                    <div class="topic-level">Level: 380</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('measurement')">
+                    <div class="topic-icon">📏</div>
+                    <div class="topic-title">Measurement</div>
+                    <div class="topic-level">Level: 420</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('ratios')" style="border-color: #ff9800;">
+                    <span class="skill-tag" style="background: #ff9800;">Grade 6</span>
+                    <div class="topic-icon">⚖️</div>
+                    <div class="topic-title">Ratios & Rates</div>
+                    <div class="topic-level">New Topic</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('integers')" style="border-color: #ff9800;">
+                    <span class="skill-tag" style="background: #ff9800;">Grade 6</span>
+                    <div class="topic-icon">➖</div>
+                    <div class="topic-title">Negative Numbers</div>
+                    <div class="topic-level">New Topic</div>
+                </div>
+                
+                <div class="topic-card" onclick="selectTopic('expressions')" style="border-color: #ff9800;">
+                    <span class="skill-tag" style="background: #ff9800;">Grade 6</span>
+                    <div class="topic-icon">📝</div>
+                    <div class="topic-title">Expressions</div>
+                    <div class="topic-level">Advanced</div>
+                </div>
+            </div>
+
+            <!-- Practice Areas -->
+            <div id="fractions-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">🥧 Fractions Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="fractions-question"></div>
+                    <div class="hint-box" id="fractions-hint">
+                        <strong>💡 Hint:</strong> <span id="fractions-hint-text"></span>
+                    </div>
+                    <div id="fractions-answers" class="answer-options"></div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('fractions')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="nextQuestion('fractions')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="fractions-feedback"></div>
+                </div>
+            </div>
+
+            <div id="operations-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">➕ Operations Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="operations-question"></div>
+                    <div class="hint-box" id="operations-hint">
+                        <strong>💡 Hint:</strong> <span id="operations-hint-text"></span>
+                    </div>
+                    <input type="number" class="answer-input" id="operations-answer" placeholder="Enter your answer">
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('operations')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="checkAnswer('operations')">Check Answer</button>
+                        <button class="btn btn-success" onclick="nextQuestion('operations')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="operations-feedback"></div>
+                </div>
+            </div>
+
+            <div id="algebra-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">🔤 Algebra Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="algebra-question"></div>
+                    <div class="hint-box" id="algebra-hint">
+                        <strong>💡 Hint:</strong> <span id="algebra-hint-text"></span>
+                    </div>
+                    <div id="algebra-answers" class="answer-options"></div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('algebra')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="nextQuestion('algebra')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="algebra-feedback"></div>
+                </div>
+            </div>
+
+            <div id="word-problems-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">📖 Word Problems Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="word-problems-question"></div>
+                    <div class="hint-box" id="word-problems-hint">
+                        <strong>💡 Hint:</strong> <span id="word-problems-hint-text"></span>
+                    </div>
+                    <input type="number" class="answer-input" id="word-problems-answer" placeholder="Enter your answer">
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('word-problems')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="checkAnswer('word-problems')">Check Answer</button>
+                        <button class="btn btn-success" onclick="nextQuestion('word-problems')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="word-problems-feedback"></div>
+                    <div class="step-explanation" id="word-problems-steps" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="geometry-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">📐 Geometry Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="geometry-question"></div>
+                    <div class="hint-box" id="geometry-hint">
+                        <strong>💡 Hint:</strong> <span id="geometry-hint-text"></span>
+                    </div>
+                    <input type="number" class="answer-input" id="geometry-answer" placeholder="Enter your answer">
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('geometry')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="checkAnswer('geometry')">Check Answer</button>
+                        <button class="btn btn-success" onclick="nextQuestion('geometry')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="geometry-feedback"></div>
+                </div>
+            </div>
+
+            <div id="measurement-practice" class="practice-area">
+                <h3 style="color: #667eea; margin-bottom: 20px;">📏 Measurement Practice</h3>
+                <div class="question-container">
+                    <div class="question-text" id="measurement-question"></div>
+                    <div class="hint-box" id="measurement-hint">
+                        <strong>💡 Hint:</strong> <span id="measurement-hint-text"></span>
+                    </div>
+                    <div id="measurement-answers" class="answer-options"></div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('measurement')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="nextQuestion('measurement')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="measurement-feedback"></div>
+                </div>
+            </div>
+
+            <div id="ratios-practice" class="practice-area">
+                <h3 style="color: #ff9800; margin-bottom: 20px;">⚖️ Ratios & Rates (6th Grade Preview)</h3>
+                <div class="question-container">
+                    <div class="question-text" id="ratios-question"></div>
+                    <div class="hint-box" id="ratios-hint">
+                        <strong>💡 Hint:</strong> <span id="ratios-hint-text"></span>
+                    </div>
+                    <input type="text" class="answer-input" id="ratios-answer" placeholder="Enter your answer">
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('ratios')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="checkAnswer('ratios')">Check Answer</button>
+                        <button class="btn btn-success" onclick="nextQuestion('ratios')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="ratios-feedback"></div>
+                    <div class="step-explanation" id="ratios-steps" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div id="integers-practice" class="practice-area">
+                <h3 style="color: #ff9800; margin-bottom: 20px;">➖ Negative Numbers (6th Grade Preview)</h3>
+                <div class="question-container">
+                    <div class="question-text" id="integers-question"></div>
+                    <div class="hint-box" id="integers-hint">
+                        <strong>💡 Hint:</strong> <span id="integers-hint-text"></span>
+                    </div>
+                    <input type="text" class="answer-input" id="integers-answer" placeholder="Enter your answer (use - for negative)">
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('integers')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="checkAnswer('integers')">Check Answer</button>
+                        <button class="btn btn-success" onclick="nextQuestion('integers')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="integers-feedback"></div>
+                </div>
+            </div>
+
+            <div id="expressions-practice" class="practice-area">
+                <h3 style="color: #ff9800; margin-bottom: 20px;">📝 Expressions & Equations (6th Grade Preview)</h3>
+                <div class="question-container">
+                    <div class="question-text" id="expressions-question"></div>
+                    <div class="hint-box" id="expressions-hint">
+                        <strong>💡 Hint:</strong> <span id="expressions-hint-text"></span>
+                    </div>
+                    <div id="expressions-answers" class="answer-options"></div>
+                    <div class="button-group">
+                        <button class="btn btn-secondary" onclick="showHint('expressions')">Show Hint</button>
+                        <button class="btn btn-primary" onclick="nextQuestion('expressions')">Next Question</button>
+                    </div>
+                    <div class="feedback-message" id="expressions-feedback"></div>
+                    <div class="step-explanation" id="expressions-steps" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="progress-tracker">
+                <h3>📊 Your Progress Today</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar" style="width: 0%">0%</div>
+                </div>
+                <p style="margin-top: 10px;">Complete 10 problems to reach today's goal!</p>
+            </div>
+
+            <div style="margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 15px; border: 2px solid #0ea5e9;">
+                <h3 style="color: #0369a1; margin-bottom: 20px;">👨‍👩‍👦 Parent Dashboard</h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.9em;">Total Problems Attempted</div>
+                        <div style="font-size: 1.8em; color: #0369a1; font-weight: bold;" id="totalAttempted">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.9em;">Correct Answers</div>
+                        <div style="font-size: 1.8em; color: #10b981; font-weight: bold;" id="correctAnswers">0</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.9em;">Accuracy Rate</div>
+                        <div style="font-size: 1.8em; color: #8b5cf6; font-weight: bold;" id="accuracyRate">0%</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <div style="color: #666; font-size: 0.9em;">Time Spent Today</div>
+                        <div style="font-size: 1.8em; color: #f59e0b; font-weight: bold;" id="timeSpent">0m</div>
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h4 style="color: #0369a1; margin-bottom: 15px;">Performance by Topic</h4>
+                    <div id="topicPerformance" style="display: grid; gap: 10px;">
+                        <!-- Topic performance will be inserted here -->
+                    </div>
+                </div>
+
+                <div style="background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h4 style="color: #0369a1; margin-bottom: 15px;">Areas Needing Attention</h4>
+                    <div id="needsAttention" style="color: #dc2626;">
+                        <!-- Will be populated with struggling topics -->
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="generateParentReport()" style="background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);">
+                        📧 Generate Email Report
+                    </button>
+                    <button class="btn btn-secondary" onclick="showDetailedStats()">
+                        📈 Show Detailed Statistics
+                    </button>
+                    <button class="btn btn-success" onclick="exportProgress()">
+                        💾 Save Progress Report
+                    </button>
+                </div>
+
+                <div id="detailedStats" style="display: none; margin-top: 20px; background: white; padding: 20px; border-radius: 10px;">
+                    <!-- Detailed statistics will appear here -->
+                </div>
+
+                <div id="reportOutput" style="display: none; margin-top: 20px; background: white; padding: 20px; border-radius: 10px; border: 2px dashed #cbd5e1;">
+                    <h4>📋 Report (Click to Copy)</h4>
+                    <pre id="reportText" style="white-space: pre-wrap; font-family: monospace; background: #f8f9fa; padding: 15px; border-radius: 8px; cursor: pointer;" onclick="copyReport()"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Question banks for each topic
+        const questions = {
+            fractions: [
+                {
+                    question: "What is 3/4 - 1/2?",
+                    options: ["1/4", "1/2", "2/4", "3/8"],
+                    correct: 0,
+                    hint: "First, make the denominators the same. 1/2 = 2/4",
+                    explanation: "3/4 - 2/4 = 1/4"
+                },
+                {
+                    question: "Sarah ate 2/5 of a pizza. Her brother ate 1/5. How much did they eat together?",
+                    options: ["3/5", "2/10", "3/10", "1/5"],
+                    correct: 0,
+                    hint: "When adding fractions with the same denominator, add the numerators",
+                    explanation: "2/5 + 1/5 = 3/5"
+                },
+                {
+                    question: "What is 1/3 + 1/6?",
+                    options: ["1/2", "2/9", "1/4", "2/6"],
+                    correct: 0,
+                    hint: "Convert 1/3 to 2/6, then add",
+                    explanation: "2/6 + 1/6 = 3/6 = 1/2"
+                },
+                {
+                    question: "A recipe needs 3/4 cup of flour. You want to make half the recipe. How much flour do you need?",
+                    options: ["3/8 cup", "1/2 cup", "3/2 cup", "1/4 cup"],
+                    correct: 0,
+                    hint: "Half of 3/4 means 1/2 × 3/4",
+                    explanation: "1/2 × 3/4 = 3/8"
+                },
+                {
+                    question: "Which fraction is larger: 3/5 or 2/3?",
+                    options: ["3/5", "2/3", "They're equal", "Can't tell"],
+                    correct: 1,
+                    hint: "Convert to the same denominator: 9/15 and 10/15",
+                    explanation: "3/5 = 9/15, 2/3 = 10/15, so 2/3 is larger"
+                }
+            ],
+            operations: [
+                {
+                    question: "Calculate: 234 ÷ 6",
+                    answer: 39,
+                    hint: "How many times does 6 go into 234?",
+                    explanation: "234 ÷ 6 = 39"
+                },
+                {
+                    question: "What is 47 × 8?",
+                    answer: 376,
+                    hint: "Break it down: (40 × 8) + (7 × 8)",
+                    explanation: "320 + 56 = 376"
+                },
+                {
+                    question: "Calculate: 891 ÷ 9",
+                    answer: 99,
+                    hint: "9 × 100 = 900, so the answer is close to 100",
+                    explanation: "891 ÷ 9 = 99"
+                },
+                {
+                    question: "What is 156 + 287?",
+                    answer: 443,
+                    hint: "Add the ones, then tens, then hundreds",
+                    explanation: "6+7=13, 50+80=130, 100+200=300, Total: 443"
+                },
+                {
+                    question: "Calculate: 1,234 - 567",
+                    answer: 667,
+                    hint: "You might need to borrow when subtracting",
+                    explanation: "1,234 - 567 = 667"
+                }
+            ],
+            algebra: [
+                {
+                    question: "If 3x = 15, what is x?",
+                    options: ["3", "5", "12", "45"],
+                    correct: 1,
+                    hint: "Divide both sides by 3",
+                    explanation: "x = 15 ÷ 3 = 5"
+                },
+                {
+                    question: "Sarah has x apples. She buys 4 more. Now she has 11. How many did she start with?",
+                    options: ["7", "15", "4", "11"],
+                    correct: 0,
+                    hint: "Set up the equation: x + 4 = 11",
+                    explanation: "x + 4 = 11, so x = 7"
+                },
+                {
+                    question: "What is 2y if y = 8?",
+                    options: ["10", "16", "6", "4"],
+                    correct: 1,
+                    hint: "Multiply y by 2",
+                    explanation: "2 × 8 = 16"
+                },
+                {
+                    question: "If n + 12 = 20, what is n?",
+                    options: ["8", "32", "12", "20"],
+                    correct: 0,
+                    hint: "Subtract 12 from both sides",
+                    explanation: "n = 20 - 12 = 8"
+                },
+                {
+                    question: "The pattern is: 2, 5, 8, 11, ... What comes next?",
+                    options: ["13", "14", "15", "12"],
+                    correct: 1,
+                    hint: "Each number increases by 3",
+                    explanation: "11 + 3 = 14"
+                }
+            ],
+            'word-problems': [
+                {
+                    question: "A car travels 60 miles per hour. How far does it go in 3 hours?",
+                    answer: 180,
+                    hint: "Distance = Speed × Time",
+                    explanation: "60 × 3 = 180 miles",
+                    steps: [
+                        "Identify what we know: Speed = 60 mph, Time = 3 hours",
+                        "Use the formula: Distance = Speed × Time",
+                        "Calculate: 60 × 3 = 180",
+                        "Answer: 180 miles"
+                    ]
+                },
+                {
+                    question: "Tom has 48 marbles. He gives 1/4 to his friend. How many does he have left?",
+                    answer: 36,
+                    hint: "First find 1/4 of 48, then subtract",
+                    explanation: "1/4 of 48 = 12, so 48 - 12 = 36",
+                    steps: [
+                        "Find 1/4 of 48: 48 ÷ 4 = 12",
+                        "Tom gives away 12 marbles",
+                        "Subtract: 48 - 12 = 36",
+                        "Tom has 36 marbles left"
+                    ]
+                },
+                {
+                    question: "A store sells pencils for $2 each. If you buy 5 or more, they cost $1.50 each. How much do 7 pencils cost?",
+                    answer: 10.50,
+                    hint: "Since you're buying 7, use the discount price",
+                    explanation: "7 × $1.50 = $10.50",
+                    steps: [
+                        "Check the quantity: 7 pencils (more than 5)",
+                        "Use discount price: $1.50 each",
+                        "Calculate: 7 × $1.50 = $10.50",
+                        "Total cost: $10.50"
+                    ]
+                },
+                {
+                    question: "Lisa reads 15 pages per day. How many pages will she read in 2 weeks?",
+                    answer: 210,
+                    hint: "2 weeks = 14 days",
+                    explanation: "15 × 14 = 210 pages",
+                    steps: [
+                        "Convert weeks to days: 2 weeks = 14 days",
+                        "Pages per day: 15",
+                        "Total pages: 15 × 14 = 210",
+                        "Answer: 210 pages"
+                    ]
+                },
+                {
+                    question: "A recipe for 4 people needs 2 cups of rice. How much rice is needed for 10 people?",
+                    answer: 5,
+                    hint: "Find the ratio: 10 ÷ 4 = 2.5",
+                    explanation: "2 cups × 2.5 = 5 cups",
+                    steps: [
+                        "Find how many times more people: 10 ÷ 4 = 2.5",
+                        "Multiply rice by same amount: 2 × 2.5 = 5",
+                        "Answer: 5 cups of rice"
+                    ]
+                }
+            ],
+            geometry: [
+                {
+                    question: "A rectangular prism has length 4, width 3, and height 5. What is its volume?",
+                    answer: 60,
+                    hint: "Volume = length × width × height",
+                    explanation: "4 × 3 × 5 = 60 cubic units"
+                },
+                {
+                    question: "How many unit cubes fit in a box that is 2 × 3 × 4 units?",
+                    answer: 24,
+                    hint: "Multiply all three dimensions",
+                    explanation: "2 × 3 × 4 = 24 unit cubes"
+                },
+                {
+                    question: "A square has a perimeter of 20. What is the length of one side?",
+                    answer: 5,
+                    hint: "A square has 4 equal sides",
+                    explanation: "20 ÷ 4 = 5 units"
+                },
+                {
+                    question: "A triangle has angles of 60°, 70°, and ?°. What is the missing angle?",
+                    answer: 50,
+                    hint: "Triangle angles add up to 180°",
+                    explanation: "180 - 60 - 70 = 50°"
+                },
+                {
+                    question: "A rectangle has length 8 and width 5. What is its area?",
+                    answer: 40,
+                    hint: "Area = length × width",
+                    explanation: "8 × 5 = 40 square units"
+                }
+            ],
+            measurement: [
+                {
+                    question: "What time will it be 2 hours and 30 minutes after 10:45?",
+                    options: ["1:15", "12:15", "1:30", "12:45"],
+                    correct: 0,
+                    hint: "Add 2 hours first, then add 30 minutes",
+                    explanation: "10:45 + 2:30 = 1:15"
+                },
+                {
+                    question: "How many inches are in 3 feet?",
+                    options: ["36", "30", "12", "24"],
+                    correct: 0,
+                    hint: "1 foot = 12 inches",
+                    explanation: "3 × 12 = 36 inches"
+                },
+                {
+                    question: "Convert 5 feet 4 inches to inches only",
+                    options: ["54", "64", "60", "74"],
+                    correct: 1,
+                    hint: "Convert feet to inches first, then add",
+                    explanation: "(5 × 12) + 4 = 60 + 4 = 64 inches"
+                },
+                {
+                    question: "If it's 3:20 PM now, what time was it 45 minutes ago?",
+                    options: ["2:35 PM", "2:45 PM", "3:05 PM", "2:25 PM"],
+                    correct: 0,
+                    hint: "Subtract 45 minutes from 3:20",
+                    explanation: "3:20 - 0:45 = 2:35"
+                },
+                {
+                    question: "Which is longer: 2 yards or 70 inches?",
+                    options: ["2 yards", "70 inches", "They're equal", "Can't tell"],
+                    correct: 0,
+                    hint: "1 yard = 36 inches",
+                    explanation: "2 yards = 72 inches, which is more than 70 inches"
+                }
+            ],
+            ratios: [
+                {
+                    question: "If there are 3 red marbles for every 2 blue marbles, and you have 6 red marbles, how many blue marbles do you have?",
+                    answer: 4,
+                    hint: "If 3 red goes with 2 blue, then 6 red (which is double) goes with...",
+                    explanation: "Think of it like a recipe! 3 red always comes with 2 blue. Since 6 is double 3, we need double the blue too! 2 × 2 = 4",
+                    steps: [
+                        "The pattern: 3 red always comes with 2 blue",
+                        "You have 6 red (that's 3 × 2)",
+                        "So you need 2 blue × 2 = 4 blue",
+                        "Answer: 4 blue marbles"
+                    ]
+                },
+                {
+                    question: "A recipe uses 2 cups of flour for every 3 cups of sugar. If you use 8 cups of flour, how many cups of sugar do you need?",
+                    answer: 12,
+                    hint: "8 cups is 4 times bigger than 2 cups",
+                    explanation: "If flour gets 4 times bigger (2→8), sugar gets 4 times bigger too (3→12)!",
+                    steps: [
+                        "Original: 2 flour with 3 sugar",
+                        "You're using: 8 flour",
+                        "How many 2's fit in 8? Answer: 4",
+                        "So multiply sugar by 4: 3 × 4 = 12 cups"
+                    ]
+                },
+                {
+                    question: "If a car travels 150 miles in 3 hours, what is its speed in miles per hour?",
+                    answer: 50,
+                    hint: "How many miles in 1 hour?",
+                    explanation: "Split 150 miles into 3 equal parts: 150 ÷ 3 = 50 miles each hour",
+                    steps: [
+                        "Total distance: 150 miles",
+                        "Total time: 3 hours",
+                        "Miles in 1 hour: 150 ÷ 3 = 50",
+                        "Speed: 50 miles per hour"
+                    ]
+                },
+                {
+                    question: "The ratio of boys to girls in a class is 4:5. If there are 20 boys, how many girls are there?",
+                    answer: 25,
+                    hint: "How many groups of 4 boys do you have?",
+                    explanation: "For every 4 boys, there are 5 girls. You have 5 groups of 4 boys (20÷4=5), so you need 5 groups of 5 girls (5×5=25)",
+                    steps: [
+                        "Pattern: 4 boys with 5 girls",
+                        "You have 20 boys",
+                        "20 ÷ 4 = 5 groups",
+                        "5 groups × 5 girls = 25 girls"
+                    ]
+                },
+                {
+                    question: "If 3 pencils cost $2.25, how much do 8 pencils cost? (Enter as decimal like 6.00)",
+                    answer: 6,
+                    hint: "First find what 1 pencil costs",
+                    explanation: "Each pencil costs 75 cents ($2.25 ÷ 3 = $0.75). So 8 pencils cost $0.75 × 8 = $6.00",
+                    steps: [
+                        "3 pencils cost $2.25",
+                        "1 pencil costs: $2.25 ÷ 3 = $0.75",
+                        "8 pencils cost: $0.75 × 8 = $6.00"
+                    ]
+                }
+            ],
+            integers: [
+                {
+                    question: "What is 5 + (-3)?",
+                    answer: 2,
+                    hint: "Start at 5 and go back 3 steps",
+                    explanation: "Think of a number line! Start at 5, adding negative 3 means go LEFT 3 spaces: 5, 4, 3, 2"
+                },
+                {
+                    question: "The temperature was 3°C. It dropped 7 degrees. What's the new temperature?",
+                    answer: -4,
+                    hint: "Count down from 3 seven times",
+                    explanation: "Start at 3: go down 3 to reach 0, then down 4 more. You're at -4°C (4 below zero!)"
+                },
+                {
+                    question: "What is -6 + 10?",
+                    answer: 4,
+                    hint: "You owe 6, then get 10",
+                    explanation: "Think: you owe $6 (-6), then get $10. After paying the $6 you owe, you have $4 left!"
+                },
+                {
+                    question: "Calculate: -3 × 4",
+                    answer: -12,
+                    hint: "Negative times positive = negative",
+                    explanation: "Think: losing 3 points, 4 times. You lose 12 points total, so -12"
+                },
+                {
+                    question: "A submarine is at -200 feet. It rises 150 feet. What's its new depth?",
+                    answer: -50,
+                    hint: "Going up from underwater",
+                    explanation: "Start 200 feet underwater (-200). Go up 150 feet. You're still 50 feet underwater (-50)"
+                },
+                {
+                    question: "What is -8 - (-3)?",
+                    answer: -5,
+                    hint: "Two negatives make a positive!",
+                    explanation: "Subtracting negative is like adding! -8 - (-3) = -8 + 3 = -5"
+                }
+            ],
+            expressions: [
+                {
+                    question: "Simplify: 3x + 2x",
+                    options: ["5x", "6x", "5", "3x + 2"],
+                    correct: 0,
+                    hint: "You have 3 x's and 2 more x's",
+                    explanation: "Think: 3 apples + 2 apples = 5 apples. So 3x + 2x = 5x"
+                },
+                {
+                    question: "If x = 4, what is the value of 2x + 7?",
+                    options: ["15", "13", "9", "11"],
+                    correct: 0,
+                    hint: "Replace every x with 4",
+                    explanation: "Put 4 where x is: 2(4) + 7 = 8 + 7 = 15"
+                },
+                {
+                    question: "Write an expression for: '5 more than twice a number n'",
+                    options: ["2n + 5", "5n + 2", "2 + 5n", "10n"],
+                    correct: 0,
+                    hint: "Twice means ×2, then add 5",
+                    explanation: "Twice n = 2 × n = 2n. Then add 5: 2n + 5"
+                },
+                {
+                    question: "Simplify: 4(x + 3)",
+                    options: ["4x + 12", "4x + 3", "7x", "x + 12"],
+                    correct: 0,
+                    hint: "Give 4 to everyone inside the ( )",
+                    explanation: "The 4 multiplies everything inside: 4×x = 4x and 4×3 = 12. Answer: 4x + 12",
+                    steps: [
+                        "The 4 goes to both things inside",
+                        "4 × x = 4x",
+                        "4 × 3 = 12",
+                        "Put together: 4x + 12"
+                    ]
+                },
+                {
+                    question: "Which expression represents the perimeter of a square with side length s?",
+                    options: ["4s", "s²", "2s", "s + 4"],
+                    correct: 0,
+                    hint: "Add all 4 sides of the square",
+                    explanation: "A square has 4 equal sides. So: s + s + s + s = 4s"
+                },
+                {
+                    question: "Evaluate: 3² + 4",
+                    options: ["13", "12", "49", "7"],
+                    correct: 0,
+                    hint: "3² means 3 times itself",
+                    explanation: "3² = 3 × 3 = 9. Then 9 + 4 = 13"
+                }
+            ]
+        };
+
+        let currentTopic = null;
+        let currentQuestionIndex = 0;
+        let completedProblems = 0;
+        let totalAttempts = 0;
+        let correctCount = 0;
+        let startTime = Date.now();
+        let topicStats = {
+            fractions: { attempted: 0, correct: 0 },
+            operations: { attempted: 0, correct: 0 },
+            algebra: { attempted: 0, correct: 0 },
+            'word-problems': { attempted: 0, correct: 0 },
+            geometry: { attempted: 0, correct: 0 },
+            measurement: { attempted: 0, correct: 0 },
+            ratios: { attempted: 0, correct: 0 },
+            integers: { attempted: 0, correct: 0 },
+            expressions: { attempted: 0, correct: 0 }
+        };
+        let problemHistory = [];
+
+        function selectTopic(topic) {
+            // Hide all practice areas
+            document.querySelectorAll('.practice-area').forEach(area => {
+                area.classList.remove('active');
+            });
+            
+            // Remove active class from all cards
+            document.querySelectorAll('.topic-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Show selected practice area
+            document.getElementById(`${topic}-practice`).classList.add('active');
+            
+            // Add active class to selected card
+            event.currentTarget.classList.add('active');
+            
+            // Set current topic and load first question
+            currentTopic = topic;
+            currentQuestionIndex = 0;
+            loadQuestion(topic);
+        }
+
+        function loadQuestion(topic) {
+            const questionBank = questions[topic];
+            const question = questionBank[currentQuestionIndex];
+            
+            // Clear previous feedback
+            const feedback = document.getElementById(`${topic}-feedback`);
+            if (feedback) {
+                feedback.style.display = 'none';
+                feedback.className = 'feedback-message';
+            }
+            
+            // Hide hint
+            document.getElementById(`${topic}-hint`).classList.remove('show');
+            
+            // Load question
+            document.getElementById(`${topic}-question`).innerHTML = question.question;
+            
+            // Set hint text
+            document.getElementById(`${topic}-hint-text`).textContent = question.hint;
+            
+            // Load answers based on type
+            if (question.options) {
+                // Multiple choice
+                const answersDiv = document.getElementById(`${topic}-answers`);
+                answersDiv.innerHTML = '';
+                question.options.forEach((option, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.textContent = option;
+                    btn.onclick = () => checkMultipleChoice(topic, index);
+                    answersDiv.appendChild(btn);
+                });
+            } else {
+                // Text input
+                const input = document.getElementById(`${topic}-answer`);
+                if (input) {
+                    input.value = '';
+                    input.focus();
+                }
+            }
+            
+            // Hide step explanation if it exists
+            const steps = document.getElementById(`${topic}-steps`);
+            if (steps) {
+                steps.style.display = 'none';
+            }
+        }
+
+        function checkMultipleChoice(topic, selectedIndex) {
+            const question = questions[topic][currentQuestionIndex];
+            const buttons = document.querySelectorAll(`#${topic}-answers .answer-btn`);
+            const feedback = document.getElementById(`${topic}-feedback`);
+            
+            totalAttempts++;
+            topicStats[topic].attempted++;
+            
+            const isCorrect = selectedIndex === question.correct;
+            
+            // Track problem in history
+            problemHistory.push({
+                topic: topic,
+                question: question.question,
+                userAnswer: question.options[selectedIndex],
+                correctAnswer: question.options[question.correct],
+                isCorrect: isCorrect,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            
+            if (isCorrect) {
+                buttons[selectedIndex].classList.add('correct');
+                feedback.className = 'feedback-message correct';
+                feedback.innerHTML = `✅ Correct! ${question.explanation}`;
+                feedback.style.display = 'block';
+                completedProblems++;
+                correctCount++;
+                topicStats[topic].correct++;
+                updateProgress();
+            } else {
+                buttons[selectedIndex].classList.add('incorrect');
+                buttons[question.correct].classList.add('correct');
+                feedback.className = 'feedback-message incorrect';
+                feedback.innerHTML = `❌ Not quite. The correct answer is ${question.options[question.correct]}. ${question.explanation}`;
+                feedback.style.display = 'block';
+            }
+            
+            // Disable all buttons after answering
+            buttons.forEach(btn => btn.disabled = true);
+            updateParentDashboard();
+        }
+
+        function checkAnswer(topic) {
+            const input = document.getElementById(`${topic}-answer`);
+            const userAnswer = topic === 'integers' ? parseInt(input.value) : parseFloat(input.value);
+            const question = questions[topic][currentQuestionIndex];
+            const feedback = document.getElementById(`${topic}-feedback`);
+            
+            totalAttempts++;
+            topicStats[topic].attempted++;
+            
+            const isCorrect = userAnswer === question.answer;
+            
+            // Track problem in history
+            problemHistory.push({
+                topic: topic,
+                question: question.question,
+                userAnswer: userAnswer,
+                correctAnswer: question.answer,
+                isCorrect: isCorrect,
+                timestamp: new Date().toLocaleTimeString()
+            });
+            
+            if (isCorrect) {
+                feedback.className = 'feedback-message correct';
+                feedback.innerHTML = `✅ Correct! ${question.explanation}`;
+                feedback.style.display = 'block';
+                completedProblems++;
+                correctCount++;
+                topicStats[topic].correct++;
+                updateProgress();
+                
+                // Show steps if available
+                if (question.steps) {
+                    showSteps(topic, question.steps);
+                }
+            } else {
+                feedback.className = 'feedback-message incorrect';
+                feedback.innerHTML = `❌ Not quite. The correct answer is ${question.answer}. ${question.explanation}`;
+                feedback.style.display = 'block';
+                
+                // Show steps even when incorrect
+                if (question.steps) {
+                    showSteps(topic, question.steps);
+                }
+            }
+            
+            updateParentDashboard();
+        }
+
+        function showSteps(topic, steps) {
+            const stepsDiv = document.getElementById(`${topic}-steps`);
+            if (stepsDiv) {
+                stepsDiv.innerHTML = '<h4>Step-by-Step Solution:</h4>';
+                steps.forEach((step, index) => {
+                    stepsDiv.innerHTML += `<div class="step" data-step="${index + 1}">${step}</div>`;
+                });
+                stepsDiv.style.display = 'block';
+            }
+        }
+
+        function showHint(topic) {
+            document.getElementById(`${topic}-hint`).classList.add('show');
+        }
+
+        function nextQuestion(topic) {
+            const questionBank = questions[topic];
+            currentQuestionIndex = (currentQuestionIndex + 1) % questionBank.length;
+            loadQuestion(topic);
+        }
+
+        function updateProgress() {
+            document.getElementById('completedCount').textContent = completedProblems;
+            const percentage = Math.min((completedProblems / 10) * 100, 100);
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = Math.round(percentage) + '%';
+            
+            if (completedProblems >= 10 && completedProblems % 10 === 0) {
+                alert('🎉 Great job! You reached your goal of 10 problems!');
+            }
+        }
+
+        function updateParentDashboard() {
+            // Update basic stats
+            document.getElementById('totalAttempted').textContent = totalAttempts;
+            document.getElementById('correctAnswers').textContent = correctCount;
+            
+            // Calculate and update accuracy
+            const accuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+            document.getElementById('accuracyRate').textContent = accuracy + '%';
+            
+            // Update time spent
+            const timeElapsed = Math.floor((Date.now() - startTime) / 60000);
+            document.getElementById('timeSpent').textContent = timeElapsed + 'm';
+            
+            // Update topic performance
+            updateTopicPerformance();
+            
+            // Identify areas needing attention
+            identifyStrugglingAreas();
+        }
+
+        function updateTopicPerformance() {
+            const container = document.getElementById('topicPerformance');
+            container.innerHTML = '';
+            
+            const topicNames = {
+                'fractions': '🥧 Fractions',
+                'operations': '➕ Operations',
+                'algebra': '🔤 Algebra',
+                'word-problems': '📖 Word Problems',
+                'geometry': '📐 Geometry',
+                'measurement': '📏 Measurement',
+                'ratios': '⚖️ Ratios (Grade 6)',
+                'integers': '➖ Negative Numbers (Grade 6)',
+                'expressions': '📝 Expressions (Grade 6)'
+            };
+            
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted > 0) {
+                    const accuracy = Math.round((stats.correct / stats.attempted) * 100);
+                    const barColor = accuracy >= 80 ? '#10b981' : accuracy >= 60 ? '#f59e0b' : '#ef4444';
+                    
+                    const topicDiv = document.createElement('div');
+                    topicDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <span style="font-weight: 600;">${topicNames[topic]}</span>
+                            <span style="color: #666;">${stats.correct}/${stats.attempted} (${accuracy}%)</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+                            <div style="width: ${accuracy}%; background: ${barColor}; height: 100%; transition: width 0.5s ease;"></div>
+                        </div>
+                    `;
+                    container.appendChild(topicDiv);
+                }
+            });
+        }
+
+        function identifyStrugglingAreas() {
+            const container = document.getElementById('needsAttention');
+            const strugglingTopics = [];
+            
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted >= 2) {
+                    const accuracy = (stats.correct / stats.attempted) * 100;
+                    if (accuracy < 60) {
+                        strugglingTopics.push({
+                            topic: topic,
+                            accuracy: Math.round(accuracy)
+                        });
+                    }
+                }
+            });
+            
+            if (strugglingTopics.length === 0) {
+                container.innerHTML = '<span style="color: #10b981;">✅ Great job! No areas of concern yet.</span>';
+            } else {
+                container.innerHTML = '<ul style="margin: 0; padding-left: 20px;">';
+                strugglingTopics.forEach(item => {
+                    const topicName = item.topic.charAt(0).toUpperCase() + item.topic.slice(1).replace('-', ' ');
+                    container.innerHTML += `<li>${topicName} - Only ${item.accuracy}% correct. Needs more practice!</li>`;
+                });
+                container.innerHTML += '</ul>';
+            }
+        }
+
+        function generateParentReport() {
+            const accuracy = totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0;
+            const timeElapsed = Math.floor((Date.now() - startTime) / 60000);
+            const date = new Date().toLocaleDateString();
+            
+            let report = `Jordan's Math Practice Report - ${date}\n`;
+            report += `${'='.repeat(50)}\n\n`;
+            
+            report += `OVERALL PERFORMANCE\n`;
+            report += `-------------------\n`;
+            report += `Total Problems Attempted: ${totalAttempts}\n`;
+            report += `Correct Answers: ${correctCount}\n`;
+            report += `Accuracy Rate: ${accuracy}%\n`;
+            report += `Time Spent: ${timeElapsed} minutes\n`;
+            report += `IXL Math Level: 460 (Target: 600+)\n\n`;
+            
+            report += `PERFORMANCE BY TOPIC\n`;
+            report += `--------------------\n`;
+            
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted > 0) {
+                    const topicName = topic.charAt(0).toUpperCase() + topic.slice(1).replace('-', ' ');
+                    const acc = Math.round((stats.correct / stats.attempted) * 100);
+                    report += `${topicName}: ${stats.correct}/${stats.attempted} (${acc}%)\n`;
+                }
+            });
+            
+            // Identify strengths and weaknesses
+            const strengths = [];
+            const needsWork = [];
+            
+            Object.keys(topicStats).forEach(topic => {
+                const stats = topicStats[topic];
+                if (stats.attempted >= 2) {
+                    const acc = (stats.correct / stats.attempted) * 100;
+                    const topicName = topic.charAt(0).toUpperCase() + topic.slice(1).replace('-', ' ');
+                    if (acc >= 80) {
+                        strengths.push(topicName);
+                    } else if (acc < 60) {
+                        needsWork.push(topicName);
+                    }
+                }
+            });
+            
+            report += `\nSTRENGTHS\n`;
+            report += `---------\n`;
+            report += strengths.length > 0 ? strengths.join(', ') + '\n' : 'Keep practicing to identify strengths!\n';
+            
+            report += `\nNEEDS ATTENTION\n`;
+            report += `---------------\n`;
+            report += needsWork.length > 0 ? needsWork.join(', ') + '\n' : 'Great progress so far!\n';
+            
+            report += `\nRECOMMENDATIONS\n`;
+            report += `---------------\n`;
+            report += `1. Focus on areas below 60% accuracy\n`;
+            report += `2. Use hints when stuck to learn concepts\n`;
+            report += `3. Practice 10-15 problems daily\n`;
+            report += `4. Review step-by-step solutions carefully\n`;
+            
+            // Show the report
+            document.getElementById('reportOutput').style.display = 'block';
+            document.getElementById('reportText').textContent = report;
+        }
+
+        function showDetailedStats() {
+            const detailsDiv = document.getElementById('detailedStats');
+            
+            if (detailsDiv.style.display === 'block') {
+                detailsDiv.style.display = 'none';
+                return;
+            }
+            
+            let html = '<h4 style="color: #0369a1;">Problem-by-Problem Breakdown</h4>';
+            
+            if (problemHistory.length === 0) {
+                html += '<p>No problems attempted yet.</p>';
+            } else {
+                html += '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr style="background: #f0f9ff;">';
+                html += '<th style="padding: 10px; text-align: left; border: 1px solid #e0e0e0;">Time</th>';
+                html += '<th style="padding: 10px; text-align: left; border: 1px solid #e0e0e0;">Topic</th>';
+                html += '<th style="padding: 10px; text-align: left; border: 1px solid #e0e0e0;">Question</th>';
+                html += '<th style="padding: 10px; text-align: left; border: 1px solid #e0e0e0;">Result</th>';
+                html += '</tr></thead><tbody>';
+                
+                problemHistory.forEach(problem => {
+                    const resultColor = problem.isCorrect ? '#10b981' : '#ef4444';
+                    const resultText = problem.isCorrect ? '✅' : '❌';
+                    html += '<tr>';
+                    html += `<td style="padding: 8px; border: 1px solid #e0e0e0;">${problem.timestamp}</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #e0e0e0;">${problem.topic}</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #e0e0e0; font-size: 0.9em;">${problem.question.substring(0, 50)}...</td>`;
+                    html += `<td style="padding: 8px; border: 1px solid #e0e0e0; color: ${resultColor};">${resultText}</td>`;
+                    html += '</tr>';
+                });
+                
+                html += '</tbody></table>';
+            }
+            
+            detailsDiv.innerHTML = html;
+            detailsDiv.style.display = 'block';
+        }
+
+        function copyReport() {
+            const reportText = document.getElementById('reportText').textContent;
+            navigator.clipboard.writeText(reportText).then(() => {
+                alert('Report copied to clipboard! You can now paste it in an email or message.');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = reportText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Report copied to clipboard!');
+            });
+        }
+
+        function exportProgress() {
+            const data = {
+                date: new Date().toISOString(),
+                studentName: 'Jordan Lopez',
+                ixlLevel: 460,
+                totalAttempts: totalAttempts,
+                correctAnswers: correctCount,
+                accuracy: totalAttempts > 0 ? Math.round((correctCount / totalAttempts) * 100) : 0,
+                timeSpentMinutes: Math.floor((Date.now() - startTime) / 60000),
+                topicStats: topicStats,
+                problemHistory: problemHistory
+            };
+            
+            const jsonData = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `jordan-math-progress-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Progress saved! You can open this file later to review Jordan\'s work.');
+        }
+
+        // Initialize dashboard on load
+        window.onload = function() {
+            updateParentDashboard();
+            // Update time every minute
+            setInterval(() => {
+                const timeElapsed = Math.floor((Date.now() - startTime) / 60000);
+                document.getElementById('timeSpent').textContent = timeElapsed + 'm';
+            }, 60000);
+        };
+    </script>
+</body>
+</html>
