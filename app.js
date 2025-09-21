@@ -38,7 +38,7 @@ let userData = {
     startDate: new Date().toISOString(),
     levelHistory: [],
     currentStage: 1,
-    pathMode: true  // New: guided path mode on/off
+    pathMode: true
 };
 
 // Parent Settings
@@ -50,7 +50,56 @@ let parentSettings = {
     lastPinChange: null
 };
 
-// Learning Path Configuration - Based on IXL Grade 5-6 Standards
+// Topic Configuration
+const topics = {
+    fractions: {
+        name: "Fractions",
+        icon: "🍕",
+        generator: window.FractionsGenerator
+    },
+    operations: {
+        name: "Operations",
+        icon: "➕",
+        generator: window.OperationsGenerator
+    },
+    algebra: {
+        name: "Algebra",
+        icon: "🔤",
+        generator: window.AlgebraGenerator
+    },
+    wordProblems: {
+        name: "Word Problems",
+        icon: "📖",
+        generator: window.WordProblemsGenerator
+    },
+    geometry: {
+        name: "Geometry",
+        icon: "📐",
+        generator: window.GeometryGenerator
+    },
+    measurement: {
+        name: "Measurement",
+        icon: "📏",
+        generator: window.MeasurementGenerator
+    },
+    ratios: {
+        name: "Ratios",
+        icon: "⚖️",
+        generator: window.RatiosGenerator
+    },
+    integers: {
+        name: "Integers",
+        icon: "❄️",
+        generator: window.IntegersGenerator
+    },
+    expressions: {
+        name: "Expressions",
+        icon: "🧮",
+        generator: window.ExpressionsGenerator
+    }
+};
+
+// Learning Path Configuration
 const learningPath = [
     {
         stage: 1,
@@ -105,6 +154,115 @@ const learningPath = [
     }
 ];
 
+// Initialize App - FIXED VERSION
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('App initializing...');
+    
+    // First, show the UI immediately
+    updateStats();
+    updateLevel();
+    initializeTopics();
+    showTopicSelection();
+    
+    // Then load data from Firebase asynchronously
+    loadUserData().then(() => {
+        console.log('User data loaded');
+        updateStats();
+        updateLevel();
+        initializeTopics(); // Re-initialize with loaded data
+    }).catch(error => {
+        console.error("Error loading user data:", error);
+        // Continue with default data
+    });
+    
+    loadParentSettings().catch(error => {
+        console.error("Error loading parent settings:", error);
+        // Use default settings
+        parentSettings.pinHash = hashPIN('1234');
+        parentSettings.initialized = false;
+    });
+    
+    checkDailyReset();
+});
+
+// Load user data from Firebase
+async function loadUserData() {
+    try {
+        const doc = await db.collection('users').doc('jordan').get();
+        if (doc.exists) {
+            const data = doc.data();
+            // Merge with existing userData to preserve defaults
+            userData = { ...userData, ...data };
+        } else {
+            // Create initial document
+            await saveUserData();
+        }
+    } catch (error) {
+        console.error("Firebase error:", error);
+        // Continue with local data
+    }
+}
+
+// Load parent settings from Firebase
+async function loadParentSettings() {
+    try {
+        const doc = await db.collection('settings').doc('parent').get();
+        if (doc.exists) {
+            parentSettings = doc.data();
+        } else {
+            // Initialize with default PIN (1234)
+            parentSettings.pinHash = hashPIN('1234');
+            parentSettings.initialized = false;
+            await saveParentSettings();
+        }
+    } catch (error) {
+        console.error("Parent settings error:", error);
+        // Use defaults
+    }
+}
+
+// Save user data to Firebase
+async function saveUserData() {
+    try {
+        userData.lastActivity = new Date().toISOString();
+        await db.collection('users').doc('jordan').set(userData);
+    } catch (error) {
+        console.error("Error saving data:", error);
+        // Continue even if save fails
+    }
+}
+
+// Save parent settings to Firebase
+async function saveParentSettings() {
+    try {
+        await db.collection('settings').doc('parent').set(parentSettings);
+    } catch (error) {
+        console.error("Error saving parent settings:", error);
+    }
+}
+
+// Hash PIN for security
+function hashPIN(pin) {
+    let hash = 0;
+    for (let i = 0; i < pin.length; i++) {
+        hash = ((hash << 5) - hash) + pin.charCodeAt(i);
+        hash = hash & hash;
+    }
+    return Math.abs(hash).toString();
+}
+
+// Check daily reset
+function checkDailyReset() {
+    const today = new Date().toDateString();
+    const lastReset = userData.lastResetDate ? new Date(userData.lastResetDate).toDateString() : '';
+    
+    if (today !== lastReset) {
+        userData.completedToday = 0;
+        userData.lastResetDate = new Date().toISOString();
+        saveUserData();
+    }
+}
+
 // Get current learning path stage
 function getCurrentStage() {
     if (!userData.currentStage) {
@@ -134,7 +292,6 @@ function getRecommendedTopic() {
     
     if (!stage) return null;
     
-    // Find the first incomplete topic in current stage
     for (const topic of stage.topics) {
         const progress = userData.topicProgress[topic.key] || { completed: 0 };
         if (progress.completed < topic.required) {
@@ -148,7 +305,6 @@ function getRecommendedTopic() {
         }
     }
     
-    // If stage completed, move to next
     if (currentStage < learningPath.length) {
         userData.currentStage = currentStage + 1;
         saveUserData();
@@ -157,141 +313,11 @@ function getRecommendedTopic() {
     
     return null;
 }
-    fractions: {
-        name: "Fractions",
-        icon: "🍕",
-        generator: window.FractionsGenerator
-    },
-    operations: {
-        name: "Operations",
-        icon: "➕",
-        generator: window.OperationsGenerator
-    },
-    algebra: {
-        name: "Algebra",
-        icon: "🔤",
-        generator: window.AlgebraGenerator
-    },
-    wordProblems: {
-        name: "Word Problems",
-        icon: "📖",
-        generator: window.WordProblemsGenerator
-    },
-    geometry: {
-        name: "Geometry",
-        icon: "📐",
-        generator: window.GeometryGenerator
-    },
-    measurement: {
-        name: "Measurement",
-        icon: "📏",
-        generator: window.MeasurementGenerator
-    },
-    ratios: {
-        name: "Ratios",
-        icon: "⚖️",
-        generator: window.RatiosGenerator
-    },
-    integers: {
-        name: "Integers",
-        icon: "❄️",
-        generator: window.IntegersGenerator
-    },
-    expressions: {
-        name: "Expressions",
-        icon: "🧮",
-        generator: window.ExpressionsGenerator
-    }
-};
-
-// Initialize App
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserData();
-    loadParentSettings();
-    initializeTopics();
-    showTopicSelection();
-    checkDailyReset();
-});
-
-// Load user data from Firebase
-async function loadUserData() {
-    try {
-        const doc = await db.collection('users').doc('jordan').get();
-        if (doc.exists) {
-            userData = doc.data();
-            updateStats();
-            updateLevel();
-        } else {
-            await saveUserData();
-        }
-    } catch (error) {
-        console.error("Error loading data:", error);
-    }
-}
-
-// Load parent settings from Firebase
-async function loadParentSettings() {
-    try {
-        const doc = await db.collection('settings').doc('parent').get();
-        if (doc.exists) {
-            parentSettings = doc.data();
-        } else {
-            // Initialize with default PIN (1234)
-            parentSettings.pinHash = hashPIN('1234');
-            parentSettings.initialized = false;
-            await saveParentSettings();
-        }
-    } catch (error) {
-        console.error("Error loading parent settings:", error);
-    }
-}
-
-// Save user data to Firebase
-async function saveUserData() {
-    try {
-        userData.lastActivity = new Date().toISOString();
-        await db.collection('users').doc('jordan').set(userData);
-    } catch (error) {
-        console.error("Error saving data:", error);
-    }
-}
-
-// Save parent settings to Firebase
-async function saveParentSettings() {
-    try {
-        await db.collection('settings').doc('parent').set(parentSettings);
-    } catch (error) {
-        console.error("Error saving parent settings:", error);
-    }
-}
-
-// Hash PIN for security
-function hashPIN(pin) {
-    // Simple hash function for PIN
-    let hash = 0;
-    for (let i = 0; i < pin.length; i++) {
-        hash = ((hash << 5) - hash) + pin.charCodeAt(i);
-        hash = hash & hash;
-    }
-    return Math.abs(hash).toString();
-}
-
-// Check daily reset
-function checkDailyReset() {
-    const today = new Date().toDateString();
-    const lastReset = userData.lastResetDate ? new Date(userData.lastResetDate).toDateString() : '';
-    
-    if (today !== lastReset) {
-        userData.completedToday = 0;
-        userData.lastResetDate = new Date().toISOString();
-        saveUserData();
-    }
-}
 
 // Initialize topic cards
 function initializeTopics() {
-    const topicGrid = document.getElementById('topicGrid');
     const topicSelection = document.getElementById('topicSelection');
+    if (!topicSelection) return;
     
     // Show learning path if enabled
     if (userData.pathMode) {
@@ -381,9 +407,11 @@ function initializeTopics() {
     }
     
     // Rebuild topic grid
+    const topicGrid = document.getElementById('topicGrid');
+    if (!topicGrid) return;
+    
     topicGrid.innerHTML = '';
     const currentStage = getCurrentStage();
-    const stage = learningPath[currentStage - 1];
     const recommended = getRecommendedTopic();
     
     for (const [key, topic] of Object.entries(topics)) {
@@ -392,11 +420,10 @@ function initializeTopics() {
         
         // Check if topic is in current stage or earlier
         let stageInfo = null;
-        let isAvailable = !userData.pathMode; // All available in free mode
+        let isAvailable = !userData.pathMode;
         let isRecommended = false;
         
         if (userData.pathMode) {
-            // Find which stage this topic belongs to
             for (let i = 0; i < learningPath.length; i++) {
                 const checkStage = learningPath[i];
                 const topicInStage = checkStage.topics.find(t => t.key === key);
@@ -452,7 +479,6 @@ function initializeTopics() {
         topicGrid.appendChild(card);
     }
     
-    // Update daily progress
     updateDailyProgress();
 }
 
@@ -492,6 +518,7 @@ function startTopic(topicKey) {
         }
     } else {
         console.error(`No generator found for ${topicKey}`);
+        alert("This topic is not ready yet. Please try another topic.");
         return;
     }
     
@@ -710,13 +737,14 @@ function updateStats() {
 // Calculate and update level
 function updateLevel() {
     const level = calculateLevel();
-    const previousLevel = userData.levelHistory.length > 0 ? 
+    const previousLevel = userData.levelHistory && userData.levelHistory.length > 0 ? 
         userData.levelHistory[userData.levelHistory.length - 1].level : "Beginner";
     
     document.getElementById('levelDisplay').textContent = `Level: ${level}`;
     
     // Track level changes
     if (level !== previousLevel) {
+        if (!userData.levelHistory) userData.levelHistory = [];
         userData.levelHistory.push({
             level: level,
             date: new Date().toISOString(),
@@ -740,12 +768,10 @@ function calculateLevel() {
 
 // Track IXL-style progress
 function trackIXLProgress() {
-    // Initialize IXL history if needed
     if (!userData.ixlHistory) {
         userData.ixlHistory = [];
     }
     
-    // Add progress entry (limit to last 100 for performance)
     userData.ixlHistory.push({
         date: new Date().toISOString(),
         topic: currentTopic,
@@ -854,19 +880,18 @@ function showParentControls() {
         Math.round((userData.correctCount / userData.totalAttempts) * 100) : 0;
     
     // Calculate IXL-style progress metrics
-    const startDate = new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date());
+    const startDate = new Date(userData.startDate || new Date());
     const daysActive = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24)) + 1;
     const problemsPerDay = daysActive > 0 ? Math.round(userData.correctCount / daysActive) : 0;
     
-    // Get initial stats for comparison
-    const initialLevel = userData.levelHistory[0]?.level || "Beginner";
+    const initialLevel = userData.levelHistory && userData.levelHistory[0] ? userData.levelHistory[0].level : "Beginner";
     const currentLevel = calculateLevel();
     const levelProgress = getLevelProgress();
     
-    // Build IXL progress chart
+    // Build progress chart
     let progressChart = '';
     if (userData.ixlHistory && userData.ixlHistory.length > 0) {
-        const recentHistory = userData.ixlHistory.slice(-30); // Last 30 entries
+        const recentHistory = userData.ixlHistory.slice(-30);
         const maxProblems = Math.max(...recentHistory.map(h => h.totalCompleted));
         
         progressChart = `
@@ -893,7 +918,7 @@ function showParentControls() {
         `;
     }
     
-    // Build topic statistics HTML with IXL-style skill levels
+    // Build topic statistics
     let topicStats = '';
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
@@ -901,7 +926,6 @@ function showParentControls() {
             Math.round((progress.completed / progress.attempts) * 100) : 0;
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
         
-        // IXL-style skill level for topic
         let skillLevel = '';
         if (progress.completed === 0) skillLevel = '⚪ Not Started';
         else if (progress.completed < 5) skillLevel = '🔵 Beginning';
@@ -974,28 +998,6 @@ function showParentControls() {
             ${progressChart}
         </div>
         
-        <div style="background: #e6fffa; border-radius: 10px; padding: 15px; margin: 15px 0;">
-            <h3>📊 Overall Statistics</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
-                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
-                    <div style="font-size: 0.9em; color: #666;">Problems Completed</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${userData.correctCount}</div>
-                </div>
-                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
-                    <div style="font-size: 0.9em; color: #666;">Total Attempts</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${userData.totalAttempts}</div>
-                </div>
-                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
-                    <div style="font-size: 0.9em; color: #666;">Accuracy</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${accuracy}%</div>
-                </div>
-                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
-                    <div style="font-size: 0.9em; color: #666;">Current Streak</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${currentStreak} 🔥</div>
-                </div>
-            </div>
-        </div>
-        
         <div style="background: #fef5e7; border-radius: 10px; padding: 15px; margin: 15px 0;">
             <h3>🎯 Daily Goal</h3>
             <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
@@ -1033,19 +1035,9 @@ function showParentControls() {
                 </span>
             </div>
         </div>
-        
-        <div style="background: #f5f5f5; border-radius: 10px; padding: 15px; margin: 15px 0;">
-            <h3>📅 Activity History</h3>
-            <p style="font-size: 0.9em; color: #666;">
-                Started: ${new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date()).toLocaleDateString()}<br>
-                Last Active: ${new Date(userData.lastActivity).toLocaleString()}<br>
-                Total Days: ${daysActive} days<br>
-                Session Started: ${parentSettings.initialized ? 'Yes' : 'First Time - Please Change PIN!'}
-            </p>
-        </div>
     `;
     
-    // Mark as initialized after first successful login
+    // Mark as initialized
     if (!parentSettings.initialized) {
         parentSettings.initialized = true;
         saveParentSettings();
@@ -1084,6 +1076,7 @@ function getLevelProgress() {
     };
 }
 
+// Parent control functions
 function toggleTopicLock(topicKey) {
     if (!parentSettings.lockedTopics) {
         parentSettings.lockedTopics = [];
@@ -1097,7 +1090,7 @@ function toggleTopicLock(topicKey) {
     }
     
     saveParentSettings();
-    showParentControls(); // Refresh display
+    showParentControls();
 }
 
 function resetTopic(topicKey) {
@@ -1105,7 +1098,7 @@ function resetTopic(topicKey) {
     if (confirm(`Are you sure you want to reset progress for ${topicName}? This cannot be undone.`)) {
         userData.topicProgress[topicKey] = { completed: 0, attempts: 0, accuracy: 0 };
         saveUserData();
-        showParentControls(); // Refresh display
+        showParentControls();
         alert(`${topicName} has been reset!`);
     }
 }
@@ -1146,7 +1139,12 @@ function resetAllProgress() {
                 lastActivity: new Date().toISOString(),
                 dailyGoal: userData.dailyGoal || 20,
                 completedToday: 0,
-                lastResetDate: new Date().toISOString()
+                lastResetDate: new Date().toISOString(),
+                ixlHistory: [],
+                startDate: new Date().toISOString(),
+                levelHistory: [],
+                currentStage: 1,
+                pathMode: true
             };
             currentStreak = 0;
             saveUserData();
