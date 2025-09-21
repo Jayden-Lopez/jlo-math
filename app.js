@@ -36,9 +36,7 @@ let userData = {
     lastResetDate: null,
     ixlHistory: [],
     startDate: new Date().toISOString(),
-    levelHistory: [],
-    currentStage: 1,
-    pathMode: true
+    levelHistory: []
 };
 
 // Parent Settings
@@ -99,89 +97,12 @@ const topics = {
     }
 };
 
-// Learning Path Configuration
-const learningPath = [
-    {
-        stage: 1,
-        name: "Number Foundations",
-        description: "Master basic operations and number sense",
-        topics: [
-            { key: 'operations', required: 10, name: 'Basic Operations' },
-            { key: 'integers', required: 10, name: 'Positive & Negative Numbers' }
-        ]
-    },
-    {
-        stage: 2,
-        name: "Fractions & Decimals",
-        description: "Work with parts of numbers",
-        topics: [
-            { key: 'fractions', required: 15, name: 'Fraction Operations' }
-        ]
-    },
-    {
-        stage: 3,
-        name: "Algebraic Thinking",
-        description: "Introduction to variables and expressions",
-        topics: [
-            { key: 'expressions', required: 10, name: 'Evaluating Expressions' },
-            { key: 'algebra', required: 15, name: 'Solving Equations' }
-        ]
-    },
-    {
-        stage: 4,
-        name: "Ratios & Proportions",
-        description: "Understanding relationships between numbers",
-        topics: [
-            { key: 'ratios', required: 12, name: 'Ratios & Percentages' }
-        ]
-    },
-    {
-        stage: 5,
-        name: "Geometry & Measurement",
-        description: "Shapes, space, and units",
-        topics: [
-            { key: 'geometry', required: 12, name: 'Area, Perimeter & Volume' },
-            { key: 'measurement', required: 10, name: 'Converting Units' }
-        ]
-    },
-    {
-        stage: 6,
-        name: "Problem Solving",
-        description: "Apply all skills to word problems",
-        topics: [
-            { key: 'wordProblems', required: 20, name: 'Multi-Step Word Problems' }
-        ]
-    }
-];
-
-// Initialize App - FIXED VERSION
+// Initialize App
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('App initializing...');
-    
-    // First, show the UI immediately
-    updateStats();
-    updateLevel();
+    loadUserData();
+    loadParentSettings();
     initializeTopics();
     showTopicSelection();
-    
-    // Then load data from Firebase asynchronously
-    loadUserData().then(() => {
-        console.log('User data loaded');
-        updateStats();
-        updateLevel();
-        initializeTopics(); // Re-initialize with loaded data
-    }).catch(error => {
-        console.error("Error loading user data:", error);
-        // Continue with default data
-    });
-    
-    loadParentSettings().catch(error => {
-        console.error("Error loading parent settings:", error);
-        // Use default settings
-        parentSettings.pinHash = hashPIN('1234');
-        parentSettings.initialized = false;
-    });
-    
     checkDailyReset();
 });
 
@@ -190,16 +111,14 @@ async function loadUserData() {
     try {
         const doc = await db.collection('users').doc('jordan').get();
         if (doc.exists) {
-            const data = doc.data();
-            // Merge with existing userData to preserve defaults
-            userData = { ...userData, ...data };
+            userData = doc.data();
+            updateStats();
+            updateLevel();
         } else {
-            // Create initial document
             await saveUserData();
         }
     } catch (error) {
-        console.error("Firebase error:", error);
-        // Continue with local data
+        console.error("Error loading data:", error);
     }
 }
 
@@ -216,8 +135,7 @@ async function loadParentSettings() {
             await saveParentSettings();
         }
     } catch (error) {
-        console.error("Parent settings error:", error);
-        // Use defaults
+        console.error("Error loading parent settings:", error);
     }
 }
 
@@ -228,7 +146,6 @@ async function saveUserData() {
         await db.collection('users').doc('jordan').set(userData);
     } catch (error) {
         console.error("Error saving data:", error);
-        // Continue even if save fails
     }
 }
 
@@ -243,6 +160,7 @@ async function saveParentSettings() {
 
 // Hash PIN for security
 function hashPIN(pin) {
+    // Simple hash function for PIN
     let hash = 0;
     for (let i = 0; i < pin.length; i++) {
         hash = ((hash << 5) - hash) + pin.charCodeAt(i);
@@ -263,195 +181,20 @@ function checkDailyReset() {
     }
 }
 
-// Get current learning path stage
-function getCurrentStage() {
-    if (!userData.currentStage) {
-        userData.currentStage = 1;
-    }
-    return userData.currentStage;
-}
-
-// Check if a stage is completed
-function isStageCompleted(stageNum) {
-    const stage = learningPath[stageNum - 1];
-    if (!stage) return false;
-    
-    for (const topic of stage.topics) {
-        const progress = userData.topicProgress[topic.key] || { completed: 0 };
-        if (progress.completed < topic.required) {
-            return false;
-        }
-    }
-    return true;
-}
-
-// Get next recommended topic
-function getRecommendedTopic() {
-    const currentStage = getCurrentStage();
-    const stage = learningPath[currentStage - 1];
-    
-    if (!stage) return null;
-    
-    for (const topic of stage.topics) {
-        const progress = userData.topicProgress[topic.key] || { completed: 0 };
-        if (progress.completed < topic.required) {
-            return {
-                key: topic.key,
-                name: topic.name,
-                completed: progress.completed,
-                required: topic.required,
-                stage: stage.name
-            };
-        }
-    }
-    
-    if (currentStage < learningPath.length) {
-        userData.currentStage = currentStage + 1;
-        saveUserData();
-        return getRecommendedTopic();
-    }
-    
-    return null;
-}
-
 // Initialize topic cards
 function initializeTopics() {
-    const topicSelection = document.getElementById('topicSelection');
-    if (!topicSelection) return;
-    
-    // Show learning path if enabled
-    if (userData.pathMode) {
-        const currentStage = getCurrentStage();
-        const stage = learningPath[currentStage - 1];
-        const recommended = getRecommendedTopic();
-        
-        // Build path progress header
-        let pathProgressHTML = `
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
-                <h3>🎯 Learning Path - Stage ${currentStage} of ${learningPath.length}</h3>
-                <h2>${stage ? stage.name : 'Complete!'}</h2>
-                <p>${stage ? stage.description : 'You\'ve completed all stages!'}</p>
-                
-                <div style="background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; margin: 15px 0;">
-                    <div style="background: white; width: ${(currentStage - 1) / learningPath.length * 100}%; 
-                                height: 100%; border-radius: 5px; transition: width 0.5s;"></div>
-                </div>
-                
-                ${recommended ? `
-                    <div style="background: rgba(255,255,255,0.3); padding: 10px; border-radius: 10px; margin-top: 10px;">
-                        <strong>Next Up:</strong> ${recommended.name} 
-                        (${recommended.completed}/${recommended.required} completed)
-                    </div>
-                ` : '<div style="padding: 10px;">🏆 All stages completed! Practice any topic to strengthen skills.</div>'}
-            </div>
-        `;
-        
-        // Show stages overview
-        let stagesHTML = '<div style="margin-bottom: 20px;">';
-        learningPath.forEach((pathStage, index) => {
-            const stageNum = index + 1;
-            const isCurrentStage = stageNum === currentStage;
-            const isCompleted = stageNum < currentStage || isStageCompleted(stageNum);
-            const isLocked = stageNum > currentStage && !isStageCompleted(currentStage);
-            
-            stagesHTML += `
-                <div style="background: ${isCurrentStage ? '#f0f8ff' : isCompleted ? '#e8f5e9' : '#f5f5f5'}; 
-                            padding: 15px; border-radius: 10px; margin-bottom: 10px;
-                            border: ${isCurrentStage ? '2px solid #667eea' : '1px solid #ddd'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>Stage ${stageNum}: ${pathStage.name}</strong> 
-                            ${isCompleted ? '✅' : isCurrentStage ? '📍' : isLocked ? '🔒' : ''}
-                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                                ${pathStage.description}
-                            </div>
-                        </div>
-                        <div style="font-size: 0.9em; color: #666;">
-                            ${pathStage.topics.map(t => {
-                                const prog = userData.topicProgress[t.key] || { completed: 0 };
-                                return `${t.name}: ${prog.completed}/${t.required}`;
-                            }).join(' | ')}
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        stagesHTML += '</div>';
-        
-        // Add toggle for free practice mode
-        const modeToggle = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <button class="btn btn-primary" onclick="togglePathMode()" 
-                        style="background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);">
-                    Switch to Free Practice Mode
-                </button>
-            </div>
-        `;
-        
-        topicSelection.innerHTML = pathProgressHTML + stagesHTML + modeToggle + 
-                                   '<h3 style="text-align: center; margin: 20px 0;">Select a Topic to Practice:</h3>' +
-                                   '<div class="topic-grid" id="topicGrid"></div>';
-    } else {
-        // Free practice mode header
-        const freeModeHeader = `
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #5a67d8;">Free Practice Mode</h2>
-                <p>Choose any topic you want to practice!</p>
-                <button class="btn btn-primary" onclick="togglePathMode()">
-                    Switch to Guided Learning Path
-                </button>
-            </div>
-        `;
-        topicSelection.innerHTML = freeModeHeader + '<div class="topic-grid" id="topicGrid"></div>';
-    }
-    
-    // Rebuild topic grid
     const topicGrid = document.getElementById('topicGrid');
-    if (!topicGrid) return;
-    
     topicGrid.innerHTML = '';
-    const currentStage = getCurrentStage();
-    const recommended = getRecommendedTopic();
     
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
-        
-        // Check if topic is in current stage or earlier
-        let stageInfo = null;
-        let isAvailable = !userData.pathMode;
-        let isRecommended = false;
-        
-        if (userData.pathMode) {
-            for (let i = 0; i < learningPath.length; i++) {
-                const checkStage = learningPath[i];
-                const topicInStage = checkStage.topics.find(t => t.key === key);
-                if (topicInStage) {
-                    stageInfo = {
-                        stage: i + 1,
-                        required: topicInStage.required,
-                        stageName: checkStage.name
-                    };
-                    isAvailable = (i + 1) <= currentStage;
-                    isRecommended = recommended && recommended.key === key;
-                    break;
-                }
-            }
-        }
         
         const card = document.createElement('div');
         card.className = 'topic-card';
         
         if (isLocked) {
             card.className += ' locked';
-        } else if (isRecommended) {
-            card.className += ' recommended';
-            card.style.border = '3px solid #667eea';
-            card.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.3)';
-        } else if (!isAvailable) {
-            card.className += ' locked';
-            card.style.opacity = '0.5';
         } else if (progress.completed >= 10) {
             card.className += ' completed';
         } else if (progress.completed > 0) {
@@ -461,32 +204,22 @@ function initializeTopics() {
         const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
         
         card.innerHTML = `
-            ${isRecommended ? '<div style="position: absolute; top: -10px; right: -10px; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">NEXT</div>' : ''}
-            <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : !isAvailable ? '🔒' : ''}</div>
-            <div class="topic-progress">Completed: ${progress.completed}${stageInfo ? `/${stageInfo.required}` : ''}</div>
+            <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : ''}</div>
+            <div class="topic-progress">Completed: ${progress.completed}</div>
             <div class="topic-accuracy">Accuracy: ${accuracy}%</div>
-            ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Stage ${stageInfo.stage}</div>` : ''}
         `;
         
-        if (!isLocked && isAvailable) {
+        if (!isLocked) {
             card.onclick = () => startTopic(key);
-        } else if (isLocked) {
-            card.onclick = () => alert("This topic is locked by parent controls");
         } else {
-            card.onclick = () => alert(`Complete Stage ${currentStage} to unlock this topic`);
+            card.onclick = () => alert("This topic is locked by parent controls");
         }
         
         topicGrid.appendChild(card);
     }
     
+    // Add daily goal progress
     updateDailyProgress();
-}
-
-// Toggle between path mode and free practice
-function togglePathMode() {
-    userData.pathMode = !userData.pathMode;
-    saveUserData();
-    initializeTopics();
 }
 
 // Update daily progress display
@@ -518,7 +251,6 @@ function startTopic(topicKey) {
         }
     } else {
         console.error(`No generator found for ${topicKey}`);
-        alert("This topic is not ready yet. Please try another topic.");
         return;
     }
     
@@ -737,14 +469,13 @@ function updateStats() {
 // Calculate and update level
 function updateLevel() {
     const level = calculateLevel();
-    const previousLevel = userData.levelHistory && userData.levelHistory.length > 0 ? 
+    const previousLevel = userData.levelHistory.length > 0 ? 
         userData.levelHistory[userData.levelHistory.length - 1].level : "Beginner";
     
     document.getElementById('levelDisplay').textContent = `Level: ${level}`;
     
     // Track level changes
     if (level !== previousLevel) {
-        if (!userData.levelHistory) userData.levelHistory = [];
         userData.levelHistory.push({
             level: level,
             date: new Date().toISOString(),
@@ -768,10 +499,12 @@ function calculateLevel() {
 
 // Track IXL-style progress
 function trackIXLProgress() {
+    // Initialize IXL history if needed
     if (!userData.ixlHistory) {
         userData.ixlHistory = [];
     }
     
+    // Add progress entry (limit to last 100 for performance)
     userData.ixlHistory.push({
         date: new Date().toISOString(),
         topic: currentTopic,
@@ -805,15 +538,8 @@ function backToTopics() {
 
 // Show topic selection
 function showTopicSelection() {
-    const topicSelection = document.getElementById('topicSelection');
-    const questionContainer = document.getElementById('questionContainer');
-    
-    if (topicSelection) {
-        topicSelection.style.display = 'block';
-    }
-    if (questionContainer) {
-        questionContainer.style.display = 'none';
-    }
+    document.getElementById('topicSelection').style.display = 'block';
+    document.getElementById('questionContainer').style.display = 'none';
 }
 
 // Parent Dashboard Functions
@@ -880,18 +606,19 @@ function showParentControls() {
         Math.round((userData.correctCount / userData.totalAttempts) * 100) : 0;
     
     // Calculate IXL-style progress metrics
-    const startDate = new Date(userData.startDate || new Date());
+    const startDate = new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date());
     const daysActive = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24)) + 1;
     const problemsPerDay = daysActive > 0 ? Math.round(userData.correctCount / daysActive) : 0;
     
-    const initialLevel = userData.levelHistory && userData.levelHistory[0] ? userData.levelHistory[0].level : "Beginner";
+    // Get initial stats for comparison
+    const initialLevel = userData.levelHistory[0]?.level || "Beginner";
     const currentLevel = calculateLevel();
     const levelProgress = getLevelProgress();
     
-    // Build progress chart
+    // Build IXL progress chart
     let progressChart = '';
     if (userData.ixlHistory && userData.ixlHistory.length > 0) {
-        const recentHistory = userData.ixlHistory.slice(-30);
+        const recentHistory = userData.ixlHistory.slice(-30); // Last 30 entries
         const maxProblems = Math.max(...recentHistory.map(h => h.totalCompleted));
         
         progressChart = `
@@ -918,7 +645,7 @@ function showParentControls() {
         `;
     }
     
-    // Build topic statistics
+    // Build topic statistics HTML with IXL-style skill levels
     let topicStats = '';
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
@@ -926,6 +653,7 @@ function showParentControls() {
             Math.round((progress.completed / progress.attempts) * 100) : 0;
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
         
+        // IXL-style skill level for topic
         let skillLevel = '';
         if (progress.completed === 0) skillLevel = '⚪ Not Started';
         else if (progress.completed < 5) skillLevel = '🔵 Beginning';
@@ -998,6 +726,28 @@ function showParentControls() {
             ${progressChart}
         </div>
         
+        <div style="background: #e6fffa; border-radius: 10px; padding: 15px; margin: 15px 0;">
+            <h3>📊 Overall Statistics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; color: #666;">Problems Completed</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${userData.correctCount}</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; color: #666;">Total Attempts</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${userData.totalAttempts}</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; color: #666;">Accuracy</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${accuracy}%</div>
+                </div>
+                <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; color: #666;">Current Streak</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${currentStreak} 🔥</div>
+                </div>
+            </div>
+        </div>
+        
         <div style="background: #fef5e7; border-radius: 10px; padding: 15px; margin: 15px 0;">
             <h3>🎯 Daily Goal</h3>
             <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
@@ -1035,9 +785,19 @@ function showParentControls() {
                 </span>
             </div>
         </div>
+        
+        <div style="background: #f5f5f5; border-radius: 10px; padding: 15px; margin: 15px 0;">
+            <h3>📅 Activity History</h3>
+            <p style="font-size: 0.9em; color: #666;">
+                Started: ${new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date()).toLocaleDateString()}<br>
+                Last Active: ${new Date(userData.lastActivity).toLocaleString()}<br>
+                Total Days: ${daysActive} days<br>
+                Session Started: ${parentSettings.initialized ? 'Yes' : 'First Time - Please Change PIN!'}
+            </p>
+        </div>
     `;
     
-    // Mark as initialized
+    // Mark as initialized after first successful login
     if (!parentSettings.initialized) {
         parentSettings.initialized = true;
         saveParentSettings();
@@ -1076,7 +836,6 @@ function getLevelProgress() {
     };
 }
 
-// Parent control functions
 function toggleTopicLock(topicKey) {
     if (!parentSettings.lockedTopics) {
         parentSettings.lockedTopics = [];
@@ -1090,7 +849,7 @@ function toggleTopicLock(topicKey) {
     }
     
     saveParentSettings();
-    showParentControls();
+    showParentControls(); // Refresh display
 }
 
 function resetTopic(topicKey) {
@@ -1098,7 +857,7 @@ function resetTopic(topicKey) {
     if (confirm(`Are you sure you want to reset progress for ${topicName}? This cannot be undone.`)) {
         userData.topicProgress[topicKey] = { completed: 0, attempts: 0, accuracy: 0 };
         saveUserData();
-        showParentControls();
+        showParentControls(); // Refresh display
         alert(`${topicName} has been reset!`);
     }
 }
@@ -1139,12 +898,7 @@ function resetAllProgress() {
                 lastActivity: new Date().toISOString(),
                 dailyGoal: userData.dailyGoal || 20,
                 completedToday: 0,
-                lastResetDate: new Date().toISOString(),
-                ixlHistory: [],
-                startDate: new Date().toISOString(),
-                levelHistory: [],
-                currentStage: 1,
-                pathMode: true
+                lastResetDate: new Date().toISOString()
             };
             currentStreak = 0;
             saveUserData();
