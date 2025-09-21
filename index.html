@@ -1,16 +1,4 @@
-function checkMultipleChoice(topic, selectedIndex) {
-            const question = window.currentQuestion;
-            const buttons = document.querySelectorAll(`#${topic}-answers .answer-btn`);
-            const feedback = document.getElementById(`${topic}-feedback`);
-            
-            totalAttempts++;
-            topicStats[topic].attempted++;
-            
-            const isCorrect = selectedIndex === question.correct;
-            
-            // Track problem in history
-            problemHistory.push({
-                topic: topic<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -724,627 +712,394 @@ function checkMultipleChoice(topic, selectedIndex) {
         
         const userId = 'jordan'; // Simple user ID for Jordan
         
-        // Question banks for each topic
+        // Question banks for each topic - Using static questions for now
         const questions = {
-            fractions: {
-                generate: function() {
-                    const types = ['add', 'subtract', 'multiply', 'word'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'add') {
-                        const d1 = [2, 3, 4, 5, 6, 8][Math.floor(Math.random() * 6)];
-                        const d2 = [2, 3, 4, 5, 6, 8][Math.floor(Math.random() * 6)];
-                        const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
-                        const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
-                        
-                        // Find common denominator
-                        const lcm = (d1 * d2) / gcd(d1, d2);
-                        const answer = (n1 * lcm / d1 + n2 * lcm / d2);
-                        const answerSimplified = simplifyFraction(answer, lcm);
-                        
-                        return {
-                            question: `What is ${n1}/${d1} + ${n2}/${d2}?`,
-                            options: generateFractionOptions(answerSimplified),
-                            correct: 0,
-                            hint: `Make the denominators the same. ${d1} and ${d2} both go into ${lcm}`,
-                            explanation: `Think of ${lcm} pieces. ${n1}/${d1} = ${n1 * lcm / d1}/${lcm} and ${n2}/${d2} = ${n2 * lcm / d2}/${lcm}. Together that's ${answer}/${lcm} = ${answerSimplified}`
-                        };
-                    } else if (type === 'subtract') {
-                        const d1 = [2, 3, 4, 5, 6, 8][Math.floor(Math.random() * 6)];
-                        const d2 = [2, 3, 4, 5, 6, 8][Math.floor(Math.random() * 6)];
-                        let n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
-                        let n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
-                        
-                        // Ensure positive result
-                        const lcm = (d1 * d2) / gcd(d1, d2);
-                        if (n1/d1 < n2/d2) {
-                            [n1, n2, d1, d2] = [n2, n1, d2, d1];
-                        }
-                        
-                        const answer = (n1 * lcm / d1 - n2 * lcm / d2);
-                        const answerSimplified = simplifyFraction(answer, lcm);
-                        
-                        return {
-                            question: `What is ${n1}/${d1} - ${n2}/${d2}?`,
-                            options: generateFractionOptions(answerSimplified),
-                            correct: 0,
-                            hint: `First make denominators the same. Find a number both ${d1} and ${d2} go into`,
-                            explanation: `Convert to ${lcm} pieces: ${n1}/${d1} = ${n1 * lcm / d1}/${lcm} and ${n2}/${d2} = ${n2 * lcm / d2}/${lcm}. Subtract: ${n1 * lcm / d1}/${lcm} - ${n2 * lcm / d2}/${lcm} = ${answerSimplified}`
-                        };
-                    } else if (type === 'multiply') {
-                        const n1 = Math.floor(Math.random() * 4) + 1;
-                        const d1 = Math.floor(Math.random() * 6) + 2;
-                        const wholeNum = Math.floor(Math.random() * 5) + 2;
-                        
-                        const answerNum = n1 * wholeNum;
-                        const answerSimplified = simplifyFraction(answerNum, d1);
-                        
-                        return {
-                            question: `What is ${n1}/${d1} × ${wholeNum}?`,
-                            options: generateFractionOptions(answerSimplified),
-                            correct: 0,
-                            hint: `Multiply the top number by ${wholeNum}, keep the bottom number the same`,
-                            explanation: `${n1} × ${wholeNum} = ${answerNum}, so the answer is ${answerNum}/${d1} = ${answerSimplified}`
-                        };
-                    } else {
-                        const total = (Math.floor(Math.random() * 4) + 2) * 12;
-                        const fractionUsed = [1, 2, 3][Math.floor(Math.random() * 3)];
-                        const denominator = [3, 4, 6][Math.floor(Math.random() * 3)];
-                        const amountUsed = (total * fractionUsed) / denominator;
-                        const remaining = total - amountUsed;
-                        
-                        return {
-                            question: `A recipe needs ${total} cookies. You've made ${fractionUsed}/${denominator} of them. How many cookies are left to make?`,
-                            answer: remaining,
-                            hint: `First find how many cookies you made: ${fractionUsed}/${denominator} of ${total}`,
-                            explanation: `${fractionUsed}/${denominator} of ${total} = ${total} × ${fractionUsed} ÷ ${denominator} = ${amountUsed} cookies made. Still need: ${total} - ${amountUsed} = ${remaining} cookies`
-                        };
-                    }
+            fractions: [
+                {
+                    question: "What is 3/4 - 1/2?",
+                    options: ["1/4", "1/2", "2/4", "3/8"],
+                    correct: 0,
+                    hint: "First, make the denominators the same. 1/2 = 2/4",
+                    explanation: "3/4 - 2/4 = 1/4"
+                },
+                {
+                    question: "Sarah ate 2/5 of a pizza. Her brother ate 1/5. How much did they eat together?",
+                    options: ["3/5", "2/10", "3/10", "1/5"],
+                    correct: 0,
+                    hint: "When adding fractions with the same denominator, add the numerators",
+                    explanation: "2/5 + 1/5 = 3/5"
+                },
+                {
+                    question: "What is 1/3 + 1/6?",
+                    options: ["1/2", "2/9", "1/4", "2/6"],
+                    correct: 0,
+                    hint: "Convert 1/3 to 2/6, then add",
+                    explanation: "2/6 + 1/6 = 3/6 = 1/2"
+                },
+                {
+                    question: "A recipe needs 3/4 cup of flour. You want to make half the recipe. How much flour do you need?",
+                    options: ["3/8 cup", "1/2 cup", "3/2 cup", "1/4 cup"],
+                    correct: 0,
+                    hint: "Half of 3/4 means 1/2 × 3/4",
+                    explanation: "1/2 × 3/4 = 3/8"
+                },
+                {
+                    question: "Which fraction is larger: 3/5 or 2/3?",
+                    options: ["3/5", "2/3", "They're equal", "Can't tell"],
+                    correct: 1,
+                    hint: "Convert to the same denominator: 9/15 and 10/15",
+                    explanation: "3/5 = 9/15, 2/3 = 10/15, so 2/3 is larger"
                 }
-            },
-            operations: {
-                generate: function() {
-                    const types = ['multiply', 'divide', 'add', 'subtract'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'multiply') {
-                        const num1 = Math.floor(Math.random() * 50) + 10;
-                        const num2 = Math.floor(Math.random() * 9) + 2;
-                        const answer = num1 * num2;
-                        
-                        return {
-                            question: `What is ${num1} × ${num2}?`,
-                            answer: answer,
-                            hint: `Break it down: ${num1} × ${num2} = (${Math.floor(num1/10)*10} × ${num2}) + (${num1%10} × ${num2})`,
-                            explanation: `${Math.floor(num1/10)*10} × ${num2} = ${Math.floor(num1/10)*10 * num2}, and ${num1%10} × ${num2} = ${(num1%10) * num2}. Add them: ${answer}`
-                        };
-                    } else if (type === 'divide') {
-                        const divisor = Math.floor(Math.random() * 8) + 2;
-                        const quotient = Math.floor(Math.random() * 50) + 10;
-                        const dividend = divisor * quotient;
-                        
-                        return {
-                            question: `Calculate: ${dividend} ÷ ${divisor}`,
-                            answer: quotient,
-                            hint: `Think: how many ${divisor}s fit into ${dividend}?`,
-                            explanation: `${divisor} × ${quotient} = ${dividend}, so ${dividend} ÷ ${divisor} = ${quotient}`
-                        };
-                    } else if (type === 'add') {
-                        const num1 = Math.floor(Math.random() * 500) + 100;
-                        const num2 = Math.floor(Math.random() * 500) + 100;
-                        const answer = num1 + num2;
-                        
-                        return {
-                            question: `What is ${num1} + ${num2}?`,
-                            answer: answer,
-                            hint: `Add the hundreds, then tens, then ones`,
-                            explanation: `${Math.floor(num1/100)*100} + ${Math.floor(num2/100)*100} = ${Math.floor(num1/100)*100 + Math.floor(num2/100)*100}, plus the rest gives ${answer}`
-                        };
-                    } else {
-                        const num1 = Math.floor(Math.random() * 800) + 200;
-                        const num2 = Math.floor(Math.random() * (num1 - 100)) + 50;
-                        const answer = num1 - num2;
-                        
-                        return {
-                            question: `Calculate: ${num1} - ${num2}`,
-                            answer: answer,
-                            hint: `You might need to borrow when subtracting`,
-                            explanation: `${num1} - ${num2} = ${answer}. Check: ${answer} + ${num2} = ${num1} ✓`
-                        };
-                    }
+            ],
+            operations: [
+                {
+                    question: "Calculate: 234 ÷ 6",
+                    answer: 39,
+                    hint: "How many times does 6 go into 234?",
+                    explanation: "234 ÷ 6 = 39"
+                },
+                {
+                    question: "What is 47 × 8?",
+                    answer: 376,
+                    hint: "Break it down: (40 × 8) + (7 × 8)",
+                    explanation: "320 + 56 = 376"
+                },
+                {
+                    question: "Calculate: 891 ÷ 9",
+                    answer: 99,
+                    hint: "9 × 100 = 900, so the answer is close to 100",
+                    explanation: "891 ÷ 9 = 99"
+                },
+                {
+                    question: "What is 156 + 287?",
+                    answer: 443,
+                    hint: "Add the ones, then tens, then hundreds",
+                    explanation: "6+7=13, 50+80=130, 100+200=300, Total: 443"
+                },
+                {
+                    question: "Calculate: 1,234 - 567",
+                    answer: 667,
+                    hint: "You might need to borrow when subtracting",
+                    explanation: "1,234 - 567 = 667"
                 }
-            },
-            algebra: {
-                generate: function() {
-                    const types = ['solve', 'pattern', 'substitute'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'solve') {
-                        const coefficient = Math.floor(Math.random() * 5) + 2;
-                        const answer = Math.floor(Math.random() * 10) + 2;
-                        const result = coefficient * answer;
-                        
-                        return {
-                            question: `If ${coefficient}x = ${result}, what is x?`,
-                            options: generateNumberOptions(answer),
-                            correct: 0,
-                            hint: `Divide both sides by ${coefficient}`,
-                            explanation: `To get x alone, divide ${result} by ${coefficient}: x = ${result} ÷ ${coefficient} = ${answer}`
-                        };
-                    } else if (type === 'pattern') {
-                        const start = Math.floor(Math.random() * 10) + 2;
-                        const increment = Math.floor(Math.random() * 5) + 2;
-                        const seq = [start, start + increment, start + 2*increment, start + 3*increment];
-                        const next = start + 4*increment;
-                        
-                        return {
-                            question: `What comes next in the pattern: ${seq.join(', ')}, ...?`,
-                            options: generateNumberOptions(next),
-                            correct: 0,
-                            hint: `Find what's being added each time`,
-                            explanation: `Each number increases by ${increment}. So ${seq[3]} + ${increment} = ${next}`
-                        };
-                    } else {
-                        const x = Math.floor(Math.random() * 8) + 2;
-                        const multiplier = Math.floor(Math.random() * 4) + 2;
-                        const adder = Math.floor(Math.random() * 10) + 1;
-                        const answer = multiplier * x + adder;
-                        
-                        return {
-                            question: `If x = ${x}, what is ${multiplier}x + ${adder}?`,
-                            options: generateNumberOptions(answer),
-                            correct: 0,
-                            hint: `Replace x with ${x}, then calculate`,
-                            explanation: `Put ${x} where x is: ${multiplier}(${x}) + ${adder} = ${multiplier * x} + ${adder} = ${answer}`
-                        };
-                    }
+            ],
+            algebra: [
+                {
+                    question: "If 3x = 15, what is x?",
+                    options: ["3", "5", "12", "45"],
+                    correct: 1,
+                    hint: "Divide both sides by 3",
+                    explanation: "x = 15 ÷ 3 = 5"
+                },
+                {
+                    question: "Sarah has x apples. She buys 4 more. Now she has 11. How many did she start with?",
+                    options: ["7", "15", "4", "11"],
+                    correct: 0,
+                    hint: "Set up the equation: x + 4 = 11",
+                    explanation: "x + 4 = 11, so x = 7"
+                },
+                {
+                    question: "What is 2y if y = 8?",
+                    options: ["10", "16", "6", "4"],
+                    correct: 1,
+                    hint: "Multiply y by 2",
+                    explanation: "2 × 8 = 16"
+                },
+                {
+                    question: "If n + 12 = 20, what is n?",
+                    options: ["8", "32", "12", "20"],
+                    correct: 0,
+                    hint: "Subtract 12 from both sides",
+                    explanation: "n = 20 - 12 = 8"
+                },
+                {
+                    question: "The pattern is: 2, 5, 8, 11, ... What comes next?",
+                    options: ["13", "14", "15", "12"],
+                    correct: 1,
+                    hint: "Each number increases by 3",
+                    explanation: "11 + 3 = 14"
                 }
-            },
-            'word-problems': {
-                generate: function() {
-                    const types = ['speed', 'proportion', 'percentage', 'time'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'speed') {
-                        const speed = Math.floor(Math.random() * 30) * 5 + 30;
-                        const time = Math.floor(Math.random() * 4) + 2;
-                        const distance = speed * time;
-                        
-                        return {
-                            question: `A car travels ${speed} miles per hour. How far does it go in ${time} hours?`,
-                            answer: distance,
-                            hint: `Distance = Speed × Time`,
-                            explanation: `Multiply: ${speed} miles/hour × ${time} hours = ${distance} miles`,
-                            steps: [
-                                `Identify: Speed = ${speed} mph, Time = ${time} hours`,
-                                `Formula: Distance = Speed × Time`,
-                                `Calculate: ${speed} × ${time} = ${distance}`,
-                                `Answer: ${distance} miles`
-                            ]
-                        };
-                    } else if (type === 'proportion') {
-                        const perItem = Math.floor(Math.random() * 15) + 5;
-                        const days = Math.floor(Math.random() * 12) + 3;
-                        const total = perItem * days;
-                        
-                        return {
-                            question: `Jordan reads ${perItem} pages every day. How many pages will he read in ${days} days?`,
-                            answer: total,
-                            hint: `Multiply pages per day by number of days`,
-                            explanation: `${perItem} pages/day × ${days} days = ${total} pages`,
-                            steps: [
-                                `Daily reading: ${perItem} pages`,
-                                `Number of days: ${days}`,
-                                `Total: ${perItem} × ${days} = ${total} pages`
-                            ]
-                        };
-                    } else if (type === 'percentage') {
-                        const whole = Math.floor(Math.random() * 20) * 10 + 40;
-                        const percentages = [10, 20, 25, 50];
-                        const percent = percentages[Math.floor(Math.random() * percentages.length)];
-                        const part = (whole * percent) / 100;
-                        const remaining = whole - part;
-                        
-                        return {
-                            question: `A store has ${whole} items. They sold ${percent}% of them. How many items are left?`,
-                            answer: remaining,
-                            hint: `First find ${percent}% of ${whole}, then subtract`,
-                            explanation: `${percent}% of ${whole} = ${part}. Items left: ${whole} - ${part} = ${remaining}`,
-                            steps: [
-                                `Total items: ${whole}`,
-                                `Sold: ${percent}% of ${whole} = ${part}`,
-                                `Remaining: ${whole} - ${part} = ${remaining}`
-                            ]
-                        };
-                    } else {
-                        const hours = Math.floor(Math.random() * 3) + 1;
-                        const minutes = Math.floor(Math.random() * 4) * 15;
-                        const totalMinutes = hours * 60 + minutes;
-                        
-                        return {
-                            question: `A movie is ${hours} hour${hours > 1 ? 's' : ''} and ${minutes} minutes long. How many minutes is that in total?`,
-                            answer: totalMinutes,
-                            hint: `Convert hours to minutes first (1 hour = 60 minutes)`,
-                            explanation: `${hours} hour${hours > 1 ? 's' : ''} = ${hours * 60} minutes. Add ${minutes} minutes = ${totalMinutes} minutes total`,
-                            steps: [
-                                `Convert hours: ${hours} × 60 = ${hours * 60} minutes`,
-                                `Add remaining minutes: ${hours * 60} + ${minutes}`,
-                                `Total: ${totalMinutes} minutes`
-                            ]
-                        };
-                    }
+            ],
+            'word-problems': [
+                {
+                    question: "A car travels 60 miles per hour. How far does it go in 3 hours?",
+                    answer: 180,
+                    hint: "Distance = Speed × Time",
+                    explanation: "60 × 3 = 180 miles",
+                    steps: [
+                        "Identify what we know: Speed = 60 mph, Time = 3 hours",
+                        "Use the formula: Distance = Speed × Time",
+                        "Calculate: 60 × 3 = 180",
+                        "Answer: 180 miles"
+                    ]
+                },
+                {
+                    question: "Tom has 48 marbles. He gives 1/4 to his friend. How many does he have left?",
+                    answer: 36,
+                    hint: "First find 1/4 of 48, then subtract",
+                    explanation: "1/4 of 48 = 12, so 48 - 12 = 36",
+                    steps: [
+                        "Find 1/4 of 48: 48 ÷ 4 = 12",
+                        "Tom gives away 12 marbles",
+                        "Subtract: 48 - 12 = 36",
+                        "Tom has 36 marbles left"
+                    ]
+                },
+                {
+                    question: "A store sells pencils for $2 each. If you buy 5 or more, they cost $1.50 each. How much do 7 pencils cost?",
+                    answer: 10.50,
+                    hint: "Since you're buying 7, use the discount price",
+                    explanation: "7 × $1.50 = $10.50",
+                    steps: [
+                        "Check the quantity: 7 pencils (more than 5)",
+                        "Use discount price: $1.50 each",
+                        "Calculate: 7 × $1.50 = $10.50",
+                        "Total cost: $10.50"
+                    ]
+                },
+                {
+                    question: "Lisa reads 15 pages per day. How many pages will she read in 2 weeks?",
+                    answer: 210,
+                    hint: "2 weeks = 14 days",
+                    explanation: "15 × 14 = 210 pages",
+                    steps: [
+                        "Convert weeks to days: 2 weeks = 14 days",
+                        "Pages per day: 15",
+                        "Total pages: 15 × 14 = 210",
+                        "Answer: 210 pages"
+                    ]
+                },
+                {
+                    question: "A recipe for 4 people needs 2 cups of rice. How much rice is needed for 10 people?",
+                    answer: 5,
+                    hint: "Find the ratio: 10 ÷ 4 = 2.5",
+                    explanation: "2 cups × 2.5 = 5 cups",
+                    steps: [
+                        "Find how many times more people: 10 ÷ 4 = 2.5",
+                        "Multiply rice by same amount: 2 × 2.5 = 5",
+                        "Answer: 5 cups of rice"
+                    ]
                 }
-            },
-            geometry: {
-                generate: function() {
-                    const types = ['volume', 'area', 'perimeter', 'angles'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'volume') {
-                        const length = Math.floor(Math.random() * 5) + 2;
-                        const width = Math.floor(Math.random() * 5) + 2;
-                        const height = Math.floor(Math.random() * 5) + 2;
-                        const volume = length * width * height;
-                        
-                        return {
-                            question: `A box has length ${length}, width ${width}, and height ${height}. What is its volume?`,
-                            answer: volume,
-                            hint: `Volume = length × width × height`,
-                            explanation: `Multiply all three: ${length} × ${width} × ${height} = ${volume} cubic units`
-                        };
-                    } else if (type === 'area') {
-                        const length = Math.floor(Math.random() * 10) + 5;
-                        const width = Math.floor(Math.random() * 10) + 3;
-                        const area = length * width;
-                        
-                        return {
-                            question: `A rectangle has length ${length} and width ${width}. What is its area?`,
-                            answer: area,
-                            hint: `Area = length × width`,
-                            explanation: `${length} × ${width} = ${area} square units`
-                        };
-                    } else if (type === 'perimeter') {
-                        const side = Math.floor(Math.random() * 8) + 3;
-                        const perimeter = side * 4;
-                        
-                        return {
-                            question: `A square has sides of length ${side}. What is its perimeter?`,
-                            answer: perimeter,
-                            hint: `A square has 4 equal sides`,
-                            explanation: `Add all 4 sides: ${side} + ${side} + ${side} + ${side} = ${perimeter} units`
-                        };
-                    } else {
-                        const angle1 = Math.floor(Math.random() * 40) + 30;
-                        const angle2 = Math.floor(Math.random() * 40) + 40;
-                        const angle3 = 180 - angle1 - angle2;
-                        
-                        return {
-                            question: `A triangle has angles of ${angle1}° and ${angle2}°. What is the third angle?`,
-                            answer: angle3,
-                            hint: `Triangle angles add up to 180°`,
-                            explanation: `180° - ${angle1}° - ${angle2}° = ${angle3}°`
-                        };
-                    }
+            ],
+            geometry: [
+                {
+                    question: "A rectangular prism has length 4, width 3, and height 5. What is its volume?",
+                    answer: 60,
+                    hint: "Volume = length × width × height",
+                    explanation: "4 × 3 × 5 = 60 cubic units"
+                },
+                {
+                    question: "How many unit cubes fit in a box that is 2 × 3 × 4 units?",
+                    answer: 24,
+                    hint: "Multiply all three dimensions",
+                    explanation: "2 × 3 × 4 = 24 unit cubes"
+                },
+                {
+                    question: "A square has a perimeter of 20. What is the length of one side?",
+                    answer: 5,
+                    hint: "A square has 4 equal sides",
+                    explanation: "20 ÷ 4 = 5 units"
+                },
+                {
+                    question: "A triangle has angles of 60°, 70°, and ?°. What is the missing angle?",
+                    answer: 50,
+                    hint: "Triangle angles add up to 180°",
+                    explanation: "180 - 60 - 70 = 50°"
+                },
+                {
+                    question: "A rectangle has length 8 and width 5. What is its area?",
+                    answer: 40,
+                    hint: "Area = length × width",
+                    explanation: "8 × 5 = 40 square units"
                 }
-            },
-            measurement: {
-                generate: function() {
-                    const types = ['time', 'length', 'convert'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'time') {
-                        const hours = Math.floor(Math.random() * 12) + 1;
-                        const minutes = Math.floor(Math.random() * 4) * 15;
-                        const addHours = Math.floor(Math.random() * 3) + 1;
-                        const addMinutes = [15, 30, 45][Math.floor(Math.random() * 3)];
-                        
-                        let endHour = hours + addHours;
-                        let endMinute = minutes + addMinutes;
-                        if (endMinute >= 60) {
-                            endHour += 1;
-                            endMinute -= 60;
-                        }
-                        if (endHour > 12) endHour -= 12;
-                        
-                        const startTime = `${hours}:${minutes.toString().padStart(2, '0')}`;
-                        const endTime = `${endHour}:${endMinute.toString().padStart(2, '0')}`;
-                        
-                        return {
-                            question: `If it's ${startTime}, what time will it be in ${addHours} hour${addHours > 1 ? 's' : ''} and ${addMinutes} minutes?`,
-                            options: generateTimeOptions(endTime),
-                            correct: 0,
-                            hint: `Add the hours first, then add the minutes`,
-                            explanation: `${startTime} + ${addHours} hour${addHours > 1 ? 's' : ''} = ${hours + addHours}:${minutes.toString().padStart(2, '0')}, then add ${addMinutes} minutes = ${endTime}`
-                        };
-                    } else if (type === 'length') {
-                        const feet = Math.floor(Math.random() * 8) + 2;
-                        const inches = feet * 12;
-                        
-                        return {
-                            question: `How many inches are in ${feet} feet?`,
-                            options: generateNumberOptions(inches),
-                            correct: 0,
-                            hint: `1 foot = 12 inches`,
-                            explanation: `${feet} feet × 12 inches/foot = ${inches} inches`
-                        };
-                    } else {
-                        const yards = Math.floor(Math.random() * 3) + 2;
-                        const feet = yards * 3;
-                        
-                        return {
-                            question: `Convert ${yards} yards to feet`,
-                            options: generateNumberOptions(feet),
-                            correct: 0,
-                            hint: `1 yard = 3 feet`,
-                            explanation: `${yards} yards × 3 feet/yard = ${feet} feet`
-                        };
-                    }
+            ],
+            measurement: [
+                {
+                    question: "What time will it be 2 hours and 30 minutes after 10:45?",
+                    options: ["1:15", "12:15", "1:30", "12:45"],
+                    correct: 0,
+                    hint: "Add 2 hours first, then add 30 minutes",
+                    explanation: "10:45 + 2:30 = 1:15"
+                },
+                {
+                    question: "How many inches are in 3 feet?",
+                    options: ["36", "30", "12", "24"],
+                    correct: 0,
+                    hint: "1 foot = 12 inches",
+                    explanation: "3 × 12 = 36 inches"
+                },
+                {
+                    question: "Convert 5 feet 4 inches to inches only",
+                    options: ["54", "64", "60", "74"],
+                    correct: 1,
+                    hint: "Convert feet to inches first, then add",
+                    explanation: "(5 × 12) + 4 = 60 + 4 = 64 inches"
+                },
+                {
+                    question: "If it's 3:20 PM now, what time was it 45 minutes ago?",
+                    options: ["2:35 PM", "2:45 PM", "3:05 PM", "2:25 PM"],
+                    correct: 0,
+                    hint: "Subtract 45 minutes from 3:20",
+                    explanation: "3:20 - 0:45 = 2:35"
+                },
+                {
+                    question: "Which is longer: 2 yards or 70 inches?",
+                    options: ["2 yards", "70 inches", "They're equal", "Can't tell"],
+                    correct: 0,
+                    hint: "1 yard = 36 inches",
+                    explanation: "2 yards = 72 inches, which is more than 70 inches"
                 }
-            },
-            ratios: {
-                generate: function() {
-                    const types = ['basic', 'recipe', 'speed', 'scale'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'basic') {
-                        const ratio1 = Math.floor(Math.random() * 4) + 2;
-                        const ratio2 = Math.floor(Math.random() * 4) + 2;
-                        const multiplier = Math.floor(Math.random() * 3) + 2;
-                        const given = ratio1 * multiplier;
-                        const answer = ratio2 * multiplier;
-                        
-                        return {
-                            question: `The ratio of red to blue marbles is ${ratio1}:${ratio2}. If there are ${given} red marbles, how many blue marbles are there?`,
-                            answer: answer,
-                            hint: `${given} red is ${multiplier} times ${ratio1}`,
-                            explanation: `${given} ÷ ${ratio1} = ${multiplier} groups. Each group has ${ratio2} blue, so ${multiplier} × ${ratio2} = ${answer} blue marbles`,
-                            steps: [
-                                `Ratio: ${ratio1} red : ${ratio2} blue`,
-                                `Groups: ${given} ÷ ${ratio1} = ${multiplier}`,
-                                `Blue marbles: ${multiplier} × ${ratio2} = ${answer}`
-                            ]
-                        };
-                    } else if (type === 'recipe') {
-                        const flour = Math.floor(Math.random() * 3) + 2;
-                        const sugar = Math.floor(Math.random() * 3) + 3;
-                        const multiplier = Math.floor(Math.random() * 3) + 2;
-                        const newFlour = flour * multiplier;
-                        const newSugar = sugar * multiplier;
-                        
-                        return {
-                            question: `A recipe uses ${flour} cups flour for every ${sugar} cups sugar. If you use ${newFlour} cups flour, how many cups of sugar do you need?`,
-                            answer: newSugar,
-                            hint: `${newFlour} is ${multiplier} times ${flour}`,
-                            explanation: `Flour increased ${multiplier} times (${flour} to ${newFlour}), so sugar must too: ${sugar} × ${multiplier} = ${newSugar}`,
-                            steps: [
-                                `Original: ${flour} flour : ${sugar} sugar`,
-                                `Scale: ${newFlour} ÷ ${flour} = ${multiplier}`,
-                                `Sugar needed: ${sugar} × ${multiplier} = ${newSugar}`
-                            ]
-                        };
-                    } else if (type === 'speed') {
-                        const distance = Math.floor(Math.random() * 50) * 10 + 100;
-                        const time = Math.floor(Math.random() * 4) + 2;
-                        const speed = distance / time;
-                        
-                        return {
-                            question: `A train travels ${distance} miles in ${time} hours. What is its speed in miles per hour?`,
-                            answer: speed,
-                            hint: `Speed = distance ÷ time`,
-                            explanation: `${distance} miles ÷ ${time} hours = ${speed} mph`,
-                            steps: [
-                                `Distance: ${distance} miles`,
-                                `Time: ${time} hours`,
-                                `Speed: ${distance} ÷ ${time} = ${speed} mph`
-                            ]
-                        };
-                    } else {
-                        const items = Math.floor(Math.random() * 4) + 2;
-                        const price = (Math.floor(Math.random() * 10) + 5) * items;
-                        const wantItems = Math.floor(Math.random() * 5) + items + 1;
-                        const unitPrice = price / items;
-                        const totalCost = unitPrice * wantItems;
-                        
-                        return {
-                            question: `If ${items} pencils cost ${price}, how much do ${wantItems} pencils cost?`,
-                            answer: totalCost,
-                            hint: `Find the cost of 1 pencil first`,
-                            explanation: `1 pencil costs ${price}÷${items} = ${unitPrice}. So ${wantItems} pencils cost ${unitPrice} × ${wantItems} = ${totalCost}`,
-                            steps: [
-                                `Cost of ${items} pencils: ${price}`,
-                                `Cost of 1 pencil: ${price} ÷ ${items} = ${unitPrice}`,
-                                `Cost of ${wantItems} pencils: ${unitPrice} × ${wantItems} = ${totalCost}`
-                            ]
-                        };
-                    }
+            ],
+            ratios: [
+                {
+                    question: "If there are 3 red marbles for every 2 blue marbles, and you have 6 red marbles, how many blue marbles do you have?",
+                    answer: 4,
+                    hint: "If 3 red goes with 2 blue, then 6 red (which is double) goes with...",
+                    explanation: "Think of it like a recipe! 3 red always comes with 2 blue. Since 6 is double 3, we need double the blue too! 2 × 2 = 4",
+                    steps: [
+                        "The pattern: 3 red always comes with 2 blue",
+                        "You have 6 red (that's 3 × 2)",
+                        "So you need 2 blue × 2 = 4 blue",
+                        "Answer: 4 blue marbles"
+                    ]
+                },
+                {
+                    question: "A recipe uses 2 cups of flour for every 3 cups of sugar. If you use 8 cups of flour, how many cups of sugar do you need?",
+                    answer: 12,
+                    hint: "8 cups is 4 times bigger than 2 cups",
+                    explanation: "If flour gets 4 times bigger (2→8), sugar gets 4 times bigger too (3→12)!",
+                    steps: [
+                        "Original: 2 flour with 3 sugar",
+                        "You're using: 8 flour",
+                        "How many 2's fit in 8? Answer: 4",
+                        "So multiply sugar by 4: 3 × 4 = 12 cups"
+                    ]
+                },
+                {
+                    question: "If a car travels 150 miles in 3 hours, what is its speed in miles per hour?",
+                    answer: 50,
+                    hint: "How many miles in 1 hour?",
+                    explanation: "Split 150 miles into 3 equal parts: 150 ÷ 3 = 50 miles each hour",
+                    steps: [
+                        "Total distance: 150 miles",
+                        "Total time: 3 hours",
+                        "Miles in 1 hour: 150 ÷ 3 = 50",
+                        "Speed: 50 miles per hour"
+                    ]
+                },
+                {
+                    question: "The ratio of boys to girls in a class is 4:5. If there are 20 boys, how many girls are there?",
+                    answer: 25,
+                    hint: "How many groups of 4 boys do you have?",
+                    explanation: "For every 4 boys, there are 5 girls. You have 5 groups of 4 boys (20÷4=5), so you need 5 groups of 5 girls (5×5=25)",
+                    steps: [
+                        "Pattern: 4 boys with 5 girls",
+                        "You have 20 boys",
+                        "20 ÷ 4 = 5 groups",
+                        "5 groups × 5 girls = 25 girls"
+                    ]
+                },
+                {
+                    question: "If 3 pencils cost $2.25, how much do 8 pencils cost? (Enter as decimal like 6.00)",
+                    answer: 6,
+                    hint: "First find what 1 pencil costs",
+                    explanation: "Each pencil costs 75 cents ($2.25 ÷ 3 = $0.75). So 8 pencils cost $0.75 × 8 = $6.00",
+                    steps: [
+                        "3 pencils cost $2.25",
+                        "1 pencil costs: $2.25 ÷ 3 = $0.75",
+                        "8 pencils cost: $0.75 × 8 = $6.00"
+                    ]
                 }
-            },
-            integers: {
-                generate: function() {
-                    const types = ['add', 'subtract', 'multiply', 'temperature', 'depth'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'add') {
-                        const num1 = Math.floor(Math.random() * 20) - 10;
-                        const num2 = Math.floor(Math.random() * 20) - 10;
-                        const answer = num1 + num2;
-                        
-                        return {
-                            question: `What is ${num1} + (${num2})?`,
-                            answer: answer,
-                            hint: num2 < 0 ? `Adding negative is like subtracting` : `Use a number line`,
-                            explanation: `${num1} + (${num2}) = ${answer}. Think: start at ${num1}, move ${Math.abs(num2)} ${num2 < 0 ? 'left' : 'right'}`
-                        };
-                    } else if (type === 'subtract') {
-                        const num1 = Math.floor(Math.random() * 20) - 10;
-                        const num2 = Math.floor(Math.random() * 20) - 10;
-                        const answer = num1 - num2;
-                        
-                        return {
-                            question: `Calculate: ${num1} - (${num2})`,
-                            answer: answer,
-                            hint: num2 < 0 ? `Subtracting negative = adding` : `Move left on number line`,
-                            explanation: `${num1} - (${num2}) = ${answer}. ${num2 < 0 ? 'Two negatives make positive!' : 'Subtract normally'}`
-                        };
-                    } else if (type === 'multiply') {
-                        const num1 = Math.floor(Math.random() * 8) - 4;
-                        const num2 = Math.floor(Math.random() * 8) + 1;
-                        const answer = num1 * num2;
-                        
-                        return {
-                            question: `What is ${num1} × ${num2}?`,
-                            answer: answer,
-                            hint: num1 < 0 ? `Negative × positive = negative` : `Multiply normally`,
-                            explanation: `${num1} × ${num2} = ${answer}. ${num1 < 0 ? 'Negative times positive gives negative' : 'Both positive, answer is positive'}`
-                        };
-                    } else if (type === 'temperature') {
-                        const start = Math.floor(Math.random() * 10) - 5;
-                        const change = Math.floor(Math.random() * 15) + 5;
-                        const goingUp = Math.random() > 0.5;
-                        const end = goingUp ? start + change : start - change;
-                        
-                        return {
-                            question: `Temperature was ${start}°C. It ${goingUp ? 'rose' : 'dropped'} ${change} degrees. What's the new temperature?`,
-                            answer: end,
-                            hint: goingUp ? `Add to current temp` : `Subtract from current temp`,
-                            explanation: `${start}°C ${goingUp ? '+' : '-'} ${change}° = ${end}°C`
-                        };
-                    } else {
-                        const start = Math.floor(Math.random() * 300) - 500;
-                        const change = Math.floor(Math.random() * 200) + 50;
-                        const goingUp = Math.random() > 0.5;
-                        const end = goingUp ? start + change : start - change;
-                        
-                        return {
-                            question: `A submarine is at ${start} feet. It ${goingUp ? 'rises' : 'descends'} ${change} feet. What's the new depth?`,
-                            answer: end,
-                            hint: `Negative means below sea level`,
-                            explanation: `${start} ${goingUp ? '+' : '-'} ${change} = ${end} feet`
-                        };
-                    }
+            ],
+            integers: [
+                {
+                    question: "What is 5 + (-3)?",
+                    answer: 2,
+                    hint: "Start at 5 and go back 3 steps",
+                    explanation: "Think of a number line! Start at 5, adding negative 3 means go LEFT 3 spaces: 5, 4, 3, 2"
+                },
+                {
+                    question: "The temperature was 3°C. It dropped 7 degrees. What's the new temperature?",
+                    answer: -4,
+                    hint: "Count down from 3 seven times",
+                    explanation: "Start at 3: go down 3 to reach 0, then down 4 more. You're at -4°C (4 below zero!)"
+                },
+                {
+                    question: "What is -6 + 10?",
+                    answer: 4,
+                    hint: "You owe 6, then get 10",
+                    explanation: "Think: you owe $6 (-6), then get $10. After paying the $6 you owe, you have $4 left!"
+                },
+                {
+                    question: "Calculate: -3 × 4",
+                    answer: -12,
+                    hint: "Negative times positive = negative",
+                    explanation: "Think: losing 3 points, 4 times. You lose 12 points total, so -12"
+                },
+                {
+                    question: "A submarine is at -200 feet. It rises 150 feet. What's its new depth?",
+                    answer: -50,
+                    hint: "Going up from underwater",
+                    explanation: "Start 200 feet underwater (-200). Go up 150 feet. You're still 50 feet underwater (-50)"
+                },
+                {
+                    question: "What is -8 - (-3)?",
+                    answer: -5,
+                    hint: "Two negatives make a positive!",
+                    explanation: "Subtracting negative is like adding! -8 - (-3) = -8 + 3 = -5"
                 }
-            },
-            expressions: {
-                generate: function() {
-                    const types = ['simplify', 'evaluate', 'distribute', 'translate'];
-                    const type = types[Math.floor(Math.random() * types.length)];
-                    
-                    if (type === 'simplify') {
-                        const coef1 = Math.floor(Math.random() * 5) + 1;
-                        const coef2 = Math.floor(Math.random() * 5) + 1;
-                        const sum = coef1 + coef2;
-                        
-                        return {
-                            question: `Simplify: ${coef1}x + ${coef2}x`,
-                            options: [`${sum}x`, `${coef1 * coef2}x`, `${sum}`, `${coef1}x${coef2}`],
-                            correct: 0,
-                            hint: `Add the numbers in front of x`,
-                            explanation: `Think: ${coef1} apples + ${coef2} apples = ${sum} apples. So ${coef1}x + ${coef2}x = ${sum}x`
-                        };
-                    } else if (type === 'evaluate') {
-                        const x = Math.floor(Math.random() * 6) + 2;
-                        const multiplier = Math.floor(Math.random() * 4) + 2;
-                        const adder = Math.floor(Math.random() * 10) + 3;
-                        const answer = multiplier * x + adder;
-                        
-                        return {
-                            question: `If x = ${x}, what is ${multiplier}x + ${adder}?`,
-                            options: generateNumberOptions(answer),
-                            correct: 0,
-                            hint: `Replace x with ${x}`,
-                            explanation: `Put ${x} where x is: ${multiplier}(${x}) + ${adder} = ${multiplier * x} + ${adder} = ${answer}`
-                        };
-                    } else if (type === 'distribute') {
-                        const outside = Math.floor(Math.random() * 4) + 2;
-                        const inside = Math.floor(Math.random() * 5) + 2;
-                        const distributed = outside * inside;
-                        
-                        return {
-                            question: `Simplify: ${outside}(x + ${inside})`,
-                            options: [`${outside}x + ${distributed}`, `${outside}x + ${inside}`, `x + ${distributed}`, `${outside + inside}x`],
-                            correct: 0,
-                            hint: `Multiply ${outside} by everything inside`,
-                            explanation: `Give ${outside} to both: ${outside}×x = ${outside}x and ${outside}×${inside} = ${distributed}. Answer: ${outside}x + ${distributed}`,
-                            steps: [
-                                `Distribute ${outside} to x: ${outside}x`,
-                                `Distribute ${outside} to ${inside}: ${distributed}`,
-                                `Result: ${outside}x + ${distributed}`
-                            ]
-                        };
-                    } else {
-                        const coefficient = Math.floor(Math.random() * 4) + 2;
-                        const constant = Math.floor(Math.random() * 10) + 3;
-                        
-                        return {
-                            question: `Write as an expression: "${constant} more than ${coefficient} times a number n"`,
-                            options: [`${coefficient}n + ${constant}`, `${constant}n + ${coefficient}`, `n + ${coefficient + constant}`, `${coefficient + constant}n`],
-                            correct: 0,
-                            hint: `"${coefficient} times n" then "add ${constant}"`,
-                            explanation: `${coefficient} times n = ${coefficient}n. Then ${constant} more = ${coefficient}n + ${constant}`
-                        };
-                    }
+            ],
+            expressions: [
+                {
+                    question: "Simplify: 3x + 2x",
+                    options: ["5x", "6x", "5", "3x + 2"],
+                    correct: 0,
+                    hint: "You have 3 x's and 2 more x's",
+                    explanation: "Think: 3 apples + 2 apples = 5 apples. So 3x + 2x = 5x"
+                },
+                {
+                    question: "If x = 4, what is the value of 2x + 7?",
+                    options: ["15", "13", "9", "11"],
+                    correct: 0,
+                    hint: "Replace every x with 4",
+                    explanation: "Put 4 where x is: 2(4) + 7 = 8 + 7 = 15"
+                },
+                {
+                    question: "Write an expression for: '5 more than twice a number n'",
+                    options: ["2n + 5", "5n + 2", "2 + 5n", "10n"],
+                    correct: 0,
+                    hint: "Twice means ×2, then add 5",
+                    explanation: "Twice n = 2 × n = 2n. Then add 5: 2n + 5"
+                },
+                {
+                    question: "Simplify: 4(x + 3)",
+                    options: ["4x + 12", "4x + 3", "7x", "x + 12"],
+                    correct: 0,
+                    hint: "Give 4 to everyone inside the ( )",
+                    explanation: "The 4 multiplies everything inside: 4×x = 4x and 4×3 = 12. Answer: 4x + 12",
+                    steps: [
+                        "The 4 goes to both things inside",
+                        "4 × x = 4x",
+                        "4 × 3 = 12",
+                        "Put together: 4x + 12"
+                    ]
+                },
+                {
+                    question: "Which expression represents the perimeter of a square with side length s?",
+                    options: ["4s", "s²", "2s", "s + 4"],
+                    correct: 0,
+                    hint: "Add all 4 sides of the square",
+                    explanation: "A square has 4 equal sides. So: s + s + s + s = 4s"
+                },
+                {
+                    question: "Evaluate: 3² + 4",
+                    options: ["13", "12", "49", "7"],
+                    correct: 0,
+                    hint: "3² means 3 times itself",
+                    explanation: "3² = 3 × 3 = 9. Then 9 + 4 = 13"
                 }
-            }
+            ]
         };
-
-        // Helper functions for generating questions
-        function gcd(a, b) {
-            return b === 0 ? a : gcd(b, a % b);
-        }
-
-        function simplifyFraction(num, den) {
-            const divisor = gcd(num, den);
-            return `${num/divisor}/${den/divisor}`;
-        }
-
-        function generateFractionOptions(correct) {
-            const options = [correct];
-            // Generate 3 plausible wrong answers
-            const parts = correct.split('/');
-            if (parts.length === 2) {
-                const n = parseInt(parts[0]);
-                const d = parseInt(parts[1]);
-                options.push(`${n+1}/${d}`);
-                options.push(`${n}/${d+1}`);
-                options.push(`${Math.max(1, n-1)}/${d}`);
-            } else {
-                options.push(`${parseInt(correct) + 1}`);
-                options.push(`${parseInt(correct) - 1}`);
-                options.push(`${parseInt(correct) + 2}`);
-            }
-            return shuffleArray(options);
-        }
-
-        function generateNumberOptions(correct) {
-            const options = [correct];
-            options.push(correct + Math.floor(Math.random() * 5) + 1);
-            options.push(Math.max(1, correct - Math.floor(Math.random() * 5) - 1));
-            options.push(correct + Math.floor(Math.random() * 10) + 5);
-            return shuffleArray(options);
-        }
-
-        function generateTimeOptions(correct) {
-            const options = [correct];
-            // Generate plausible wrong times
-            const parts = correct.split(':');
-            const hour = parseInt(parts[0]);
-            const minute = parseInt(parts[1]);
-            
-            options.push(`${hour}:${((minute + 15) % 60).toString().padStart(2, '0')}`);
-            options.push(`${hour + 1}:${minute.toString().padStart(2, '0')}`);
-            options.push(`${Math.max(1, hour - 1)}:${minute.toString().padStart(2, '0')}`);
-            
-            return shuffleArray(options);
-        }
-
-        function shuffleArray(array) {
-            const newArray = [...array];
-            for (let i = newArray.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-            }
-            return newArray;
-        }
 
         let currentTopic = null;
         let currentQuestionIndex = 0;
@@ -1389,11 +1144,8 @@ function checkMultipleChoice(topic, selectedIndex) {
         }
 
         function loadQuestion(topic) {
-            // Generate a new question for this topic
-            const question = questions[topic].generate();
-            
-            // Store current question for checking answers
-            window.currentQuestion = question;
+            const questionBank = questions[topic];
+            const question = questionBank[currentQuestionIndex];
             
             // Clear previous feedback
             const feedback = document.getElementById(`${topic}-feedback`);
@@ -1415,16 +1167,14 @@ function checkMultipleChoice(topic, selectedIndex) {
             if (question.options) {
                 // Multiple choice
                 const answersDiv = document.getElementById(`${topic}-answers`);
-                if (answersDiv) {
-                    answersDiv.innerHTML = '';
-                    question.options.forEach((option, index) => {
-                        const btn = document.createElement('button');
-                        btn.className = 'answer-btn';
-                        btn.textContent = option;
-                        btn.onclick = () => checkMultipleChoice(topic, index);
-                        answersDiv.appendChild(btn);
-                    });
-                }
+                answersDiv.innerHTML = '';
+                question.options.forEach((option, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'answer-btn';
+                    btn.textContent = option;
+                    btn.onclick = () => checkMultipleChoice(topic, index);
+                    answersDiv.appendChild(btn);
+                });
             } else {
                 // Text input
                 const input = document.getElementById(`${topic}-answer`);
@@ -2100,68 +1850,102 @@ function checkMultipleChoice(topic, selectedIndex) {
             alert('✅ Progress has been reset!\n\nJordan is starting fresh at level 460.');
         }
 
-        // Add a quick reset function for testing (without confirmation)
-        function quickReset() {
-            // This function can be called from console for testing
-            // Type: quickReset() in browser console
-            completedProblems = 0;
-            totalAttempts = 0;
-            correctCount = 0;
-            startTime = Date.now();
-            problemHistory = [];
-            topicStats = {
-                fractions: { attempted: 0, correct: 0 },
-                operations: { attempted: 0, correct: 0 },
-                algebra: { attempted: 0, correct: 0 },
-                'word-problems': { attempted: 0, correct: 0 },
-                geometry: { attempted: 0, correct: 0 },
-                measurement: { attempted: 0, correct: 0 },
-                ratios: { attempted: 0, correct: 0 },
-                integers: { attempted: 0, correct: 0 },
-                expressions: { attempted: 0, correct: 0 }
-            };
-            updateProgress();
-            updateParentDashboard();
-            db.collection('users').doc(userId).delete();
-            showSyncStatus('🔄 Quick reset completed');
+        // Firebase reconnection attempt
+        function attemptFirebaseReconnection() {
+            if (!firebaseAvailable && typeof firebase !== 'undefined') {
+                try {
+                    const firebaseConfig = {
+                        apiKey: "AIzaSyAs7_DlWthyuWVVLbYCo7SQHHt2Siw_DH0",
+                        authDomain: "jordan-math-practice.firebaseapp.com",
+                        projectId: "jordan-math-practice",
+                        storageBucket: "jordan-math-practice.firebasestorage.app",
+                        messagingSenderId: "1011552332362",
+                        appId: "1:1011552332362:web:8bc57f83156212d63094b3"
+                    };
+                    
+                    // Try to initialize Firebase
+                    firebase.initializeApp(firebaseConfig);
+                    db = firebase.firestore();
+                    firebaseAvailable = true;
+                    
+                    console.log('Firebase reconnected successfully');
+                    showSyncStatus('☁️ Cloud sync restored');
+                    
+                    // Sync local data to cloud
+                    syncLocalToCloud();
+                    
+                    // Set up real-time sync
+                    setupRealtimeSync();
+                    
+                    return true;
+                } catch (error) {
+                    console.log('Firebase reconnection failed:', error);
+                    return false;
+                }
+            }
+            return firebaseAvailable;
         }
 
-        // Add function to set custom progress (for testing different levels)
-        function setProgress(problems, correct) {
-            // This can be called from console for testing
-            // Example: setProgress(50, 45) sets 50 attempts with 45 correct
-            completedProblems = problems;
-            totalAttempts = problems;
-            correctCount = correct;
-            updateProgress();
-            updateParentDashboard();
-            showSyncStatus(`📊 Set to ${problems} problems, ${correct} correct`);
+        function syncLocalToCloud() {
+            // If we have local data and Firebase is now available, push it to cloud
+            if (firebaseAvailable && db && totalAttempts > 0) {
+                const progressData = {
+                    completedProblems: completedProblems,
+                    totalAttempts: totalAttempts,
+                    correctCount: correctCount,
+                    topicStats: topicStats,
+                    lastUpdated: new Date().toISOString()
+                };
+                saveToFirebase(progressData);
+                showSyncStatus('⬆️ Local progress uploaded to cloud');
+            }
         }
+
+        function setupRealtimeSync() {
+            if (firebaseAvailable && db) {
+                db.collection('users').doc(userId)
+                    .onSnapshot(doc => {
+                        if (doc.exists) {
+                            const data = doc.data();
+                            // Don't update if this device just made the change
+                            if (data.lastUpdated && new Date(data.lastUpdated).getTime() > Date.now() - 5000) {
+                                return;
+                            }
+                            
+                            // Check if cloud data is newer than local
+                            const cloudTime = new Date(data.lastUpdated).getTime();
+                            const localTime = new Date().getTime() - (totalAttempts * 30000); // Rough estimate
+                            
+                            if (cloudTime > localTime && data.totalAttempts > totalAttempts) {
+                                // Cloud has more recent data
+                                completedProblems = data.completedProblems || completedProblems;
+                                totalAttempts = data.totalAttempts || totalAttempts;
+                                correctCount = data.correctCount || correctCount;
+                                topicStats = data.topicStats || topicStats;
+                                
+                                updateProgress();
+                                updateParentDashboard();
+                                showSyncStatus('🔄 Progress synced from cloud');
+                            }
+                        }
+                    });
+            }
+        }
+
+        // Initialize dashboard on load
         window.onload = function() {
             // Load progress from Firebase first
             loadProgressFromFirebase();
             
-            // Set up real-time sync
-            db.collection('users').doc(userId)
-                .onSnapshot(doc => {
-                    if (doc.exists) {
-                        const data = doc.data();
-                        // Don't update if this device just made the change
-                        if (data.lastUpdated && new Date(data.lastUpdated).getTime() > Date.now() - 5000) {
-                            return; // Skip if update was within last 5 seconds from this device
-                        }
-                        
-                        // Update from another device's changes
-                        completedProblems = data.completedProblems || completedProblems;
-                        totalAttempts = data.totalAttempts || totalAttempts;
-                        correctCount = data.correctCount || correctCount;
-                        topicStats = data.topicStats || topicStats;
-                        
-                        updateProgress();
-                        updateParentDashboard();
-                        showSyncStatus('🔄 Progress synced from another device');
-                    }
-                });
+            // Set up real-time sync if Firebase is available
+            setupRealtimeSync();
+            
+            // Try to reconnect to Firebase every 30 seconds if not connected
+            setInterval(() => {
+                if (!firebaseAvailable) {
+                    attemptFirebaseReconnection();
+                }
+            }, 30000);
             
             // Update time every minute
             setInterval(() => {
@@ -2169,7 +1953,7 @@ function checkMultipleChoice(topic, selectedIndex) {
                 document.getElementById('timeSpent').textContent = timeElapsed + 'm';
             }, 60000);
             
-            // Save to Firebase periodically (every 30 seconds)
+            // Save progress periodically
             setInterval(() => {
                 if (totalAttempts > 0) {
                     saveProgressToLocal();
