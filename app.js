@@ -779,8 +779,15 @@ function backToTopics() {
 
 // Show topic selection
 function showTopicSelection() {
-    document.getElementById('topicSelection').style.display = 'block';
-    document.getElementById('questionContainer').style.display = 'none';
+    const topicSelection = document.getElementById('topicSelection');
+    const questionContainer = document.getElementById('questionContainer');
+    
+    if (topicSelection) {
+        topicSelection.style.display = 'block';
+    }
+    if (questionContainer) {
+        questionContainer.style.display = 'none';
+    }
 }
 
 // Parent Dashboard Functions
