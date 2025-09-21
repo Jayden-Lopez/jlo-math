@@ -251,6 +251,16 @@
             margin-right: 10px;
         }
 
+        .topic-card.recommended {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
         .topic-card.locked {
             background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
             cursor: not-allowed;
