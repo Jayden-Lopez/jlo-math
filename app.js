@@ -33,7 +33,12 @@ let userData = {
     lastActivity: new Date().toISOString(),
     dailyGoal: 20,
     completedToday: 0,
-    lastResetDate: null
+    lastResetDate: null,
+    ixlHistory: [],
+    startDate: new Date().toISOString(),
+    levelHistory: [],
+    currentStage: 1,
+    pathMode: true  // New: guided path mode on/off
 };
 
 // Parent Settings
@@ -45,8 +50,113 @@ let parentSettings = {
     lastPinChange: null
 };
 
-// Topic Configuration
-const topics = {
+// Learning Path Configuration - Based on IXL Grade 5-6 Standards
+const learningPath = [
+    {
+        stage: 1,
+        name: "Number Foundations",
+        description: "Master basic operations and number sense",
+        topics: [
+            { key: 'operations', required: 10, name: 'Basic Operations' },
+            { key: 'integers', required: 10, name: 'Positive & Negative Numbers' }
+        ]
+    },
+    {
+        stage: 2,
+        name: "Fractions & Decimals",
+        description: "Work with parts of numbers",
+        topics: [
+            { key: 'fractions', required: 15, name: 'Fraction Operations' }
+        ]
+    },
+    {
+        stage: 3,
+        name: "Algebraic Thinking",
+        description: "Introduction to variables and expressions",
+        topics: [
+            { key: 'expressions', required: 10, name: 'Evaluating Expressions' },
+            { key: 'algebra', required: 15, name: 'Solving Equations' }
+        ]
+    },
+    {
+        stage: 4,
+        name: "Ratios & Proportions",
+        description: "Understanding relationships between numbers",
+        topics: [
+            { key: 'ratios', required: 12, name: 'Ratios & Percentages' }
+        ]
+    },
+    {
+        stage: 5,
+        name: "Geometry & Measurement",
+        description: "Shapes, space, and units",
+        topics: [
+            { key: 'geometry', required: 12, name: 'Area, Perimeter & Volume' },
+            { key: 'measurement', required: 10, name: 'Converting Units' }
+        ]
+    },
+    {
+        stage: 6,
+        name: "Problem Solving",
+        description: "Apply all skills to word problems",
+        topics: [
+            { key: 'wordProblems', required: 20, name: 'Multi-Step Word Problems' }
+        ]
+    }
+];
+
+// Get current learning path stage
+function getCurrentStage() {
+    if (!userData.currentStage) {
+        userData.currentStage = 1;
+    }
+    return userData.currentStage;
+}
+
+// Check if a stage is completed
+function isStageCompleted(stageNum) {
+    const stage = learningPath[stageNum - 1];
+    if (!stage) return false;
+    
+    for (const topic of stage.topics) {
+        const progress = userData.topicProgress[topic.key] || { completed: 0 };
+        if (progress.completed < topic.required) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Get next recommended topic
+function getRecommendedTopic() {
+    const currentStage = getCurrentStage();
+    const stage = learningPath[currentStage - 1];
+    
+    if (!stage) return null;
+    
+    // Find the first incomplete topic in current stage
+    for (const topic of stage.topics) {
+        const progress = userData.topicProgress[topic.key] || { completed: 0 };
+        if (progress.completed < topic.required) {
+            return {
+                key: topic.key,
+                name: topic.name,
+                completed: progress.completed,
+                required: topic.required,
+                stage: stage.name
+            };
+        }
+    }
+    
+    // If stage completed, move to next
+    if (currentStage < learningPath.length) {
+        userData.currentStage = currentStage + 1;
+        saveUserData();
+        return getRecommendedTopic();
+    }
+    
+    return null;
+}
     fractions: {
         name: "Fractions",
         icon: "🍕",
@@ -181,17 +291,140 @@ function checkDailyReset() {
 // Initialize topic cards
 function initializeTopics() {
     const topicGrid = document.getElementById('topicGrid');
+    const topicSelection = document.getElementById('topicSelection');
+    
+    // Show learning path if enabled
+    if (userData.pathMode) {
+        const currentStage = getCurrentStage();
+        const stage = learningPath[currentStage - 1];
+        const recommended = getRecommendedTopic();
+        
+        // Build path progress header
+        let pathProgressHTML = `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                <h3>🎯 Learning Path - Stage ${currentStage} of ${learningPath.length}</h3>
+                <h2>${stage ? stage.name : 'Complete!'}</h2>
+                <p>${stage ? stage.description : 'You\'ve completed all stages!'}</p>
+                
+                <div style="background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; margin: 15px 0;">
+                    <div style="background: white; width: ${(currentStage - 1) / learningPath.length * 100}%; 
+                                height: 100%; border-radius: 5px; transition: width 0.5s;"></div>
+                </div>
+                
+                ${recommended ? `
+                    <div style="background: rgba(255,255,255,0.3); padding: 10px; border-radius: 10px; margin-top: 10px;">
+                        <strong>Next Up:</strong> ${recommended.name} 
+                        (${recommended.completed}/${recommended.required} completed)
+                    </div>
+                ` : '<div style="padding: 10px;">🏆 All stages completed! Practice any topic to strengthen skills.</div>'}
+            </div>
+        `;
+        
+        // Show stages overview
+        let stagesHTML = '<div style="margin-bottom: 20px;">';
+        learningPath.forEach((pathStage, index) => {
+            const stageNum = index + 1;
+            const isCurrentStage = stageNum === currentStage;
+            const isCompleted = stageNum < currentStage || isStageCompleted(stageNum);
+            const isLocked = stageNum > currentStage && !isStageCompleted(currentStage);
+            
+            stagesHTML += `
+                <div style="background: ${isCurrentStage ? '#f0f8ff' : isCompleted ? '#e8f5e9' : '#f5f5f5'}; 
+                            padding: 15px; border-radius: 10px; margin-bottom: 10px;
+                            border: ${isCurrentStage ? '2px solid #667eea' : '1px solid #ddd'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>Stage ${stageNum}: ${pathStage.name}</strong> 
+                            ${isCompleted ? '✅' : isCurrentStage ? '📍' : isLocked ? '🔒' : ''}
+                            <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                                ${pathStage.description}
+                            </div>
+                        </div>
+                        <div style="font-size: 0.9em; color: #666;">
+                            ${pathStage.topics.map(t => {
+                                const prog = userData.topicProgress[t.key] || { completed: 0 };
+                                return `${t.name}: ${prog.completed}/${t.required}`;
+                            }).join(' | ')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        stagesHTML += '</div>';
+        
+        // Add toggle for free practice mode
+        const modeToggle = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="togglePathMode()" 
+                        style="background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);">
+                    Switch to Free Practice Mode
+                </button>
+            </div>
+        `;
+        
+        topicSelection.innerHTML = pathProgressHTML + stagesHTML + modeToggle + 
+                                   '<h3 style="text-align: center; margin: 20px 0;">Select a Topic to Practice:</h3>' +
+                                   '<div class="topic-grid" id="topicGrid"></div>';
+    } else {
+        // Free practice mode header
+        const freeModeHeader = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #5a67d8;">Free Practice Mode</h2>
+                <p>Choose any topic you want to practice!</p>
+                <button class="btn btn-primary" onclick="togglePathMode()">
+                    Switch to Guided Learning Path
+                </button>
+            </div>
+        `;
+        topicSelection.innerHTML = freeModeHeader + '<div class="topic-grid" id="topicGrid"></div>';
+    }
+    
+    // Rebuild topic grid
     topicGrid.innerHTML = '';
+    const currentStage = getCurrentStage();
+    const stage = learningPath[currentStage - 1];
+    const recommended = getRecommendedTopic();
     
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
+        
+        // Check if topic is in current stage or earlier
+        let stageInfo = null;
+        let isAvailable = !userData.pathMode; // All available in free mode
+        let isRecommended = false;
+        
+        if (userData.pathMode) {
+            // Find which stage this topic belongs to
+            for (let i = 0; i < learningPath.length; i++) {
+                const checkStage = learningPath[i];
+                const topicInStage = checkStage.topics.find(t => t.key === key);
+                if (topicInStage) {
+                    stageInfo = {
+                        stage: i + 1,
+                        required: topicInStage.required,
+                        stageName: checkStage.name
+                    };
+                    isAvailable = (i + 1) <= currentStage;
+                    isRecommended = recommended && recommended.key === key;
+                    break;
+                }
+            }
+        }
         
         const card = document.createElement('div');
         card.className = 'topic-card';
         
         if (isLocked) {
             card.className += ' locked';
+        } else if (isRecommended) {
+            card.className += ' recommended';
+            card.style.border = '3px solid #667eea';
+            card.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.3)';
+        } else if (!isAvailable) {
+            card.className += ' locked';
+            card.style.opacity = '0.5';
         } else if (progress.completed >= 10) {
             card.className += ' completed';
         } else if (progress.completed > 0) {
@@ -201,22 +434,33 @@ function initializeTopics() {
         const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
         
         card.innerHTML = `
-            <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : ''}</div>
-            <div class="topic-progress">Completed: ${progress.completed}</div>
+            ${isRecommended ? '<div style="position: absolute; top: -10px; right: -10px; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">NEXT</div>' : ''}
+            <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : !isAvailable ? '🔒' : ''}</div>
+            <div class="topic-progress">Completed: ${progress.completed}${stageInfo ? `/${stageInfo.required}` : ''}</div>
             <div class="topic-accuracy">Accuracy: ${accuracy}%</div>
+            ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Stage ${stageInfo.stage}</div>` : ''}
         `;
         
-        if (!isLocked) {
+        if (!isLocked && isAvailable) {
             card.onclick = () => startTopic(key);
-        } else {
+        } else if (isLocked) {
             card.onclick = () => alert("This topic is locked by parent controls");
+        } else {
+            card.onclick = () => alert(`Complete Stage ${currentStage} to unlock this topic`);
         }
         
         topicGrid.appendChild(card);
     }
     
-    // Add daily goal progress
+    // Update daily progress
     updateDailyProgress();
+}
+
+// Toggle between path mode and free practice
+function togglePathMode() {
+    userData.pathMode = !userData.pathMode;
+    saveUserData();
+    initializeTopics();
 }
 
 // Update daily progress display
@@ -373,6 +617,9 @@ function checkAnswer() {
         (userData.topicProgress[currentTopic].completed / userData.topicProgress[currentTopic].attempts) * 100
     );
     
+    // Track IXL-style progress
+    trackIXLProgress();
+    
     // Save progress
     saveUserData();
     updateStats();
@@ -463,7 +710,20 @@ function updateStats() {
 // Calculate and update level
 function updateLevel() {
     const level = calculateLevel();
+    const previousLevel = userData.levelHistory.length > 0 ? 
+        userData.levelHistory[userData.levelHistory.length - 1].level : "Beginner";
+    
     document.getElementById('levelDisplay').textContent = `Level: ${level}`;
+    
+    // Track level changes
+    if (level !== previousLevel) {
+        userData.levelHistory.push({
+            level: level,
+            date: new Date().toISOString(),
+            problemsCompleted: userData.correctCount
+        });
+        saveUserData();
+    }
 }
 
 function calculateLevel() {
@@ -476,6 +736,29 @@ function calculateLevel() {
     else if (correctAnswers < 200) return "Advanced";
     else if (correctAnswers < 500) return "Expert";
     else return "Math Master 🏆";
+}
+
+// Track IXL-style progress
+function trackIXLProgress() {
+    // Initialize IXL history if needed
+    if (!userData.ixlHistory) {
+        userData.ixlHistory = [];
+    }
+    
+    // Add progress entry (limit to last 100 for performance)
+    userData.ixlHistory.push({
+        date: new Date().toISOString(),
+        topic: currentTopic,
+        totalCompleted: userData.correctCount,
+        accuracy: userData.totalAttempts > 0 ? 
+            Math.round((userData.correctCount / userData.totalAttempts) * 100) : 0,
+        level: calculateLevel()
+    });
+    
+    // Keep only last 100 entries
+    if (userData.ixlHistory.length > 100) {
+        userData.ixlHistory = userData.ixlHistory.slice(-100);
+    }
 }
 
 // End session and return to topics
@@ -563,7 +846,47 @@ function showParentControls() {
     const accuracy = userData.totalAttempts > 0 ? 
         Math.round((userData.correctCount / userData.totalAttempts) * 100) : 0;
     
-    // Build topic statistics HTML
+    // Calculate IXL-style progress metrics
+    const startDate = new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date());
+    const daysActive = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24)) + 1;
+    const problemsPerDay = daysActive > 0 ? Math.round(userData.correctCount / daysActive) : 0;
+    
+    // Get initial stats for comparison
+    const initialLevel = userData.levelHistory[0]?.level || "Beginner";
+    const currentLevel = calculateLevel();
+    const levelProgress = getLevelProgress();
+    
+    // Build IXL progress chart
+    let progressChart = '';
+    if (userData.ixlHistory && userData.ixlHistory.length > 0) {
+        const recentHistory = userData.ixlHistory.slice(-30); // Last 30 entries
+        const maxProblems = Math.max(...recentHistory.map(h => h.totalCompleted));
+        
+        progressChart = `
+            <div style="background: #f0f8ff; padding: 15px; border-radius: 10px; margin-top: 10px;">
+                <h4>Progress Timeline (Last 30 Sessions)</h4>
+                <div style="display: flex; align-items: flex-end; height: 150px; gap: 2px; margin-top: 15px;">
+                    ${recentHistory.map(entry => {
+                        const height = (entry.totalCompleted / maxProblems) * 100;
+                        const date = new Date(entry.date);
+                        return `
+                            <div style="flex: 1; background: linear-gradient(to top, #667eea, #764ba2); 
+                                        height: ${height}%; min-height: 5px; border-radius: 2px 2px 0 0;"
+                                 title="${date.toLocaleDateString()}: ${entry.totalCompleted} problems (${entry.accuracy}% accuracy)">
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.8em; color: #666;">
+                    <span>Start</span>
+                    <span>Recent Sessions</span>
+                    <span>Now</span>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Build topic statistics HTML with IXL-style skill levels
     let topicStats = '';
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
@@ -571,14 +894,27 @@ function showParentControls() {
             Math.round((progress.completed / progress.attempts) * 100) : 0;
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
         
+        // IXL-style skill level for topic
+        let skillLevel = '';
+        if (progress.completed === 0) skillLevel = '⚪ Not Started';
+        else if (progress.completed < 5) skillLevel = '🔵 Beginning';
+        else if (progress.completed < 10) skillLevel = '🟢 Developing';
+        else if (progress.completed < 20) skillLevel = '🟡 Proficient';
+        else skillLevel = '🟣 Mastered';
+        
         topicStats += `
             <div style="margin: 10px 0; padding: 15px; background: #f0f0f0; border-radius: 10px; 
                         display: flex; justify-content: space-between; align-items: center;">
                 <div style="flex: 1;">
                     <strong>${topic.icon} ${topic.name} ${isLocked ? '🔒' : ''}</strong><br>
                     <span style="font-size: 0.9em; color: #666;">
-                        ${progress.completed} completed | ${progress.attempts} attempts | ${topicAccuracy}% accuracy
+                        ${skillLevel} | ${progress.completed} completed | ${progress.attempts} attempts | ${topicAccuracy}% accuracy
                     </span>
+                    <div style="background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 5px;">
+                        <div style="background: linear-gradient(90deg, #667eea, #764ba2); 
+                                    width: ${Math.min(topicAccuracy, 100)}%; height: 100%; 
+                                    border-radius: 4px; transition: width 0.3s;"></div>
+                    </div>
                 </div>
                 <div style="display: flex; gap: 10px;">
                     <button class="btn btn-small ${isLocked ? 'btn-unlock' : 'btn-lock'}" 
@@ -598,6 +934,39 @@ function showParentControls() {
         <span class="close" onclick="closeParentDashboard()">&times;</span>
         <h2>👨‍👩‍👦 Parent Dashboard</h2>
         
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                    color: white; border-radius: 10px; padding: 20px; margin: 15px 0;">
+            <h3>📈 IXL-Style Progress Report</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Starting Level</div>
+                    <div style="font-size: 1.8em; font-weight: bold;">${initialLevel}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Current Level</div>
+                    <div style="font-size: 1.8em; font-weight: bold;">${currentLevel}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Days Active</div>
+                    <div style="font-size: 1.8em; font-weight: bold;">${daysActive}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px;">
+                    <div style="font-size: 0.9em; opacity: 0.9;">Avg Per Day</div>
+                    <div style="font-size: 1.8em; font-weight: bold;">${problemsPerDay}</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">Progress to Next Level: ${levelProgress.current}/${levelProgress.needed}</div>
+                <div style="background: rgba(255,255,255,0.3); height: 20px; border-radius: 10px;">
+                    <div style="background: white; width: ${levelProgress.percentage}%; height: 100%; 
+                                border-radius: 10px; transition: width 0.5s;"></div>
+                </div>
+            </div>
+            
+            ${progressChart}
+        </div>
+        
         <div style="background: #e6fffa; border-radius: 10px; padding: 15px; margin: 15px 0;">
             <h3>📊 Overall Statistics</h3>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 15px;">
@@ -614,8 +983,8 @@ function showParentControls() {
                     <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${accuracy}%</div>
                 </div>
                 <div style="text-align: center; background: white; padding: 10px; border-radius: 8px;">
-                    <div style="font-size: 0.9em; color: #666;">Current Level</div>
-                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${calculateLevel()}</div>
+                    <div style="font-size: 0.9em; color: #666;">Current Streak</div>
+                    <div style="font-size: 1.5em; font-weight: bold; color: #667eea;">${currentStreak} 🔥</div>
                 </div>
             </div>
         </div>
@@ -659,9 +1028,11 @@ function showParentControls() {
         </div>
         
         <div style="background: #f5f5f5; border-radius: 10px; padding: 15px; margin: 15px 0;">
-            <h3>📈 Activity History</h3>
+            <h3>📅 Activity History</h3>
             <p style="font-size: 0.9em; color: #666;">
+                Started: ${new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date()).toLocaleDateString()}<br>
                 Last Active: ${new Date(userData.lastActivity).toLocaleString()}<br>
+                Total Days: ${daysActive} days<br>
                 Session Started: ${parentSettings.initialized ? 'Yes' : 'First Time - Please Change PIN!'}
             </p>
         </div>
@@ -672,6 +1043,38 @@ function showParentControls() {
         parentSettings.initialized = true;
         saveParentSettings();
     }
+}
+
+// Get level progress details
+function getLevelProgress() {
+    const correctAnswers = userData.correctCount;
+    let needed, nextLevel;
+    
+    if (correctAnswers < 10) { needed = 10; nextLevel = "Learning"; }
+    else if (correctAnswers < 25) { needed = 25; nextLevel = "Practicing"; }
+    else if (correctAnswers < 50) { needed = 50; nextLevel = "Improving"; }
+    else if (correctAnswers < 100) { needed = 100; nextLevel = "Advanced"; }
+    else if (correctAnswers < 200) { needed = 200; nextLevel = "Expert"; }
+    else if (correctAnswers < 500) { needed = 500; nextLevel = "Math Master"; }
+    else { needed = 1000; nextLevel = "Legendary"; }
+    
+    const previousThreshold = correctAnswers < 10 ? 0 :
+                             correctAnswers < 25 ? 10 :
+                             correctAnswers < 50 ? 25 :
+                             correctAnswers < 100 ? 50 :
+                             correctAnswers < 200 ? 100 :
+                             correctAnswers < 500 ? 200 : 500;
+    
+    const progressInLevel = correctAnswers - previousThreshold;
+    const neededInLevel = needed - previousThreshold;
+    const percentage = Math.round((progressInLevel / neededInLevel) * 100);
+    
+    return {
+        current: correctAnswers,
+        needed: needed,
+        nextLevel: nextLevel,
+        percentage: percentage
+    };
 }
 
 function toggleTopicLock(topicKey) {
