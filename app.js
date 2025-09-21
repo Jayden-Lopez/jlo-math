@@ -195,6 +195,11 @@ async function loadParentSettings() {
         }
     } catch (error) {
         console.error("Error loading parent settings:", error);
+        // Set default PIN if Firebase fails
+        if (!parentSettings.pinHash) {
+            parentSettings.pinHash = hashPIN('1234');
+            parentSettings.initialized = false;
+        }
     }
 }
 
@@ -601,7 +606,6 @@ function checkAnswer() {
     
     // Update statistics
     userData.totalAttempts++;
-    userData.completedToday++;
     
     if (!userData.topicProgress[currentTopic]) {
         userData.topicProgress[currentTopic] = { completed: 0, attempts: 0, accuracy: 0 };
@@ -611,6 +615,7 @@ function checkAnswer() {
     if (isCorrect) {
         userData.correctCount++;
         userData.topicProgress[currentTopic].completed++;
+        userData.completedToday++; // Only increment daily count for correct answers
         currentStreak++;
         showFeedback(true);
     } else {
@@ -642,15 +647,13 @@ function checkAnswer() {
     // Stop timer
     clearInterval(timerInterval);
     
-    // Disable submit button
+    // Disable submit button and answer inputs
     document.getElementById('submitBtn').disabled = true;
-    
-    // Show next question after delay
-    setTimeout(() => {
-        currentQuestionIndex++;
-        showQuestion();
-        document.getElementById('submitBtn').disabled = false;
-    }, 3000);
+    if (document.getElementById('answerInput')) {
+        document.getElementById('answerInput').disabled = true;
+    }
+    const options = document.querySelectorAll('.mc-option');
+    options.forEach(opt => opt.style.pointerEvents = 'none');
 }
 
 // Show feedback
@@ -669,6 +672,9 @@ function showFeedback(isCorrect) {
             <div class="feedback correct">
                 ${messages[Math.floor(Math.random() * messages.length)]}
             </div>
+            <button class="btn btn-primary" onclick="nextQuestion()" style="margin-top: 15px;">
+                Next Question →
+            </button>
         `;
     } else {
         feedbackArea.innerHTML = `
@@ -679,8 +685,18 @@ function showFeedback(isCorrect) {
                 <strong>Here's how to solve it:</strong><br>
                 ${currentQuestion.explanation}
             </div>
+            <button class="btn btn-primary" onclick="nextQuestion()" style="margin-top: 15px;">
+                Next Question →
+            </button>
         `;
     }
+}
+
+// Function to move to next question
+function nextQuestion() {
+    currentQuestionIndex++;
+    showQuestion();
+    document.getElementById('submitBtn').disabled = false;
 }
 
 // Show hint
@@ -799,6 +815,12 @@ function showTopicSelection() {
 
 // Parent Dashboard Functions
 function showParentDashboard() {
+    // Initialize PIN if not set
+    if (!parentSettings.pinHash) {
+        parentSettings.pinHash = hashPIN('1234');
+        parentSettings.initialized = false;
+    }
+    
     // Check for lockout
     if (lockoutTime && new Date() < lockoutTime) {
         const remainingTime = Math.ceil((lockoutTime - new Date()) / 1000);
