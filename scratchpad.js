@@ -1,5 +1,5 @@
-// scratchpad.js - Modular Canvas-Based Scratch Pad for Math Practice App
-// Add this as a new file in your project
+// scratchpad.js - Fixed version with proper initialization
+// This replaces your entire scratchpad.js file
 
 class ScratchPad {
     constructor() {
@@ -11,11 +11,6 @@ class ScratchPad {
         this.brushSize = 3;
         this.drawingHistory = [];
         this.currentPath = [];
-    }
-
-    // Initialize the scratch pad (call this once when the page loads)
-    init() {
-        // This will be called when scratch pad is shown
     }
 
     // Get the HTML for the scratch pad
@@ -78,9 +73,9 @@ class ScratchPad {
                     </div>
                 </div>
                 
-                <canvas id="scratchCanvas" width="800" height="400" style="border: 2px solid #fcd34d; border-radius: 10px; 
-                        background: white; cursor: crosshair; display: block; width: 100%; height: auto;
-                        touch-action: none; max-width: 100%;"></canvas>
+                <canvas id="scratchCanvas" style="border: 2px solid #fcd34d; border-radius: 10px; 
+                        background: white; cursor: crosshair; display: block; width: 100%; height: 400px;
+                        touch-action: none;"></canvas>
                 
                 <div style="margin-top: 10px; font-size: 0.9em; color: #92400e;">
                     💡 Tip: Use your finger or stylus to write! Switch between pen and eraser as needed.
@@ -96,7 +91,8 @@ class ScratchPad {
         if (container && button) {
             container.style.display = 'block';
             button.style.display = 'none';
-            this.setupCanvas();
+            // Important: Setup canvas after a short delay to ensure DOM is ready
+            setTimeout(() => this.setupCanvas(), 100);
         }
     }
 
@@ -113,72 +109,75 @@ class ScratchPad {
     // Setup canvas and event listeners
     setupCanvas() {
         this.canvas = document.getElementById('scratchCanvas');
-        if (!this.canvas) return;
+        if (!this.canvas) {
+            console.error('Canvas not found!');
+            return;
+        }
 
         this.ctx = this.canvas.getContext('2d');
         
-        // Set canvas actual size for better quality on retina displays
+        // Set canvas size based on container
         const rect = this.canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = rect.width * dpr;
-        this.canvas.height = 400 * dpr;
-        this.ctx.scale(dpr, dpr);
+        this.canvas.width = rect.width;
+        this.canvas.height = 400;
         
         // Set initial drawing styles
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
+        this.ctx.lineWidth = this.brushSize;
+        this.ctx.strokeStyle = this.currentColor;
         
-        // Remove any existing listeners to prevent duplicates
-        this.removeEventListeners();
+        // Remove any existing listeners
+        this.canvas.onmousedown = null;
+        this.canvas.onmousemove = null;
+        this.canvas.onmouseup = null;
+        this.canvas.onmouseout = null;
+        this.canvas.ontouchstart = null;
+        this.canvas.ontouchmove = null;
+        this.canvas.ontouchend = null;
         
-        // Add event listeners for drawing
-        this.addEventListeners();
-    }
-
-    // Add event listeners
-    addEventListeners() {
-        if (!this.canvas) return;
-
-        // Mouse events
-        this.canvas.addEventListener('mousedown', this.startDrawing.bind(this));
-        this.canvas.addEventListener('mousemove', this.draw.bind(this));
-        this.canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
-        this.canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
-
-        // Touch events for iPad/tablets
-        this.canvas.addEventListener('touchstart', this.handleTouch.bind(this), { passive: false });
-        this.canvas.addEventListener('touchmove', this.handleTouch.bind(this), { passive: false });
-        this.canvas.addEventListener('touchend', this.stopDrawing.bind(this));
-        this.canvas.addEventListener('touchcancel', this.stopDrawing.bind(this));
-    }
-
-    // Remove event listeners
-    removeEventListeners() {
-        if (!this.canvas) return;
-
-        const newCanvas = this.canvas.cloneNode(true);
-        this.canvas.parentNode.replaceChild(newCanvas, this.canvas);
-        this.canvas = newCanvas;
-    }
-
-    // Handle touch events
-    handleTouch(e) {
-        e.preventDefault();
-        const touch = e.touches[0];
-        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
-                                         e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.canvas.dispatchEvent(mouseEvent);
+        // Add mouse event listeners
+        this.canvas.onmousedown = (e) => this.startDrawing(e);
+        this.canvas.onmousemove = (e) => this.draw(e);
+        this.canvas.onmouseup = () => this.stopDrawing();
+        this.canvas.onmouseout = () => this.stopDrawing();
+        
+        // Add touch event listeners for iPad
+        this.canvas.ontouchstart = (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
+            this.startDrawing(mouseEvent);
+        };
+        
+        this.canvas.ontouchmove = (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
+            this.draw(mouseEvent);
+        };
+        
+        this.canvas.ontouchend = (e) => {
+            e.preventDefault();
+            this.stopDrawing();
+        };
+        
+        console.log('Canvas setup complete');
     }
 
     // Get coordinates relative to canvas
     getCoordinates(e) {
         const rect = this.canvas.getBoundingClientRect();
         return {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+            x: (e.clientX - rect.left) * (this.canvas.width / rect.width),
+            y: (e.clientY - rect.top) * (this.canvas.height / rect.height)
         };
     }
 
@@ -186,6 +185,7 @@ class ScratchPad {
     startDrawing(e) {
         this.isDrawing = true;
         const coords = this.getCoordinates(e);
+        
         this.currentPath = [{
             x: coords.x,
             y: coords.y,
@@ -231,53 +231,48 @@ class ScratchPad {
             }
         }
         this.isDrawing = false;
-        this.ctx.beginPath();
+        if (this.ctx) {
+            this.ctx.beginPath();
+        }
     }
 
     // Set pen mode
     setPenMode() {
         this.isEraserMode = false;
-        this.canvas.style.cursor = 'crosshair';
-        document.getElementById('penBtn').style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
-        document.getElementById('eraserBtn').style.boxShadow = 'none';
+        if (this.canvas) {
+            this.canvas.style.cursor = 'crosshair';
+        }
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        if (penBtn) penBtn.style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
+        if (eraserBtn) eraserBtn.style.boxShadow = 'none';
     }
 
     // Set eraser mode
     setEraserMode() {
         this.isEraserMode = true;
-        this.canvas.style.cursor = 'grab';
-        document.getElementById('eraserBtn').style.boxShadow = '0 0 10px rgba(251, 146, 60, 0.3)';
-        document.getElementById('penBtn').style.boxShadow = 'none';
+        if (this.canvas) {
+            this.canvas.style.cursor = 'grab';
+        }
+        const penBtn = document.getElementById('penBtn');
+        const eraserBtn = document.getElementById('eraserBtn');
+        if (eraserBtn) eraserBtn.style.boxShadow = '0 0 10px rgba(251, 146, 60, 0.3)';
+        if (penBtn) penBtn.style.boxShadow = 'none';
     }
 
     // Set pen color
     setColor(color) {
         this.currentColor = color;
         this.setPenMode(); // Switch to pen mode when selecting a color
-        
-        // Update color button borders to show selected
-        document.querySelectorAll('[id^="color"]').forEach(btn => {
-            btn.style.borderWidth = '3px';
-        });
-        
-        // Find and highlight the selected color button
-        const colorButtons = {
-            '#2563eb': 'colorBlue',
-            '#000000': 'colorBlack',
-            '#dc2626': 'colorRed',
-            '#16a34a': 'colorGreen',
-            '#9333ea': 'colorPurple'
-        };
-        
-        if (colorButtons[color]) {
-            document.getElementById(colorButtons[color]).style.borderWidth = '5px';
-        }
     }
 
     // Set brush size
     setBrushSize(size) {
         this.brushSize = parseInt(size);
-        document.getElementById('brushSizeDisplay').textContent = size + 'px';
+        const display = document.getElementById('brushSizeDisplay');
+        if (display) {
+            display.textContent = size + 'px';
+        }
     }
 
     // Undo last stroke
@@ -291,13 +286,17 @@ class ScratchPad {
     // Clear entire canvas
     clear() {
         if (confirm('Are you sure you want to clear the entire scratch pad?')) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            if (this.ctx && this.canvas) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            }
             this.drawingHistory = [];
         }
     }
 
     // Redraw canvas from history
     redrawCanvas() {
+        if (!this.ctx || !this.canvas) return;
+        
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.drawingHistory.forEach(path => {
@@ -325,9 +324,23 @@ class ScratchPad {
 // Create global instance
 const scratchPad = new ScratchPad();
 
-// INTEGRATION INSTRUCTIONS:
-// 1. Add this file to your project: <script src="scratchpad.js"></script>
-// 2. In your app.js, replace the scratchPadHTML variable in showQuestion() with:
-//    const scratchPadHTML = scratchPad.getHTML();
-// 3. Remove the old scratch pad functions from app.js (showScratchPad, hideScratchPad, clearScratchPad, etc.)
-// 4. That's it! The new canvas-based scratch pad will work automatically
+// FIX FOR REPEATING QUESTIONS
+// Add this to your app.js or replace the existing nextQuestion function
+if (typeof nextQuestion === 'undefined') {
+    window.nextQuestion = function() {
+        // Clear the scratch pad for new question
+        if (scratchPad.ctx && scratchPad.canvas) {
+            scratchPad.ctx.clearRect(0, 0, scratchPad.canvas.width, scratchPad.canvas.height);
+            scratchPad.drawingHistory = [];
+        }
+        
+        currentQuestionIndex++;
+        showQuestion();
+        
+        // Re-enable submit button for new question
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+        }
+    };
+}
