@@ -516,49 +516,7 @@ function showQuestion() {
     
     const answerSection = document.getElementById('answerSection');
     
-    const scratchPadHTML = `
-        <button id="scratchPadOpenBtn" onclick="showScratchPad()" 
-                style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
-                       color: #92400e; border: none; 
-                       padding: 10px 20px; border-radius: 15px; cursor: pointer; 
-                       font-weight: bold; margin-bottom: 15px;
-                       box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-            ✏️ Need Scratch Paper?
-        </button>
-        <div id="scratchPadContainer" style="display: none; background: #fffbf0; 
-             border: 2px dashed #fbbf24; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label style="color: #92400e; font-weight: bold;">✏️ Scratch Pad</label>
-                <div>
-                    <button onclick="undoScratchPad()" style="background: #60a5fa; color: white; border: none; 
-                            padding: 5px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-right: 5px;">
-                        ↶ Undo
-                    </button>
-                    <button onclick="eraseLastLine()" style="background: #fb923c; color: white; border: none; 
-                            padding: 5px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-right: 5px;">
-                        ⌫ Erase Line
-                    </button>
-                    <button onclick="clearScratchPad()" style="background: #fbbf24; color: #92400e; border: none; 
-                            padding: 5px 12px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-right: 5px;">
-                        🧹 Clear All
-                    </button>
-                    <button onclick="hideScratchPad()" style="background: #f59e0b; color: white; border: none; 
-                            padding: 5px 12px; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                        ✕ Close
-                    </button>
-                </div>
-            </div>
-            <textarea id="scratchPad" style="width: 100%; height: 150px; padding: 10px; border: 1px solid #fcd34d; 
-                      border-radius: 10px; font-size: 1.2em; font-family: 'Comic Sans MS', cursive; 
-                      background: white; resize: vertical;"
-                      placeholder="Work out the problem here... 
-Press Enter for a new line.
-Click 'Erase Line' to remove the last line."></textarea>
-            <div style="margin-top: 10px; font-size: 0.9em; color: #92400e;">
-                💡 Tip: Press Enter after each step to keep your work organized!
-            </div>
-        </div>
-    `;
+    const scratchPadHTML = scratchPad.getHTML();
     
     if (currentQuestion.options) {
         answerSection.innerHTML = scratchPadHTML + '<div class="mc-options" id="mcOptions"></div>';
@@ -583,65 +541,6 @@ Click 'Erase Line' to remove the last line."></textarea>
     }
     
     startTimer();
-}
-
-// Scratch Pad Functions
-function showScratchPad() {
-    const container = document.getElementById('scratchPadContainer');
-    const button = document.getElementById('scratchPadOpenBtn');
-    if (container && button) {
-        container.style.display = 'block';
-        button.style.display = 'none';
-        const pad = document.getElementById('scratchPad');
-        if (pad) pad.focus();
-    }
-}
-
-function hideScratchPad() {
-    const container = document.getElementById('scratchPadContainer');
-    const button = document.getElementById('scratchPadOpenBtn');
-    if (container && button) {
-        container.style.display = 'none';
-        button.style.display = 'block';
-    }
-}
-
-function clearScratchPad() {
-    const pad = document.getElementById('scratchPad');
-    if (pad) {
-        scratchPadHistory.push(pad.value);
-        if (scratchPadHistory.length > 10) scratchPadHistory.shift();
-        pad.value = '';
-        pad.focus();
-    }
-}
-
-function eraseLastLine() {
-    const pad = document.getElementById('scratchPad');
-    if (pad) {
-        scratchPadHistory.push(pad.value);
-        if (scratchPadHistory.length > 10) scratchPadHistory.shift();
-        
-        const lines = pad.value.split('\n');
-        for (let i = lines.length - 1; i >= 0; i--) {
-            if (lines[i].trim() !== '') {
-                lines.splice(i, 1);
-                break;
-            }
-        }
-        pad.value = lines.join('\n');
-        pad.focus();
-    }
-}
-
-function undoScratchPad() {
-    if (scratchPadHistory.length > 0) {
-        const pad = document.getElementById('scratchPad');
-        if (pad) {
-            pad.value = scratchPadHistory.pop();
-            pad.focus();
-        }
-    }
 }
 
 // Select multiple choice option
