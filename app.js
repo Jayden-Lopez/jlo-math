@@ -2568,4 +2568,3 @@ window.onclick = function(event) {
         modal.style.display = 'none';
     }
 }
-Modular infinite dynamic questions - Claude
