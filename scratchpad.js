@@ -1,0 +1,333 @@
+// scratchpad.js - Modular Canvas-Based Scratch Pad for Math Practice App
+// Add this as a new file in your project
+
+class ScratchPad {
+    constructor() {
+        this.canvas = null;
+        this.ctx = null;
+        this.isDrawing = false;
+        this.isEraserMode = false;
+        this.currentColor = '#2563eb';
+        this.brushSize = 3;
+        this.drawingHistory = [];
+        this.currentPath = [];
+    }
+
+    // Initialize the scratch pad (call this once when the page loads)
+    init() {
+        // This will be called when scratch pad is shown
+    }
+
+    // Get the HTML for the scratch pad
+    getHTML() {
+        return `
+            <button id="scratchPadOpenBtn" onclick="scratchPad.show()" 
+                    style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
+                           color: #92400e; border: none; 
+                           padding: 10px 20px; border-radius: 15px; cursor: pointer; 
+                           font-weight: bold; margin-bottom: 15px;
+                           box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                ✏️ Need Scratch Paper?
+            </button>
+            <div id="scratchPadContainer" style="display: none; background: #fffbf0; 
+                 border: 2px dashed #fbbf24; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="color: #92400e; font-weight: bold; font-size: 1.2em;">✏️ Scratch Pad</label>
+                    <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                        <button id="penBtn" onclick="scratchPad.setPenMode()" style="background: #10b981; color: white; border: none; 
+                                padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);">
+                            ✏️ Pen
+                        </button>
+                        <button id="eraserBtn" onclick="scratchPad.setEraserMode()" style="background: #fb923c; color: white; border: none; 
+                                padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                            🧹 Eraser
+                        </button>
+                        <button onclick="scratchPad.undo()" style="background: #60a5fa; color: white; border: none; 
+                                padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                            ↶ Undo
+                        </button>
+                        <button onclick="scratchPad.clear()" style="background: #fbbf24; color: #92400e; border: none; 
+                                padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                            🗑️ Clear All
+                        </button>
+                        <button onclick="scratchPad.hide()" style="background: #f59e0b; color: white; border: none; 
+                                padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                            ✕ Close
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Color palette -->
+                <div style="display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; align-items: center;">
+                    <button onclick="scratchPad.setColor('#2563eb')" style="width: 35px; height: 35px; background: #2563eb; 
+                            border: 3px solid #1e40af; border-radius: 50%; cursor: pointer;" id="colorBlue"></button>
+                    <button onclick="scratchPad.setColor('#000000')" style="width: 35px; height: 35px; background: #000000; 
+                            border: 3px solid #333; border-radius: 50%; cursor: pointer;" id="colorBlack"></button>
+                    <button onclick="scratchPad.setColor('#dc2626')" style="width: 35px; height: 35px; background: #dc2626; 
+                            border: 3px solid #991b1b; border-radius: 50%; cursor: pointer;" id="colorRed"></button>
+                    <button onclick="scratchPad.setColor('#16a34a')" style="width: 35px; height: 35px; background: #16a34a; 
+                            border: 3px solid #14532d; border-radius: 50%; cursor: pointer;" id="colorGreen"></button>
+                    <button onclick="scratchPad.setColor('#9333ea')" style="width: 35px; height: 35px; background: #9333ea; 
+                            border: 3px solid #6b21a8; border-radius: 50%; cursor: pointer;" id="colorPurple"></button>
+                    <div style="margin-left: 15px; display: flex; align-items: center; gap: 10px;">
+                        <label style="color: #92400e; font-weight: bold;">Size:</label>
+                        <input type="range" id="brushSizeRange" min="1" max="20" value="3" 
+                               oninput="scratchPad.setBrushSize(this.value)"
+                               style="width: 100px;">
+                        <span id="brushSizeDisplay" style="color: #92400e; font-weight: bold;">3px</span>
+                    </div>
+                </div>
+                
+                <canvas id="scratchCanvas" width="800" height="400" style="border: 2px solid #fcd34d; border-radius: 10px; 
+                        background: white; cursor: crosshair; display: block; width: 100%; height: auto;
+                        touch-action: none; max-width: 100%;"></canvas>
+                
+                <div style="margin-top: 10px; font-size: 0.9em; color: #92400e;">
+                    💡 Tip: Use your finger or stylus to write! Switch between pen and eraser as needed.
+                </div>
+            </div>
+        `;
+    }
+
+    // Show the scratch pad
+    show() {
+        const container = document.getElementById('scratchPadContainer');
+        const button = document.getElementById('scratchPadOpenBtn');
+        if (container && button) {
+            container.style.display = 'block';
+            button.style.display = 'none';
+            this.setupCanvas();
+        }
+    }
+
+    // Hide the scratch pad
+    hide() {
+        const container = document.getElementById('scratchPadContainer');
+        const button = document.getElementById('scratchPadOpenBtn');
+        if (container && button) {
+            container.style.display = 'none';
+            button.style.display = 'block';
+        }
+    }
+
+    // Setup canvas and event listeners
+    setupCanvas() {
+        this.canvas = document.getElementById('scratchCanvas');
+        if (!this.canvas) return;
+
+        this.ctx = this.canvas.getContext('2d');
+        
+        // Set canvas actual size for better quality on retina displays
+        const rect = this.canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = rect.width * dpr;
+        this.canvas.height = 400 * dpr;
+        this.ctx.scale(dpr, dpr);
+        
+        // Set initial drawing styles
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+        
+        // Remove any existing listeners to prevent duplicates
+        this.removeEventListeners();
+        
+        // Add event listeners for drawing
+        this.addEventListeners();
+    }
+
+    // Add event listeners
+    addEventListeners() {
+        if (!this.canvas) return;
+
+        // Mouse events
+        this.canvas.addEventListener('mousedown', this.startDrawing.bind(this));
+        this.canvas.addEventListener('mousemove', this.draw.bind(this));
+        this.canvas.addEventListener('mouseup', this.stopDrawing.bind(this));
+        this.canvas.addEventListener('mouseout', this.stopDrawing.bind(this));
+
+        // Touch events for iPad/tablets
+        this.canvas.addEventListener('touchstart', this.handleTouch.bind(this), { passive: false });
+        this.canvas.addEventListener('touchmove', this.handleTouch.bind(this), { passive: false });
+        this.canvas.addEventListener('touchend', this.stopDrawing.bind(this));
+        this.canvas.addEventListener('touchcancel', this.stopDrawing.bind(this));
+    }
+
+    // Remove event listeners
+    removeEventListeners() {
+        if (!this.canvas) return;
+
+        const newCanvas = this.canvas.cloneNode(true);
+        this.canvas.parentNode.replaceChild(newCanvas, this.canvas);
+        this.canvas = newCanvas;
+    }
+
+    // Handle touch events
+    handleTouch(e) {
+        e.preventDefault();
+        const touch = e.touches[0];
+        const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 
+                                         e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+        });
+        this.canvas.dispatchEvent(mouseEvent);
+    }
+
+    // Get coordinates relative to canvas
+    getCoordinates(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    }
+
+    // Start drawing
+    startDrawing(e) {
+        this.isDrawing = true;
+        const coords = this.getCoordinates(e);
+        this.currentPath = [{
+            x: coords.x,
+            y: coords.y,
+            color: this.currentColor,
+            size: this.brushSize,
+            isEraser: this.isEraserMode
+        }];
+        
+        this.ctx.beginPath();
+        this.ctx.moveTo(coords.x, coords.y);
+    }
+
+    // Draw on canvas
+    draw(e) {
+        if (!this.isDrawing) return;
+
+        const coords = this.getCoordinates(e);
+        
+        this.ctx.globalCompositeOperation = this.isEraserMode ? 'destination-out' : 'source-over';
+        this.ctx.strokeStyle = this.isEraserMode ? 'rgba(0,0,0,1)' : this.currentColor;
+        this.ctx.lineWidth = this.isEraserMode ? this.brushSize * 3 : this.brushSize;
+        
+        this.ctx.lineTo(coords.x, coords.y);
+        this.ctx.stroke();
+        this.ctx.beginPath();
+        this.ctx.moveTo(coords.x, coords.y);
+        
+        this.currentPath.push({
+            x: coords.x,
+            y: coords.y,
+            color: this.currentColor,
+            size: this.brushSize,
+            isEraser: this.isEraserMode
+        });
+    }
+
+    // Stop drawing
+    stopDrawing() {
+        if (this.isDrawing && this.currentPath.length > 0) {
+            this.drawingHistory.push([...this.currentPath]);
+            if (this.drawingHistory.length > 50) {
+                this.drawingHistory.shift();
+            }
+        }
+        this.isDrawing = false;
+        this.ctx.beginPath();
+    }
+
+    // Set pen mode
+    setPenMode() {
+        this.isEraserMode = false;
+        this.canvas.style.cursor = 'crosshair';
+        document.getElementById('penBtn').style.boxShadow = '0 0 10px rgba(16, 185, 129, 0.3)';
+        document.getElementById('eraserBtn').style.boxShadow = 'none';
+    }
+
+    // Set eraser mode
+    setEraserMode() {
+        this.isEraserMode = true;
+        this.canvas.style.cursor = 'grab';
+        document.getElementById('eraserBtn').style.boxShadow = '0 0 10px rgba(251, 146, 60, 0.3)';
+        document.getElementById('penBtn').style.boxShadow = 'none';
+    }
+
+    // Set pen color
+    setColor(color) {
+        this.currentColor = color;
+        this.setPenMode(); // Switch to pen mode when selecting a color
+        
+        // Update color button borders to show selected
+        document.querySelectorAll('[id^="color"]').forEach(btn => {
+            btn.style.borderWidth = '3px';
+        });
+        
+        // Find and highlight the selected color button
+        const colorButtons = {
+            '#2563eb': 'colorBlue',
+            '#000000': 'colorBlack',
+            '#dc2626': 'colorRed',
+            '#16a34a': 'colorGreen',
+            '#9333ea': 'colorPurple'
+        };
+        
+        if (colorButtons[color]) {
+            document.getElementById(colorButtons[color]).style.borderWidth = '5px';
+        }
+    }
+
+    // Set brush size
+    setBrushSize(size) {
+        this.brushSize = parseInt(size);
+        document.getElementById('brushSizeDisplay').textContent = size + 'px';
+    }
+
+    // Undo last stroke
+    undo() {
+        if (this.drawingHistory.length > 0) {
+            this.drawingHistory.pop();
+            this.redrawCanvas();
+        }
+    }
+
+    // Clear entire canvas
+    clear() {
+        if (confirm('Are you sure you want to clear the entire scratch pad?')) {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.drawingHistory = [];
+        }
+    }
+
+    // Redraw canvas from history
+    redrawCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.drawingHistory.forEach(path => {
+            if (path.length === 0) return;
+            
+            for (let i = 0; i < path.length - 1; i++) {
+                const point = path[i];
+                const nextPoint = path[i + 1];
+                
+                this.ctx.globalCompositeOperation = point.isEraser ? 'destination-out' : 'source-over';
+                this.ctx.strokeStyle = point.isEraser ? 'rgba(0,0,0,1)' : point.color;
+                this.ctx.lineWidth = point.isEraser ? point.size * 3 : point.size;
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(point.x, point.y);
+                this.ctx.lineTo(nextPoint.x, nextPoint.y);
+                this.ctx.stroke();
+            }
+        });
+    }
+}
+
+// Create global instance
+const scratchPad = new ScratchPad();
+
+// INTEGRATION INSTRUCTIONS:
+// 1. Add this file to your project: <script src="scratchpad.js"></script>
+// 2. In your app.js, replace the scratchPadHTML variable in showQuestion() with:
+//    const scratchPadHTML = scratchPad.getHTML();
+// 3. Remove the old scratch pad functions from app.js (showScratchPad, hideScratchPad, clearScratchPad, etc.)
+// 4. That's it! The new canvas-based scratch pad will work automatically
