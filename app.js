@@ -1,46 +1,4 @@
-// Display current question
-function showQuestion() {
-    if (currentQuestionIndex >= sessionQuestions.length) {
-        endSession();
-        return;
-    }
-    
-    currentQuestion = sessionQuestions[currentQuestionIndex];
-    
-    // Update question number
-    document.getElementById('questionNumber').textContent = 
-        `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
-    
-    // Display question
-    document.getElementById('questionText').textContent = currentQuestion.question;
-    
-    // Clear previous feedback
-    document.getElementById('feedbackArea').innerHTML = '';
-    
-    // Setup answer input based on question type
-    const answerSection = document.getElementById('answerSection');
-    
-    // Add scratch pad for working out problems
-    const scratchPadHTML = `
-        <div style="background: #fffbf0; border: 2px dashed #fbbf24; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label style="color: #92400e; font-weight: bold;">✏️ Scratch Pad - Work it out here!</label>
-                <button onclick="clearScratchPad()" style="background: #fbbf24; color: #92400e; border: none; 
-                        padding: 5px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
-                    🧹 Clear
-                </button>
-            </div>
-            <textarea id="scratchPad" style="width: 100%; height: 120px; padding: 10px; border: 1px solid #fcd34d; 
-                      border-radius: 10px; font-size: 1.2em; font-family: 'Comic Sans MS', cursive; 
-                      background: white; resize: vertical;"
-                      placeholder="Use this space to work out the problem... You can write calculations like:
-12 × 8 = ?
-12 × 8 = 96"></textarea>
-        </div>
-    `;
-    
-    if (currentQuestion.options) {
-        // Multiple choice question// Firebase Configuration
+// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDYpd-RQ3G7fiAZvT8Crx3lU5gVjbvLjHU",
     authDomain: "jordan-math-buddy.firebaseapp.com",
@@ -65,6 +23,7 @@ let timerInterval = null;
 let currentStreak = 0;
 let parentAccessAttempts = 0;
 let lockoutTime = null;
+let scratchPadHistory = [];
 
 // User Progress Data
 let userData = {
@@ -211,7 +170,6 @@ async function loadUserData() {
         const doc = await db.collection('users').doc('jordan').get();
         if (doc.exists) {
             const data = doc.data();
-            // Merge with defaults to ensure all properties exist
             userData = { ...userData, ...data };
             updateStats();
             updateLevel();
@@ -230,14 +188,12 @@ async function loadParentSettings() {
         if (doc.exists) {
             parentSettings = doc.data();
         } else {
-            // Initialize with default PIN (1234)
             parentSettings.pinHash = hashPIN('1234');
             parentSettings.initialized = false;
             await saveParentSettings();
         }
     } catch (error) {
         console.error("Error loading parent settings:", error);
-        // Set default PIN if Firebase fails
         if (!parentSettings.pinHash) {
             parentSettings.pinHash = hashPIN('1234');
             parentSettings.initialized = false;
@@ -266,7 +222,6 @@ async function saveParentSettings() {
 
 // Hash PIN for security
 function hashPIN(pin) {
-    // Simple hash function for PIN
     let hash = 0;
     for (let i = 0; i < pin.length; i++) {
         hash = ((hash << 5) - hash) + pin.charCodeAt(i);
@@ -316,7 +271,6 @@ function getRecommendedTopic() {
     
     if (!stage) return null;
     
-    // Find the first incomplete topic in current stage
     for (const topic of stage.topics) {
         const progress = userData.topicProgress[topic.key] || { completed: 0 };
         if (progress.completed < topic.required) {
@@ -330,7 +284,6 @@ function getRecommendedTopic() {
         }
     }
     
-    // If stage completed, move to next
     if (currentStage < learningPath.length) {
         userData.currentStage = currentStage + 1;
         saveUserData();
@@ -345,13 +298,11 @@ function initializeTopics() {
     const topicSelection = document.getElementById('topicSelection');
     if (!topicSelection) return;
     
-    // Show learning path if enabled
     if (userData.pathMode) {
         const currentStage = getCurrentStage();
         const stage = learningPath[currentStage - 1];
         const recommended = getRecommendedTopic();
         
-        // Build path progress header
         let pathProgressHTML = `
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                         color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
@@ -373,7 +324,6 @@ function initializeTopics() {
             </div>
         `;
         
-        // Show stages overview
         let stagesHTML = '<div style="margin-bottom: 20px;">';
         learningPath.forEach((pathStage, index) => {
             const stageNum = index + 1;
@@ -405,7 +355,6 @@ function initializeTopics() {
         });
         stagesHTML += '</div>';
         
-        // Add toggle for free practice mode
         const modeToggle = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <button class="btn btn-primary" onclick="togglePathMode()" 
@@ -419,7 +368,6 @@ function initializeTopics() {
                                    '<h3 style="text-align: center; margin: 20px 0;">Select a Topic to Practice:</h3>' +
                                    '<div class="topic-grid" id="topicGrid"></div>';
     } else {
-        // Free practice mode header
         const freeModeHeader = `
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2 style="color: #5a67d8;">Free Practice Mode</h2>
@@ -432,7 +380,6 @@ function initializeTopics() {
         topicSelection.innerHTML = freeModeHeader + '<div class="topic-grid" id="topicGrid"></div>';
     }
     
-    // Rebuild topic grid
     const topicGrid = document.getElementById('topicGrid');
     topicGrid.innerHTML = '';
     
@@ -443,13 +390,11 @@ function initializeTopics() {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
         
-        // Check if topic is in current stage or earlier
         let stageInfo = null;
-        let isAvailable = !userData.pathMode; // All available in free mode
+        let isAvailable = !userData.pathMode;
         let isRecommended = false;
         
         if (userData.pathMode) {
-            // Find which stage this topic belongs to
             for (let i = 0; i < learningPath.length; i++) {
                 const checkStage = learningPath[i];
                 const topicInStage = checkStage.topics.find(t => t.key === key);
@@ -505,7 +450,6 @@ function initializeTopics() {
         topicGrid.appendChild(card);
     }
     
-    // Add daily goal progress
     updateDailyProgress();
 }
 
@@ -536,8 +480,8 @@ function startTopic(topicKey) {
     currentTopic = topicKey;
     currentQuestionIndex = 0;
     sessionQuestions = [];
+    scratchPadHistory = [];
     
-    // Generate questions for this session
     const generator = topics[topicKey].generator;
     if (generator && generator.generate) {
         for (let i = 0; i < questionsPerSession; i++) {
@@ -548,11 +492,9 @@ function startTopic(topicKey) {
         return;
     }
     
-    // Hide topic selection, show question container
     document.getElementById('topicSelection').style.display = 'none';
     document.getElementById('questionContainer').style.display = 'block';
     
-    // Start first question
     showQuestion();
 }
 
@@ -565,20 +507,15 @@ function showQuestion() {
     
     currentQuestion = sessionQuestions[currentQuestionIndex];
     
-    // Update question number
     document.getElementById('questionNumber').textContent = 
         `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
     
-    // Display question
     document.getElementById('questionText').textContent = currentQuestion.question;
     
-    // Clear previous feedback
     document.getElementById('feedbackArea').innerHTML = '';
     
-    // Setup answer input based on question type
     const answerSection = document.getElementById('answerSection');
     
-    // Add scratch pad button (optional, starts hidden)
     const scratchPadHTML = `
         <button id="scratchPadOpenBtn" onclick="showScratchPad()" 
                 style="background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
@@ -624,7 +561,6 @@ Click 'Erase Line' to remove the last line."></textarea>
     `;
     
     if (currentQuestion.options) {
-        // Multiple choice question
         answerSection.innerHTML = scratchPadHTML + '<div class="mc-options" id="mcOptions"></div>';
         const mcContainer = document.getElementById('mcOptions');
         
@@ -637,7 +573,6 @@ Click 'Erase Line' to remove the last line."></textarea>
             mcContainer.appendChild(optionBtn);
         });
     } else {
-        // Text input question
         answerSection.innerHTML = scratchPadHTML + `
             <div class="input-group">
                 <input type="text" class="answer-input" id="answerInput" 
@@ -647,13 +582,10 @@ Click 'Erase Line' to remove the last line."></textarea>
         `;
     }
     
-    // Start timer
     startTimer();
 }
 
 // Scratch Pad Functions
-let scratchPadHistory = [];
-
 function showScratchPad() {
     const container = document.getElementById('scratchPadContainer');
     const button = document.getElementById('scratchPadOpenBtn');
@@ -725,7 +657,6 @@ function checkAnswer() {
     let isCorrect = false;
     
     if (currentQuestion.options) {
-        // Multiple choice
         const selected = document.querySelector('.mc-option.selected');
         if (!selected) {
             alert("Please select an answer!");
@@ -735,7 +666,6 @@ function checkAnswer() {
         isCorrect = (selectedIndex === currentQuestion.correct);
         userAnswer = currentQuestion.options[selectedIndex];
     } else {
-        // Text input
         const input = document.getElementById('answerInput');
         userAnswer = input.value.trim();
         
@@ -744,15 +674,12 @@ function checkAnswer() {
             return;
         }
         
-        // Parse answer for comparison
         const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
         const correctAnswer = parseFloat(currentQuestion.answer);
         
-        // Check if answer is close enough (within 0.01 for decimals)
         isCorrect = Math.abs(numericAnswer - correctAnswer) < 0.01;
     }
     
-    // Update statistics
     userData.totalAttempts++;
     
     if (!userData.topicProgress[currentTopic]) {
@@ -763,7 +690,7 @@ function checkAnswer() {
     if (isCorrect) {
         userData.correctCount++;
         userData.topicProgress[currentTopic].completed++;
-        userData.completedToday++; // Only increment daily count for correct answers
+        userData.completedToday++;
         currentStreak++;
         showFeedback(true);
     } else {
@@ -771,15 +698,12 @@ function checkAnswer() {
         showFeedback(false);
     }
     
-    // Update accuracy
     userData.topicProgress[currentTopic].accuracy = Math.round(
         (userData.topicProgress[currentTopic].completed / userData.topicProgress[currentTopic].attempts) * 100
     );
     
-    // Track IXL-style progress
     trackIXLProgress();
     
-    // Check if stage completed
     if (userData.pathMode && isStageCompleted(getCurrentStage())) {
         const nextStage = getCurrentStage() + 1;
         if (nextStage <= learningPath.length) {
@@ -787,15 +711,12 @@ function checkAnswer() {
         }
     }
     
-    // Save progress
     saveUserData();
     updateStats();
     updateDailyProgress();
     
-    // Stop timer
     clearInterval(timerInterval);
     
-    // Disable submit button and answer inputs
     document.getElementById('submitBtn').disabled = true;
     if (document.getElementById('answerInput')) {
         document.getElementById('answerInput').disabled = true;
@@ -893,7 +814,6 @@ function updateLevel() {
     
     document.getElementById('levelDisplay').textContent = `Level: ${level}`;
     
-    // Track level changes
     if (level !== previousLevel) {
         userData.levelHistory.push({
             level: level,
@@ -918,12 +838,10 @@ function calculateLevel() {
 
 // Track IXL-style progress
 function trackIXLProgress() {
-    // Initialize IXL history if needed
     if (!userData.ixlHistory) {
         userData.ixlHistory = [];
     }
     
-    // Add progress entry (limit to last 100 for performance)
     userData.ixlHistory.push({
         date: new Date().toISOString(),
         topic: currentTopic,
@@ -933,7 +851,6 @@ function trackIXLProgress() {
         level: calculateLevel()
     });
     
-    // Keep only last 100 entries
     if (userData.ixlHistory.length > 100) {
         userData.ixlHistory = userData.ixlHistory.slice(-100);
     }
@@ -963,13 +880,11 @@ function showTopicSelection() {
 
 // Parent Dashboard Functions
 function showParentDashboard() {
-    // Initialize PIN if not set
     if (!parentSettings.pinHash) {
         parentSettings.pinHash = hashPIN('1234');
         parentSettings.initialized = false;
     }
     
-    // Check for lockout
     if (lockoutTime && new Date() < lockoutTime) {
         const remainingTime = Math.ceil((lockoutTime - new Date()) / 1000);
         alert(`Too many incorrect attempts. Please wait ${remainingTime} seconds.`);
@@ -979,7 +894,6 @@ function showParentDashboard() {
     const modal = document.getElementById('parentModal');
     const modalContent = document.querySelector('.modal-content');
     
-    // Show PIN entry first
     modalContent.innerHTML = `
         <span class="close" onclick="closeParentDashboard()">&times;</span>
         <h2>🔐 Parent Access</h2>
@@ -1015,7 +929,7 @@ function verifyParentAccess() {
     } else {
         parentAccessAttempts++;
         if (parentAccessAttempts >= 3) {
-            lockoutTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minute lockout
+            lockoutTime = new Date(Date.now() + 5 * 60 * 1000);
             errorDiv.textContent = 'Too many attempts. Locked for 5 minutes.';
             setTimeout(() => closeParentDashboard(), 2000);
         } else {
@@ -1030,20 +944,17 @@ function showParentControls() {
     const accuracy = userData.totalAttempts > 0 ? 
         Math.round((userData.correctCount / userData.totalAttempts) * 100) : 0;
     
-    // Calculate IXL-style progress metrics
     const startDate = new Date(userData.startDate || userData.ixlHistory[0]?.date || new Date());
     const daysActive = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24)) + 1;
     const problemsPerDay = daysActive > 0 ? Math.round(userData.correctCount / daysActive) : 0;
     
-    // Get initial stats for comparison
     const initialLevel = userData.levelHistory[0]?.level || "Beginner";
     const currentLevel = calculateLevel();
     const levelProgress = getLevelProgress();
     
-    // Build IXL progress chart
     let progressChart = '';
     if (userData.ixlHistory && userData.ixlHistory.length > 0) {
-        const recentHistory = userData.ixlHistory.slice(-30); // Last 30 entries
+        const recentHistory = userData.ixlHistory.slice(-30);
         const maxProblems = Math.max(...recentHistory.map(h => h.totalCompleted));
         
         progressChart = `
@@ -1070,7 +981,6 @@ function showParentControls() {
         `;
     }
     
-    // Build topic statistics HTML with IXL-style skill levels
     let topicStats = '';
     for (const [key, topic] of Object.entries(topics)) {
         const progress = userData.topicProgress[key] || { completed: 0, attempts: 0, accuracy: 0 };
@@ -1078,7 +988,6 @@ function showParentControls() {
             Math.round((progress.completed / progress.attempts) * 100) : 0;
         const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
         
-        // IXL-style skill level for topic
         let skillLevel = '';
         if (progress.completed === 0) skillLevel = '⚪ Not Started';
         else if (progress.completed < 5) skillLevel = '🔵 Beginning';
@@ -1114,7 +1023,6 @@ function showParentControls() {
         `;
     }
     
-    // Add learning path status
     const currentStage = getCurrentStage();
     const pathStatus = `
         <div style="background: #f0fff4; border-radius: 10px; padding: 15px; margin: 15px 0;">
@@ -1237,7 +1145,6 @@ function showParentControls() {
         </div>
     `;
     
-    // Mark as initialized after first successful login
     if (!parentSettings.initialized) {
         parentSettings.initialized = true;
         saveParentSettings();
@@ -1289,7 +1196,7 @@ function toggleTopicLock(topicKey) {
     }
     
     saveParentSettings();
-    showParentControls(); // Refresh display
+    showParentControls();
 }
 
 function resetTopic(topicKey) {
@@ -1297,7 +1204,7 @@ function resetTopic(topicKey) {
     if (confirm(`Are you sure you want to reset progress for ${topicName}? This cannot be undone.`)) {
         userData.topicProgress[topicKey] = { completed: 0, attempts: 0, accuracy: 0 };
         saveUserData();
-        showParentControls(); // Refresh display
+        showParentControls();
         alert(`${topicName} has been reset!`);
     }
 }
