@@ -1,4 +1,46 @@
-// Firebase Configuration
+// Display current question
+function showQuestion() {
+    if (currentQuestionIndex >= sessionQuestions.length) {
+        endSession();
+        return;
+    }
+    
+    currentQuestion = sessionQuestions[currentQuestionIndex];
+    
+    // Update question number
+    document.getElementById('questionNumber').textContent = 
+        `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
+    
+    // Display question
+    document.getElementById('questionText').textContent = currentQuestion.question;
+    
+    // Clear previous feedback
+    document.getElementById('feedbackArea').innerHTML = '';
+    
+    // Setup answer input based on question type
+    const answerSection = document.getElementById('answerSection');
+    
+    // Add scratch pad for working out problems
+    const scratchPadHTML = `
+        <div style="background: #fffbf0; border: 2px dashed #fbbf24; border-radius: 15px; padding: 15px; margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label style="color: #92400e; font-weight: bold;">✏️ Scratch Pad - Work it out here!</label>
+                <button onclick="clearScratchPad()" style="background: #fbbf24; color: #92400e; border: none; 
+                        padding: 5px 15px; border-radius: 10px; cursor: pointer; font-weight: bold;">
+                    🧹 Clear
+                </button>
+            </div>
+            <textarea id="scratchPad" style="width: 100%; height: 120px; padding: 10px; border: 1px solid #fcd34d; 
+                      border-radius: 10px; font-size: 1.2em; font-family: 'Comic Sans MS', cursive; 
+                      background: white; resize: vertical;"
+                      placeholder="Use this space to work out the problem... You can write calculations like:
+12 × 8 = ?
+12 × 8 = 96"></textarea>
+        </div>
+    `;
+    
+    if (currentQuestion.options) {
+        // Multiple choice question// Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDYpd-RQ3G7fiAZvT8Crx3lU5gVjbvLjHU",
     authDomain: "jordan-math-buddy.firebaseapp.com",
@@ -536,9 +578,17 @@ function showQuestion() {
     // Setup answer input based on question type
     const answerSection = document.getElementById('answerSection');
     
+    // Add scratch pad button (hidden by default)
+    let scratchPadHTML = '';
+    if (window.UIComponents && window.UIComponents.ScratchPad) {
+        // Reset scratch pad for new question
+        window.UIComponents.ScratchPad.reset();
+        scratchPadHTML = window.UIComponents.ScratchPad.createButton();
+    }
+    
     if (currentQuestion.options) {
         // Multiple choice question
-        answerSection.innerHTML = '<div class="mc-options" id="mcOptions"></div>';
+        answerSection.innerHTML = scratchPadHTML + '<div class="mc-options" id="mcOptions"></div>';
         const mcContainer = document.getElementById('mcOptions');
         
         currentQuestion.options.forEach((option, index) => {
@@ -551,7 +601,7 @@ function showQuestion() {
         });
     } else {
         // Text input question
-        answerSection.innerHTML = `
+        answerSection.innerHTML = scratchPadHTML + `
             <div class="input-group">
                 <input type="text" class="answer-input" id="answerInput" 
                        placeholder="Type your answer here..." 
