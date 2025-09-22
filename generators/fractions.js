@@ -1,4 +1,5 @@
-// Fractions Question Generator
+// generators/fractions.js
+// Fractions Question Generator - Updated to use global helper functions
 window.FractionsGenerator = {
     generate: function() {
         const types = ['add', 'subtract', 'multiply', 'compare', 'simplify'];
@@ -27,20 +28,26 @@ window.FractionsGenerator = {
         const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
         const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
         
-        // Find LCD
-        const lcd = this.lcm(d1, d2);
+        // Find LCD using global lcm function
+        const lcd = lcm(d1, d2);
         const result_n = (n1 * lcd / d1) + (n2 * lcd / d2);
         const result_d = lcd;
         
-        // Simplify result
-        const gcd = this.gcd(result_n, result_d);
-        const final_n = result_n / gcd;
-        const final_d = result_d / gcd;
+        // Simplify result using global gcd function
+        const g = gcd(result_n, result_d);
+        const final_n = result_n / g;
+        const final_d = result_d / g;
         
         return {
             question: `What is ${n1}/${d1} + ${n2}/${d2}?`,
             answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
-            hint: `First find a common denominator. Try ${lcd}`,
+            hint: `Step 1: Look at the bottom numbers (denominators): ${d1} and ${d2}
+Step 2: Find a common denominator. Try ${lcd}
+Step 3: Convert the fractions: ${n1}/${d1} = ${n1 * lcd / d1}/${lcd}
+Step 4: Convert the second: ${n2}/${d2} = ${n2 * lcd / d2}/${lcd}
+Step 5: Add the top numbers: ${n1 * lcd / d1} + ${n2 * lcd / d2} = ${result_n}
+Step 6: Keep the bottom: ${result_n}/${result_d}
+Step 7: Simplify if you can: ${final_n}/${final_d}`,
             explanation: `To add fractions: ${n1}/${d1} = ${n1 * lcd / d1}/${lcd} and ${n2}/${d2} = ${n2 * lcd / d2}/${lcd}. Then ${n1 * lcd / d1}/${lcd} + ${n2 * lcd / d2}/${lcd} = ${result_n}/${result_d}. Simplified: ${final_n}/${final_d}`
         };
     },
@@ -57,7 +64,7 @@ window.FractionsGenerator = {
         const v2 = n2 / d2;
         
         let question, result_n, result_d;
-        const lcd = this.lcm(d1, d2);
+        const lcd = lcm(d1, d2);
         
         if (v1 >= v2) {
             result_n = (n1 * lcd / d1) - (n2 * lcd / d2);
@@ -69,14 +76,18 @@ window.FractionsGenerator = {
             question = `What is ${n2}/${d2} - ${n1}/${d1}?`;
         }
         
-        const gcd = this.gcd(result_n, result_d);
-        const final_n = result_n / gcd;
-        const final_d = result_d / gcd;
+        const g = gcd(result_n, result_d);
+        const final_n = result_n / g;
+        const final_d = result_d / g;
         
         return {
             question: question,
             answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
-            hint: `Convert to the same denominator: ${lcd}`,
+            hint: `Step 1: Find a common denominator: ${lcd}
+Step 2: Convert both fractions to have denominator ${lcd}
+Step 3: Subtract the top numbers only
+Step 4: Keep the bottom number the same
+Step 5: Simplify your answer if possible`,
             explanation: `Using common denominator ${lcd}, subtract the numerators and simplify to get ${final_n}/${final_d}`
         };
     },
@@ -93,14 +104,17 @@ window.FractionsGenerator = {
         const result_n = n1 * n2;
         const result_d = d1 * d2;
         
-        const gcd = this.gcd(result_n, result_d);
-        const final_n = result_n / gcd;
-        const final_d = result_d / gcd;
+        const g = gcd(result_n, result_d);
+        const final_n = result_n / g;
+        const final_d = result_d / g;
         
         return {
             question: `What is ${n1}/${d1} × ${n2}/${d2}?`,
             answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
-            hint: "Multiply the tops, multiply the bottoms",
+            hint: `Step 1: Multiply the top numbers: ${n1} × ${n2} = ${result_n}
+Step 2: Multiply the bottom numbers: ${d1} × ${d2} = ${result_d}
+Step 3: Write as a fraction: ${result_n}/${result_d}
+Step 4: Simplify if you can: ${final_n}/${final_d}`,
             explanation: `${n1} × ${n2} = ${result_n} and ${d1} × ${d2} = ${result_d}. Simplified: ${final_n}/${final_d}`
         };
     },
@@ -126,13 +140,17 @@ window.FractionsGenerator = {
             correct = 1;
         }
         
-        const lcd = this.lcm(d1, d2);
+        const lcd = lcm(d1, d2);
         
         return {
             question: `Which is larger: ${n1}/${d1} or ${n2}/${d2}?`,
             options: options,
             correct: correct,
-            hint: `Convert to the same denominator: ${lcd}`,
+            hint: `Step 1: Make the bottoms the same (use ${lcd})
+Step 2: ${n1}/${d1} becomes ${n1 * lcd / d1}/${lcd}
+Step 3: ${n2}/${d2} becomes ${n2 * lcd / d2}/${lcd}
+Step 4: Now compare ${n1 * lcd / d1}/${lcd} and ${n2 * lcd / d2}/${lcd}
+Step 5: The one with the bigger top number is larger!`,
             explanation: `${n1}/${d1} = ${n1 * lcd / d1}/${lcd} and ${n2}/${d2} = ${n2 * lcd / d2}/${lcd}, so ${options[correct]} is larger`
         };
     },
@@ -146,24 +164,20 @@ window.FractionsGenerator = {
         const n = n_base * factor;
         const d = d_base * factor;
         
-        const gcd = this.gcd(n, d);
-        const final_n = n / gcd;
-        const final_d = d / gcd;
+        const g = gcd(n, d);
+        const final_n = n / g;
+        const final_d = d / g;
         
         return {
             question: `Simplify ${n}/${d}`,
             answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
-            hint: `Find the greatest common factor of ${n} and ${d}`,
-            explanation: `Both ${n} and ${d} can be divided by ${gcd}. ${n} ÷ ${gcd} = ${final_n}, ${d} ÷ ${gcd} = ${final_d}`
+            hint: `Step 1: Find a number that divides both ${n} and ${d}
+Step 2: Try small numbers first: 2, 3, 4, 5...
+Step 3: ${g} goes into both! 
+Step 4: ${n} ÷ ${g} = ${final_n}
+Step 5: ${d} ÷ ${g} = ${final_d}
+Step 6: Your answer is ${final_n}/${final_d}`,
+            explanation: `Both ${n} and ${d} can be divided by ${g}. ${n} ÷ ${g} = ${final_n}, ${d} ÷ ${g} = ${final_d}`
         };
-    },
-    
-    // Helper functions
-    gcd: function(a, b) {
-        return b ? this.gcd(b, a % b) : a;
-    },
-    
-    lcm: function(a, b) {
-        return Math.abs(a * b) / this.gcd(a, b);
     }
 };
