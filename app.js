@@ -906,3 +906,16 @@ window.initializeTopics = initializeTopics;
 window.showParentControls = showParentControls;
 window.togglePathMode = togglePathMode;
 window.APP_VERSION = APP_VERSION;
+
+// Export functions for parent dashboard
+window.closeParentDashboard = closeParentDashboard;
+window.verifyParentAccess = verifyParentAccess;
+window.showParentDashboard = showParentDashboard;
+
+// Export functions for question handling
+window.checkAnswer = checkAnswer;
+window.showHint = showHint;
+window.nextQuestion = nextQuestion;
+window.backToTopics = backToTopics;
+window.selectMCOption = selectMCOption;
+window.startTopic = startTopic;
