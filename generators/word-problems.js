@@ -152,3 +152,31 @@ window.WordProblemsGenerator = {
                 hint: `First find how many were given away, then subtract`,
                 explanation: `Given away: ${perPerson} × ${people} = ${total}. Left: ${total + extra} - ${total} = ${extra} ${item}`
             }
+        ];
+        
+        return problems[Math.floor(Math.random() * problems.length)];
+    },
+    
+    generatePatterns: function() {
+        const start = Math.floor(Math.random() * 10) + 1;
+        const step = Math.floor(Math.random() * 5) + 2;
+        const position = Math.floor(Math.random() * 5) + 4;
+        
+        const patterns = [
+            {
+                question: `What comes next in this pattern: ${start}, ${start + step}, ${start + 2*step}, ${start + 3*step}, ___?`,
+                answer: start + 4*step,
+                hint: `Find what number is being added each time`,
+                explanation: `Pattern adds ${step} each time. Next: ${start + 3*step} + ${step} = ${start + 4*step}`
+            },
+            {
+                question: `In the pattern that starts ${start}, ${start + step}, ${start + 2*step}... what is the ${position}th number?`,
+                answer: start + (position - 1) * step,
+                hint: `The pattern adds ${step} each time`,
+                explanation: `Position ${position}: ${start} + ${step} × ${position - 1} = ${start + (position - 1) * step}`
+            }
+        ];
+        
+        return patterns[Math.floor(Math.random() * patterns.length)];
+    }
+};
