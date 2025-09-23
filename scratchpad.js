@@ -323,6 +323,7 @@ class ScratchPad {
 
 // Create global instance
 const scratchPad = new ScratchPad();
+window.scratchPad = scratchPad;
 
 // FIX FOR REPEATING QUESTIONS
 // Add this to your app.js or replace the existing nextQuestion function
