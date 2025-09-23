@@ -824,6 +824,7 @@ function showParentDashboard() {
     if (!parentSettings.pinHash) {
         parentSettings.pinHash = hashPIN('1234');
         parentSettings.initialized = false;
+        saveParentSettings(); // ADD THIS LINE to save the default
     }
     
     if (lockoutTime && new Date() < lockoutTime) {
