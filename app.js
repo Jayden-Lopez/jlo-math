@@ -166,45 +166,47 @@ async function loadUserData() {
 // Load parent settings with protection
 async function loadParentSettings() {
     try {
-        // Try Firebase first (primary source)
+        // Try Firebase first
         const doc = await db.collection('settings').doc('parent').get();
         if (doc.exists) {
             parentSettings = doc.data();
-            // Update localStorage with Firebase data
+            console.log('Loaded from Firebase:', parentSettings);
             localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
-        } else {
-            // No Firebase data, check localStorage
-            const localData = localStorage.getItem('parentSettingsBackup');
-            if (localData) {
-                parentSettings = JSON.parse(localData);
-            } else {
-                // Nothing saved anywhere, use defaults
-                parentSettings = {
-                    pinHash: hashPIN('1234'),
-                    initialized: false,
-                    lockedTopics: [],
-                    difficultySettings: {},
-                    lastPinChange: null
-                };
-                await saveParentSettings();
-            }
+            return;
         }
     } catch (error) {
-        console.error("Firebase load failed, using localStorage:", error);
-        // Firebase failed, use localStorage
-        const localData = localStorage.getItem('parentSettingsBackup');
-        if (localData) {
+        console.log('Firebase load failed:', error);
+    }
+    
+    // Try localStorage if Firebase failed or had no data
+    const localData = localStorage.getItem('parentSettingsBackup');
+    if (localData) {
+        try {
             parentSettings = JSON.parse(localData);
-        } else {
-            parentSettings = {
-                pinHash: hashPIN('1234'),
-                initialized: false,
-                lockedTopics: [],
-                difficultySettings: {},
-                lastPinChange: null
-            };
+            console.log('Loaded from localStorage:', parentSettings);
+            
+            // If we have local data, try to sync it to Firebase
+            if (parentSettings.pinHash) {
+                saveParentSettings().catch(err => console.log('Could not sync to Firebase:', err));
+            }
+            return;
+        } catch (e) {
+            console.error('Failed to parse localStorage:', e);
         }
     }
+    
+    // Only use defaults if NOTHING exists
+    console.log('No saved settings found, using defaults');
+    parentSettings = {
+        pinHash: hashPIN('1234'),
+        initialized: false,
+        lockedTopics: [],
+        difficultySettings: {},
+        lastPinChange: null
+    };
+    
+    // Save the defaults
+    await saveParentSettings();
 }
 
 // ENHANCED: Save user data with backup
