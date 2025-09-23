@@ -165,29 +165,36 @@ async function loadUserData() {
 
 // Load parent settings with protection
 async function loadParentSettings() {
+    // First check localStorage
+    const localBackup = localStorage.getItem('parentSettingsBackup');
+    if (localBackup) {
+        try {
+            parentSettings = JSON.parse(localBackup);
+        } catch (e) {
+            console.error("Error parsing local settings:", e);
+        }
+    }
+    
+    // Then try Firebase (might override local if more recent)
     try {
         const doc = await db.collection('settings').doc('parent').get();
         if (doc.exists) {
             parentSettings = doc.data();
-        } else {
+            // Update localStorage with Firebase data
+            localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
+        } else if (!parentSettings.pinHash) {
+            // Only set defaults if no settings exist anywhere
             parentSettings.pinHash = hashPIN('1234');
             parentSettings.initialized = false;
             await saveParentSettings();
         }
     } catch (error) {
-        console.error("Error loading parent settings:", error);
-        // Try loading from localStorage backup
-        const localBackup = localStorage.getItem('parentSettingsBackup');
-        if (localBackup) {
-            try {
-                parentSettings = { ...parentSettings, ...JSON.parse(localBackup) };
-            } catch (e) {
-                // Set defaults if loading fails
-                if (!parentSettings.pinHash) {
-                    parentSettings.pinHash = hashPIN('1234');
-                    parentSettings.initialized = false;
-                }
-            }
+        console.error("Error loading parent settings from Firebase:", error);
+        // Continue with localStorage settings
+        if (!parentSettings.pinHash) {
+            parentSettings.pinHash = hashPIN('1234');
+            parentSettings.initialized = false;
+            localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
         }
     }
 }
@@ -209,12 +216,14 @@ async function saveUserData() {
 // Save parent settings with backup
 async function saveParentSettings() {
     try {
-        await db.collection('settings').doc('parent').set(parentSettings);
-        // Backup parent settings too
+        // Always save to localStorage first
         localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
+        
+        // Then try Firebase
+        await db.collection('settings').doc('parent').set(parentSettings);
     } catch (error) {
         console.error("Error saving parent settings:", error);
-        localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
+        // Already saved to localStorage, so settings will persist
     }
 }
 
@@ -520,7 +529,7 @@ function showQuestion() {
     const answerSection = document.getElementById('answerSection');
     
     // Get scratch pad HTML if available
-    const scratchPadHTML = window.scratchPad ? scratchPad.getHTML() : '';
+    const scratchPadHTML = window.scratchPad ? window.scratchPad.getHTML() : '';
     
     if (currentQuestion.options) {
         answerSection.innerHTML = scratchPadHTML + '<div class="mc-options" id="mcOptions"></div>';
