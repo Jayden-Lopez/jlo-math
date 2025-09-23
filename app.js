@@ -6,9 +6,9 @@ const APP_VERSION = '1.1.0';
 // Firebase Configuration
 const firebaseConfig = {
     apiKey: "AIzaSyDYpd-RQ3G7fiAZvT8Crx3lU5gVjbvLjHU",
-    authDomain: "jordan-math-buddy.firebaseapp.com",
-    projectId: "jordan-math-buddy",
-    storageBucket: "jordan-math-buddy.appspot.com",
+    authDomain: "jordan-math-practice.firebaseapp.com",
+    projectId: "jordan-math-practice",
+    storageBucket: "jordan-math-practice.appspot.com",
     messagingSenderId: "482301964012",
     appId: "1:482301964012:web:7e2b3f89e0da431e2b8c9e"
 };
