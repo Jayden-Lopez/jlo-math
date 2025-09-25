@@ -215,9 +215,10 @@ async function loadParentSettings() {
 async function saveUserData() {
     try {
         userData.lastActivity = new Date().toISOString();
-        console.log('Saving to Firebase - correctCount:', userData.correctCount, 'completedToday:', userData.completedToday);
+        console.log('SAVING: correctCount=' + userData.correctCount + ', completedToday=' + userData.completedToday);
         await db.collection('users').doc('jordan').set(userData);
         localStorage.setItem('jordanMathBackup', JSON.stringify(userData));
+        console.log('Save successful');
     } catch (error) {
         console.error("Error saving data:", error);
         localStorage.setItem('jordanMathBackup', JSON.stringify(userData));
