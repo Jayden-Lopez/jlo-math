@@ -912,10 +912,23 @@ window.onclick = function(event) {
 }
 
 // Make necessary functions and data globally available for modules
-window.userData = userData;
-window.parentSettings = parentSettings;
+// Use getters to ensure we always get current values
+Object.defineProperty(window, 'userData', {
+    get: function() { return userData; },
+    set: function(val) { userData = val; }
+});
+
+Object.defineProperty(window, 'parentSettings', {
+    get: function() { return parentSettings; },
+    set: function(val) { parentSettings = val; }
+});
+
+Object.defineProperty(window, 'currentStreak', {
+    get: function() { return currentStreak; },
+    set: function(val) { currentStreak = val; }
+});
+
 window.topics = topics;
-window.currentStreak = currentStreak;
 window.saveUserData = saveUserData;
 window.saveParentSettings = saveParentSettings;
 window.hashPIN = hashPIN;
