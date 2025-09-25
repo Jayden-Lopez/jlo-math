@@ -257,7 +257,8 @@ function checkDailyReset() {
     if (today !== lastReset) {
         userData.completedToday = 0;
         userData.lastResetDate = new Date().toISOString();
-        saveUserData();
+        // Don't save here - let it save later when data is ready
+        // saveUserData();
     }
 }
 
