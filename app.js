@@ -124,12 +124,12 @@ const learningPath = [
 window.learningPath = learningPath;
 
 // Initialize App
-document.addEventListener('DOMContentLoaded', function() {
-    loadUserData();
-    loadParentSettings();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadUserData();  // Wait for data to load first
+    await loadParentSettings();
+    checkDailyReset();  // Then check daily reset
     initializeTopics();
     showTopicSelection();
-    checkDailyReset();
 });
 
 // ENHANCED: Load user data with progress protection
