@@ -587,19 +587,25 @@ function checkAnswer() {
         const selectedIndex = parseInt(selected.dataset.index);
         isCorrect = (selectedIndex === currentQuestion.correct);
     } else {
-        const input = document.getElementById('answerInput');
-        const userAnswer = input.value.trim();
-        
-        if (!userAnswer) {
-            alert("Please enter an answer!");
-            return;
-        }
-        
+    const input = document.getElementById('answerInput');
+    const userAnswer = input.value.trim();
+    
+    if (!userAnswer) {
+        alert("Please enter an answer!");
+        return;
+    }
+    
+    // Check if answer is a fraction (contains /)
+    if (currentQuestion.answer.toString().includes('/') || userAnswer.includes('/')) {
+        // For fraction answers, do string comparison
+        isCorrect = (userAnswer === currentQuestion.answer.toString());
+    } else {
+        // For numeric answers, do numeric comparison
         const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
         const correctAnswer = parseFloat(currentQuestion.answer);
-        
         isCorrect = Math.abs(numericAnswer - correctAnswer) < 0.01;
     }
+}
     
     // Update statistics
     userData.totalAttempts++;
