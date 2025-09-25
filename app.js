@@ -59,6 +59,8 @@ let parentSettings = {
 // Topic Configuration
 const topics = {
     fractions: { name: "Fractions", icon: "🍕", generator: window.FractionsGenerator },
+    mixedNumbers: { name: "Mixed Numbers", icon: "🔢", generator: window.MixedNumbersGenerator },
+    decimals: { name: "Decimals & Percents", icon: "💯", generator: window.DecimalsGenerator },
     operations: { name: "Operations", icon: "➕", generator: window.OperationsGenerator },
     algebra: { name: "Algebra", icon: "🔤", generator: window.AlgebraGenerator },
     wordProblems: { name: "Word Problems", icon: "📖", generator: window.WordProblemsGenerator },
