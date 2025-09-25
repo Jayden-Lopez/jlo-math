@@ -588,22 +588,26 @@ function checkAnswer() {
         isCorrect = (selectedIndex === currentQuestion.correct);
     } else {
     const input = document.getElementById('answerInput');
-    const userAnswer = input.value.trim();
+    let userAnswer = input.value.trim();
     
     if (!userAnswer) {
         alert("Please enter an answer!");
         return;
     }
     
-    // Check if answer is a fraction (contains /)
-    if (currentQuestion.answer.toString().includes('/') || userAnswer.includes('/')) {
-        // For fraction answers, do string comparison
-        isCorrect = (userAnswer === currentQuestion.answer.toString());
+    // Normalize spaces in both answers (replace multiple spaces with single space)
+    userAnswer = userAnswer.replace(/\s+/g, ' ');
+    let correctAnswer = currentQuestion.answer.toString().replace(/\s+/g, ' ');
+    
+    // Check if this is a fraction or mixed number answer
+    if (correctAnswer.includes('/') || userAnswer.includes('/')) {
+        // Direct string comparison for fractions/mixed numbers
+        isCorrect = (userAnswer === correctAnswer);
     } else {
         // For numeric answers, do numeric comparison
         const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
-        const correctAnswer = parseFloat(currentQuestion.answer);
-        isCorrect = Math.abs(numericAnswer - correctAnswer) < 0.01;
+        const correctNum = parseFloat(correctAnswer);
+        isCorrect = Math.abs(numericAnswer - correctNum) < 0.01;
     }
 }
     
