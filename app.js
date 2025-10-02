@@ -1,7 +1,7 @@
 // app.js - Jordan's Math Practice App
-// Version 1.1.0 - With progress protection and modular parent dashboard
+// Version 2.0.0 - Glencoe Math Course 1 Aligned
 
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '2.0.0';
 
 // Firebase Configuration
 const firebaseConfig = {
@@ -42,7 +42,8 @@ let userData = {
     ixlHistory: [],
     startDate: new Date().toISOString(),
     levelHistory: [],
-    currentStage: 1,
+    currentStage: 2, // Start at Chapter 2 (where Jordan's class likely is)
+    currentChapter: 2, // Track current textbook chapter
     pathMode: true,
     version: APP_VERSION
 };
@@ -56,67 +57,215 @@ let parentSettings = {
     lastPinChange: null
 };
 
-// Topic Configuration
+// Topic Configuration - Aligned with Glencoe chapters
 const topics = {
-    fractions: { name: "Fractions", icon: "🍕", generator: window.FractionsGenerator },
-    mixedNumbers: { name: "Mixed Numbers", icon: "🔢", generator: window.MixedNumbersGenerator },
-    decimals: { name: "Decimals & Percents", icon: "💯", generator: window.DecimalsGenerator },
-    operations: { name: "Operations", icon: "➕", generator: window.OperationsGenerator },
-    algebra: { name: "Algebra", icon: "🔤", generator: window.AlgebraGenerator },
-    wordProblems: { name: "Word Problems", icon: "📖", generator: window.WordProblemsGenerator },
-    geometry: { name: "Geometry", icon: "📐", generator: window.GeometryGenerator },
-    measurement: { name: "Measurement", icon: "📏", generator: window.MeasurementGenerator },
-    ratios: { name: "Ratios", icon: "⚖️", generator: window.RatiosGenerator },
-    integers: { name: "Integers", icon: "❄️", generator: window.IntegersGenerator },
-    expressions: { name: "Expressions", icon: "🧮", generator: window.ExpressionsGenerator }
+    ratios: { name: "Ch 1: Ratios & Rates", icon: "⚖️", generator: window.RatiosGenerator },
+    decimals: { name: "Ch 2: Decimals & Percents", icon: "💯", generator: window.DecimalsGenerator },
+    operations: { name: "Ch 3: Multi-Digit Operations", icon: "➕", generator: window.OperationsGenerator },
+    fractions: { name: "Ch 4: Multiply/Divide Fractions", icon: "🍕", generator: window.FractionsGenerator },
+    mixedNumbers: { name: "Ch 4: Mixed Numbers", icon: "🔢", generator: window.MixedNumbersGenerator },
+    integers: { name: "Ch 5: Integers", icon: "❄️", generator: window.IntegersGenerator },
+    expressions: { name: "Ch 6: Expressions", icon: "🧮", generator: window.ExpressionsGenerator },
+    algebra: { name: "Ch 7: Equations", icon: "🔤", generator: window.AlgebraGenerator },
+    geometry: { name: "Ch 9-10: Area & Volume", icon: "📐", generator: window.GeometryGenerator },
+    measurement: { name: "Measurement Skills", icon: "📏", generator: window.MeasurementGenerator },
+    wordProblems: { name: "Word Problems", icon: "📖", generator: window.WordProblemsGenerator }
 };
 
-// Learning Path Configuration
+// UPDATED: Glencoe Course 1 Chapter-by-Chapter Learning Path
 const learningPath = [
     {
         stage: 1,
-        name: "Number Foundations",
-        description: "Master basic operations and number sense",
+        name: "Chapter 1: Ratios and Rates",
+        description: "Understand relationships between quantities",
         topics: [
-            { key: 'operations', required: 10, name: 'Basic Operations' },
-            { key: 'integers', required: 10, name: 'Positive & Negative Numbers' }
+            { key: 'ratios', required: 20, name: 'Ratios and Rates Practice' }
+        ],
+        lessons: [
+            "1.1 Factors and Multiples",
+            "1.2 Ratios",
+            "1.3 Rates", 
+            "1.4 Ratio Tables",
+            "1.5 Graph Ratios",
+            "1.6 Equivalent Ratios",
+            "1.7 Ratio and Rate Problems"
         ]
     },
     {
         stage: 2,
-        name: "Fractions & Decimals",
-        description: "Work with parts of numbers",
-        topics: [{ key: 'fractions', required: 15, name: 'Fraction Operations' }]
+        name: "Chapter 2: Fractions, Decimals, and Percents",
+        description: "Convert between different number forms",
+        topics: [
+            { key: 'decimals', required: 20, name: 'Decimals and Percents Practice' }
+        ],
+        lessons: [
+            "2.1 Decimals and Fractions",
+            "2.2 Percents and Fractions",
+            "2.3 Percents and Decimals",
+            "2.4 Percent of a Number",
+            "2.5 Compare and Order Fractions, Decimals, and Percents"
+        ]
     },
     {
         stage: 3,
-        name: "Algebraic Thinking",
-        description: "Introduction to variables and expressions",
+        name: "Chapter 3: Compute with Multi-Digit Numbers",
+        description: "Operations with whole numbers and decimals",
         topics: [
-            { key: 'expressions', required: 10, name: 'Evaluating Expressions' },
-            { key: 'algebra', required: 15, name: 'Solving Equations' }
+            { key: 'operations', required: 25, name: 'Multi-Digit Operations' }
+        ],
+        lessons: [
+            "3.1 Add and Subtract Decimals",
+            "3.2 Estimate Products",
+            "3.3 Multiply Decimals",
+            "3.4 Divide Multi-Digit Numbers", // Jordan needs this!
+            "3.5 Divide Decimals",
+            "3.6 Add and Subtract Fractions with Unlike Denominators"
         ]
     },
     {
         stage: 4,
-        name: "Ratios & Proportions",
-        description: "Understanding relationships between numbers",
-        topics: [{ key: 'ratios', required: 12, name: 'Ratios & Percentages' }]
+        name: "Chapter 4: Multiply and Divide Fractions",
+        description: "Operations with fractions and mixed numbers",
+        topics: [
+            { key: 'fractions', required: 20, name: 'Fraction Operations' },
+            { key: 'mixedNumbers', required: 15, name: 'Mixed Numbers' }
+        ],
+        lessons: [
+            "4.1 Estimate Products of Fractions",
+            "4.2 Multiply Fractions",
+            "4.3 Simplify Before Multiplying",
+            "4.4 Multiply Mixed Numbers",
+            "4.5 Divide Whole Numbers by Fractions",
+            "4.6 Divide Fractions",
+            "4.7 Divide Mixed Numbers"
+        ]
     },
     {
         stage: 5,
-        name: "Geometry & Measurement",
-        description: "Shapes, space, and units",
+        name: "Chapter 5: Integers and the Coordinate Plane",
+        description: "Positive and negative numbers, coordinate graphing",
         topics: [
-            { key: 'geometry', required: 12, name: 'Area, Perimeter & Volume' },
-            { key: 'measurement', required: 10, name: 'Converting Units' }
+            { key: 'integers', required: 20, name: 'Integer Operations' }
+        ],
+        lessons: [
+            "5.1 Integers and Opposites",
+            "5.2 Absolute Value",
+            "5.3 Compare and Order Integers",
+            "5.4 Add Integers",
+            "5.5 Subtract Integers",
+            "5.6 Distance on the Coordinate Plane"
         ]
     },
     {
         stage: 6,
-        name: "Problem Solving",
-        description: "Apply all skills to word problems",
-        topics: [{ key: 'wordProblems', required: 20, name: 'Multi-Step Word Problems' }]
+        name: "Chapter 6: Expressions",
+        description: "Write and evaluate algebraic expressions",
+        topics: [
+            { key: 'expressions', required: 15, name: 'Algebraic Expressions' }
+        ],
+        lessons: [
+            "6.1 Powers and Exponents",
+            "6.2 Order of Operations",
+            "6.3 Write Algebraic Expressions",
+            "6.4 Evaluate Algebraic Expressions",
+            "6.5 Properties",
+            "6.6 The Distributive Property",
+            "6.7 Simplify Algebraic Expressions"
+        ]
+    },
+    {
+        stage: 7,
+        name: "Chapter 7: Equations",
+        description: "Solve one-step and two-step equations",
+        topics: [
+            { key: 'algebra', required: 20, name: 'Solving Equations' }
+        ],
+        lessons: [
+            "7.1 Solve One-Step Addition and Subtraction Equations",
+            "7.2 Solve One-Step Multiplication and Division Equations",
+            "7.3 Solve Two-Step Equations",
+            "7.4 Write and Solve Equations"
+        ]
+    },
+    {
+        stage: 8,
+        name: "Chapter 8: Functions and Inequalities",
+        description: "Understand functions and solve inequalities",
+        topics: [
+            { key: 'algebra', required: 15, name: 'Functions and Inequalities' }
+        ],
+        lessons: [
+            "8.1 Function Tables",
+            "8.2 Function Rules",
+            "8.3 Functions and Equations",
+            "8.4 Multiple Representations of Functions",
+            "8.5 Inequalities",
+            "8.6 Write and Graph Inequalities"
+        ]
+    },
+    {
+        stage: 9,
+        name: "Chapter 9: Area",
+        description: "Find area of various shapes",
+        topics: [
+            { key: 'geometry', required: 20, name: 'Area Calculations' }
+        ],
+        lessons: [
+            "9.1 Area of Rectangles",
+            "9.2 Area of Parallelograms",
+            "9.3 Area of Triangles",
+            "9.4 Area of Trapezoids",
+            "9.5 Area of Composite Figures",
+            "9.6 Area of Irregular Figures"
+        ]
+    },
+    {
+        stage: 10,
+        name: "Chapter 10: Volume and Surface Area",
+        description: "3D measurements and calculations",
+        topics: [
+            { key: 'geometry', required: 20, name: 'Volume and Surface Area' }
+        ],
+        lessons: [
+            "10.1 Volume of Rectangular Prisms",
+            "10.2 Volume of Triangular Prisms",
+            "10.3 Volume of Pyramids",
+            "10.4 Surface Area of Rectangular Prisms",
+            "10.5 Surface Area of Triangular Prisms",
+            "10.6 Surface Area of Pyramids"
+        ]
+    },
+    {
+        stage: 11,
+        name: "Chapter 11: Statistical Measures",
+        description: "Analyze data using statistical concepts",
+        topics: [
+            { key: 'wordProblems', required: 15, name: 'Statistical Word Problems' }
+        ],
+        lessons: [
+            "11.1 Mean",
+            "11.2 Median",
+            "11.3 Mode and Range",
+            "11.4 Quartiles and Outliers",
+            "11.5 Histograms",
+            "11.6 Box Plots"
+        ]
+    },
+    {
+        stage: 12,
+        name: "Chapter 12: Statistical Displays",
+        description: "Create and interpret data displays",
+        topics: [
+            { key: 'wordProblems', required: 15, name: 'Data Display Problems' }
+        ],
+        lessons: [
+            "12.1 Line Plots",
+            "12.2 Stem-and-Leaf Plots",
+            "12.3 Circle Graphs",
+            "12.4 Choose an Appropriate Display",
+            "12.5 Use Appropriate Scales",
+            "12.6 Misleading Graphs and Statistics"
+        ]
     }
 ];
 
@@ -299,11 +448,20 @@ function getRecommendedTopic() {
     // Move to next stage if current is complete
     if (currentStage < learningPath.length) {
         userData.currentStage = currentStage + 1;
+        userData.currentChapter = currentStage + 1;
         saveUserData();
         return getRecommendedTopic();
     }
     
     return null;
+}
+
+// NEW: Chapter selector function
+function setCurrentChapter(chapterNumber) {
+    userData.currentStage = parseInt(chapterNumber);
+    userData.currentChapter = parseInt(chapterNumber);
+    saveUserData();
+    initializeTopics();
 }
 
 // Initialize topics with mastery display
@@ -328,12 +486,36 @@ function buildPathModeUI(container) {
     const stage = learningPath[currentStage - 1];
     const recommended = getRecommendedTopic();
     
+    // NEW: Add chapter selector at the top
     let html = `
+        <div style="background: #f0f9ff; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+            <h3>📚 Select Your Current Chapter</h3>
+            <p style="margin-bottom: 15px;">What chapter is your class working on?</p>
+            <select id="chapterSelect" onchange="setCurrentChapter(this.value)" 
+                    style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 2px solid #667eea;">
+                ${learningPath.map((chapter, index) => `
+                    <option value="${index + 1}" ${currentStage === index + 1 ? 'selected' : ''}>
+                        ${chapter.name}
+                    </option>
+                `).join('')}
+            </select>
+            
+            <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 10px;">
+                <h4>Lessons in ${stage.name}:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    ${stage.lessons.map(lesson => 
+                        `<li style="margin: 5px 0;">${lesson}</li>`
+                    ).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    html += `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
                     color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
-            <h3>🎯 Learning Path - Stage ${currentStage} of ${learningPath.length}</h3>
-            <h2>${stage ? stage.name : 'Complete!'}</h2>
-            <p>${stage ? stage.description : 'You\'ve completed all stages!'}</p>
+            <h3>🎯 Current Chapter - ${stage ? stage.name : 'Complete!'}</h3>
+            <p>${stage ? stage.description : 'You\'ve completed all chapters!'}</p>
             
             <div style="background: rgba(255,255,255,0.2); height: 10px; border-radius: 5px; margin: 15px 0;">
                 <div style="background: white; width: ${(currentStage - 1) / learningPath.length * 100}%; 
@@ -345,41 +527,9 @@ function buildPathModeUI(container) {
                     <strong>Next Up:</strong> ${recommended.name} 
                     (${recommended.completed}/${recommended.required} completed)
                 </div>
-            ` : '<div style="padding: 10px;">🏆 All stages completed! Practice any topic to strengthen skills.</div>'}
+            ` : '<div style="padding: 10px;">🏆 Chapter completed! Move to next chapter or practice more.</div>'}
         </div>
     `;
-    
-    // Add stages overview
-    html += '<div style="margin-bottom: 20px;">';
-    learningPath.forEach((pathStage, index) => {
-        const stageNum = index + 1;
-        const isCurrentStage = stageNum === currentStage;
-        const isCompleted = stageNum < currentStage || isStageCompleted(stageNum);
-        const isLocked = stageNum > currentStage && !isStageCompleted(currentStage);
-        
-        html += `
-            <div style="background: ${isCurrentStage ? '#f0f8ff' : isCompleted ? '#e8f5e9' : '#f5f5f5'}; 
-                        padding: 15px; border-radius: 10px; margin-bottom: 10px;
-                        border: ${isCurrentStage ? '2px solid #667eea' : '1px solid #ddd'};">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <strong>Stage ${stageNum}: ${pathStage.name}</strong> 
-                        ${isCompleted ? '✅' : isCurrentStage ? '📍' : isLocked ? '🔒' : ''}
-                        <div style="font-size: 0.9em; color: #666; margin-top: 5px;">
-                            ${pathStage.description}
-                        </div>
-                    </div>
-                    <div style="font-size: 0.9em; color: #666;">
-                        ${pathStage.topics.map(t => {
-                            const prog = userData.topicProgress[t.key] || { completed: 0 };
-                            return `${t.name}: ${prog.completed}/${t.required}`;
-                        }).join(' | ')}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    html += '</div>';
     
     // Add mode toggle
     html += `
@@ -402,7 +552,7 @@ function buildFreeModeUI(container) {
             <h2 style="color: #5a67d8;">Free Practice Mode</h2>
             <p>Choose any topic you want to practice!</p>
             <button class="btn btn-primary" onclick="togglePathMode()">
-                Switch to Guided Learning Path
+                Switch to Chapter Mode
             </button>
         </div>
         <div class="topic-grid" id="topicGrid"></div>
@@ -444,23 +594,37 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
         }
     }
     
-    // Determine availability and styling
+    // Determine availability and styling based on current chapter
     let isAvailable = !userData.pathMode;
     let isRecommended = false;
     let stageInfo = null;
     
     if (userData.pathMode) {
-        for (let i = 0; i < learningPath.length; i++) {
-            const checkStage = learningPath[i];
-            const topicInStage = checkStage.topics.find(t => t.key === key);
-            if (topicInStage) {
-                stageInfo = {
-                    stage: i + 1,
-                    required: topicInStage.required
-                };
-                isAvailable = (i + 1) <= currentStage;
-                isRecommended = recommended && recommended.key === key;
-                break;
+        // Check if this topic is in the current chapter
+        const currentChapterData = learningPath[currentStage - 1];
+        const topicInCurrentChapter = currentChapterData?.topics.find(t => t.key === key);
+        
+        if (topicInCurrentChapter) {
+            isAvailable = true;
+            isRecommended = recommended && recommended.key === key;
+            stageInfo = {
+                stage: currentStage,
+                required: topicInCurrentChapter.required
+            };
+        } else {
+            // Check if it's in any chapter for display purposes
+            for (let i = 0; i < learningPath.length; i++) {
+                const checkStage = learningPath[i];
+                const topicInStage = checkStage.topics.find(t => t.key === key);
+                if (topicInStage) {
+                    stageInfo = {
+                        stage: i + 1,
+                        required: topicInStage.required
+                    };
+                    // Available if in current or previous chapters
+                    isAvailable = (i + 1) <= currentStage;
+                    break;
+                }
             }
         }
     }
@@ -487,7 +651,7 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
         <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : !isAvailable ? '🔒' : ''}</div>
         <div class="topic-progress">Completed: ${progress.completed}${stageInfo ? `/${stageInfo.required}` : ''}</div>
         <div class="topic-accuracy">Accuracy: ${accuracy}%</div>
-        ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Stage ${stageInfo.stage}</div>` : ''}
+        ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Chapter ${stageInfo.stage}</div>` : ''}
         ${masteryHTML}
     `;
     
@@ -497,7 +661,7 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
     } else if (isLocked) {
         card.onclick = () => alert("This topic is locked by parent controls");
     } else {
-        card.onclick = () => alert(`Complete Stage ${currentStage} to unlock this topic`);
+        card.onclick = () => alert(`This topic is in Chapter ${stageInfo?.stage}. Switch to that chapter to practice.`);
     }
     
     return card;
@@ -588,29 +752,29 @@ function checkAnswer() {
         const selectedIndex = parseInt(selected.dataset.index);
         isCorrect = (selectedIndex === currentQuestion.correct);
     } else {
-    const input = document.getElementById('answerInput');
-    let userAnswer = input.value.trim();
-    
-    if (!userAnswer) {
-        alert("Please enter an answer!");
-        return;
+        const input = document.getElementById('answerInput');
+        let userAnswer = input.value.trim();
+        
+        if (!userAnswer) {
+            alert("Please enter an answer!");
+            return;
+        }
+        
+        // Normalize spaces in both answers (replace multiple spaces with single space)
+        userAnswer = userAnswer.replace(/\s+/g, ' ');
+        let correctAnswer = currentQuestion.answer.toString().replace(/\s+/g, ' ');
+        
+        // Check if this is a fraction or mixed number answer
+        if (correctAnswer.includes('/') || userAnswer.includes('/')) {
+            // Direct string comparison for fractions/mixed numbers
+            isCorrect = (userAnswer === correctAnswer);
+        } else {
+            // For numeric answers, do numeric comparison
+            const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
+            const correctNum = parseFloat(correctAnswer);
+            isCorrect = Math.abs(numericAnswer - correctNum) < 0.01;
+        }
     }
-    
-    // Normalize spaces in both answers (replace multiple spaces with single space)
-    userAnswer = userAnswer.replace(/\s+/g, ' ');
-    let correctAnswer = currentQuestion.answer.toString().replace(/\s+/g, ' ');
-    
-    // Check if this is a fraction or mixed number answer
-    if (correctAnswer.includes('/') || userAnswer.includes('/')) {
-        // Direct string comparison for fractions/mixed numbers
-        isCorrect = (userAnswer === correctAnswer);
-    } else {
-        // For numeric answers, do numeric comparison
-        const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
-        const correctNum = parseFloat(correctAnswer);
-        isCorrect = Math.abs(numericAnswer - correctNum) < 0.01;
-    }
-}
     
     // Update statistics
     userData.totalAttempts++;
@@ -650,6 +814,7 @@ function checkAnswer() {
         const nextStage = getCurrentStage() + 1;
         if (nextStage <= learningPath.length) {
             userData.currentStage = nextStage;
+            userData.currentChapter = nextStage;
         }
     }
     
@@ -837,7 +1002,7 @@ function showParentDashboard() {
     if (!parentSettings.pinHash) {
         parentSettings.pinHash = hashPIN('1234');
         parentSettings.initialized = false;
-        saveParentSettings(); // ADD THIS LINE to save the default
+        saveParentSettings();
     }
     
     if (lockoutTime && new Date() < lockoutTime) {
@@ -952,6 +1117,7 @@ window.updateDailyProgress = updateDailyProgress;
 window.initializeTopics = initializeTopics;
 window.showParentControls = showParentControls;
 window.togglePathMode = togglePathMode;
+window.setCurrentChapter = setCurrentChapter;
 window.APP_VERSION = APP_VERSION;
 
 // Export functions for parent dashboard
