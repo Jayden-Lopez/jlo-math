@@ -1,192 +1,191 @@
-// Integers Question Generator
+// integers.js - Glencoe Math Course 1, Chapter 5: Integers and the Coordinate Plane
+// For Jordan - 6th grade
+
 window.IntegersGenerator = {
     generate: function() {
-        const types = ['add', 'subtract', 'multiply', 'divide', 'compare', 'absolute'];
-        const type = types[Math.floor(Math.random() * types.length)];
+        const lessonTypes = [
+            'opposites',
+            'absoluteValue',
+            'compareIntegers',
+            'orderIntegers',
+            'addIntegers',
+            'subtractIntegers',
+            'coordinatePlane',
+            'distance'
+        ];
+        
+        const type = lessonTypes[Math.floor(Math.random() * lessonTypes.length)];
         
         switch(type) {
-            case 'add':
-                return this.generateAddition();
-            case 'subtract':
-                return this.generateSubtraction();
-            case 'multiply':
-                return this.generateMultiplication();
-            case 'divide':
-                return this.generateDivision();
-            case 'compare':
-                return this.generateComparison();
-            case 'absolute':
-                return this.generateAbsolute();
+            case 'opposites':
+                return this.generateOpposites();
+            case 'absoluteValue':
+                return this.generateAbsoluteValue();
+            case 'compareIntegers':
+                return this.generateCompareIntegers();
+            case 'orderIntegers':
+                return this.generateOrderIntegers();
+            case 'addIntegers':
+                return this.generateAddIntegers();
+            case 'subtractIntegers':
+                return this.generateSubtractIntegers();
+            case 'coordinatePlane':
+                return this.generateCoordinatePlane();
+            case 'distance':
+                return this.generateDistance();
             default:
-                return this.generateAddition();
+                return this.generateAbsoluteValue();
         }
     },
     
-    generateAddition: function() {
-        const problems = [
-            {
-                generate: function() {
-                    const a = Math.floor(Math.random() * 20) - 10;
-                    const b = Math.floor(Math.random() * 20) - 10;
-                    const sum = a + b;
-                    return {
-                        question: `What is ${a} + ${b}?`,
-                        answer: sum,
-                        hint: a < 0 && b < 0 ? "Adding two negatives gives a negative" : 
-                              a < 0 || b < 0 ? "Different signs: subtract and use the sign of the larger absolute value" : 
-                              "Add the positive numbers",
-                        explanation: `${a} + ${b} = ${sum}`
-                    };
-                }
-            },
-            {
-                generate: function() {
-                    const temp = Math.floor(Math.random() * 10) + 5;
-                    const drop = Math.floor(Math.random() * 15) + 10;
-                    const result = temp - drop;
-                    return {
-                        question: `The temperature is ${temp}°C. It drops by ${drop}°C. What is the new temperature?`,
-                        answer: result,
-                        hint: `Start at ${temp} and count down ${drop}`,
-                        explanation: `${temp} - ${drop} = ${result}°C`
-                    };
-                }
-            }
+    // Lesson 5.1: Integers and Opposites
+    generateOpposites: function() {
+        const num = Math.floor(Math.random() * 21) - 10;
+        const opposite = -num;
+        
+        return {
+            question: `What is the opposite of ${num}?`,
+            answer: opposite.toString(),
+            hint: "The opposite has the same distance from zero but different sign",
+            explanation: `The opposite of ${num} is ${opposite}`
+        };
+    },
+    
+    // Lesson 5.2: Absolute Value
+    generateAbsoluteValue: function() {
+        const num = Math.floor(Math.random() * 21) - 10;
+        const absValue = Math.abs(num);
+        
+        return {
+            question: `What is |${num}|?`,
+            answer: absValue.toString(),
+            hint: "Absolute value is the distance from zero (always positive)",
+            explanation: `|${num}| = ${absValue} (${absValue} units from 0)`
+        };
+    },
+    
+    // Lesson 5.3: Compare Integers
+    generateCompareIntegers: function() {
+        const num1 = Math.floor(Math.random() * 21) - 10;
+        const num2 = Math.floor(Math.random() * 21) - 10;
+        
+        if (num1 === num2) {
+            return this.generateCompareIntegers(); // Regenerate if equal
+        }
+        
+        const symbol = num1 > num2 ? ">" : "<";
+        
+        return {
+            question: `Compare: ${num1} ___ ${num2}`,
+            answer: symbol,
+            options: [">", "<", "="],
+            correct: [">", "<", "="].indexOf(symbol),
+            hint: "On a number line, numbers to the right are greater",
+            explanation: `${num1} ${symbol} ${num2} because ${num1} is ${symbol === ">" ? "greater than" : "less than"} ${num2}`
+        };
+    },
+    
+    // Lesson 5.4: Order Integers
+    generateOrderIntegers: function() {
+        const nums = [
+            Math.floor(Math.random() * 21) - 10,
+            Math.floor(Math.random() * 21) - 10,
+            Math.floor(Math.random() * 21) - 10,
+            Math.floor(Math.random() * 21) - 10
         ];
         
-        const problem = problems[Math.floor(Math.random() * problems.length)];
-        return problem.generate();
-    },
-    
-    generateSubtraction: function() {
-        const a = Math.floor(Math.random() * 20) - 10;
-        const b = Math.floor(Math.random() * 20) - 10;
-        const diff = a - b;
+        // Shuffle for the question
+        const shuffled = [...nums].sort(() => Math.random() - 0.5);
+        // Sort for the answer
+        const sorted = [...nums].sort((a, b) => a - b);
         
         return {
-            question: `What is ${a} - ${b}?`,
-            answer: diff,
-            hint: b < 0 ? "Subtracting a negative is the same as adding" : "Subtract normally",
-            explanation: b < 0 ? `${a} - (${b}) = ${a} + ${Math.abs(b)} = ${diff}` : `${a} - ${b} = ${diff}`
-        };
-    },
-    
-    generateMultiplication: function() {
-        const a = Math.floor(Math.random() * 10) - 5;
-        const b = Math.floor(Math.random() * 10) - 5;
-        const product = a * b;
-        
-        const sign = (a < 0 && b < 0) ? "Negative × Negative = Positive" :
-                    (a < 0 || b < 0) ? "Positive × Negative = Negative" :
-                    "Positive × Positive = Positive";
-        
-        return {
-            question: `What is ${a} × ${b}?`,
-            answer: product,
-            hint: sign,
-            explanation: `${a} × ${b} = ${product}. ${sign}`
-        };
-    },
-    
-    generateDivision: function() {
-        const b = Math.floor(Math.random() * 8) + 2;
-        const quotient = Math.floor(Math.random() * 10) - 5;
-        const a = b * quotient;
-        
-        if (a === 0) return this.generateDivision(); // Avoid 0 ÷ b
-        
-        const sign = (a < 0 && b < 0) ? "Negative ÷ Negative = Positive" :
-                    (a < 0 || b < 0) ? "Positive ÷ Negative = Negative" :
-                    "Positive ÷ Positive = Positive";
-        
-        return {
-            question: `What is ${a} ÷ ${b}?`,
-            answer: quotient,
-            hint: sign,
-            explanation: `${a} ÷ ${b} = ${quotient}. ${sign}`
-        };
-    },
-    
-    generateComparison: function() {
-        const a = Math.floor(Math.random() * 20) - 10;
-        const b = Math.floor(Math.random() * 20) - 10;
-        
-        const options = [
-            `${a} > ${b}`,
-            `${a} < ${b}`,
-            `${a} = ${b}`,
-            "Cannot determine"
-        ];
-        
-        let correct;
-        if (a > b) correct = 0;
-        else if (a < b) correct = 1;
-        else correct = 2;
-        
-        return {
-            question: `Which statement is true about ${a} and ${b}?`,
-            options: options,
-            correct: correct,
+            question: `Order from least to greatest: ${shuffled.join(", ")}`,
+            answer: sorted.join(", "),
             hint: "Remember: negative numbers are less than positive numbers",
-            explanation: `${a} ${a > b ? '>' : a < b ? '<' : '='} ${b}, so "${options[correct]}" is correct`
+            explanation: `On a number line from left to right: ${sorted.join(", ")}`
         };
     },
     
-    generateAbsolute: function() {
-        const problems = [
-            {
-                generate: function() {
-                    const a = Math.floor(Math.random() * 20) - 10;
-                    return {
-                        question: `What is |${a}|?`,
-                        answer: Math.abs(a),
-                        hint: "Absolute value is the distance from zero",
-                        explanation: `|${a}| = ${Math.abs(a)} (always positive or zero)`
-                    };
-                }
-            },
-            {
-                generate: function() {
-                    const a = Math.floor(Math.random() * 10) - 5;
-                    const b = Math.floor(Math.random() * 10) - 5;
-                    const result = Math.abs(a) + Math.abs(b);
-                    return {
-                        question: `What is |${a}| + |${b}|?`,
-                        answer: result,
-                        hint: "Find each absolute value first, then add",
-                        explanation: `|${a}| = ${Math.abs(a)}, |${b}| = ${Math.abs(b)}. So ${Math.abs(a)} + ${Math.abs(b)} = ${result}`
-                    };
-                }
-            },
-            {
-                generate: function() {
-                    const a = Math.floor(Math.random() * 15) - 7;
-                    const b = Math.floor(Math.random() * 15) - 7;
-                    
-                    const options = [
-                        `|${a}|`,
-                        `|${b}|`,
-                        "They're equal",
-                        "Cannot determine"
-                    ];
-                    
-                    let correct;
-                    if (Math.abs(a) > Math.abs(b)) correct = 0;
-                    else if (Math.abs(a) < Math.abs(b)) correct = 1;
-                    else correct = 2;
-                    
-                    return {
-                        question: `Which is larger: |${a}| or |${b}|?`,
-                        options: options,
-                        correct: correct,
-                        hint: "Compare the distances from zero",
-                        explanation: `|${a}| = ${Math.abs(a)}, |${b}| = ${Math.abs(b)}, so ${options[correct]} is larger`
-                    };
-                }
-            }
-        ];
+    // Lesson 5.5: Add Integers
+    generateAddIntegers: function() {
+        const num1 = Math.floor(Math.random() * 21) - 10;
+        const num2 = Math.floor(Math.random() * 21) - 10;
+        const sum = num1 + num2;
         
-        const problem = problems[Math.floor(Math.random() * problems.length)];
-        return problem.generate();
+        return {
+            question: `Add: ${num1} + ${num2}`,
+            answer: sum.toString(),
+            hint: num1 * num2 > 0 ? "Same signs: add and keep the sign" : "Different signs: subtract and use sign of larger absolute value",
+            explanation: `${num1} + ${num2} = ${sum}`
+        };
+    },
+    
+    // Lesson 5.6: Subtract Integers
+    generateSubtractIntegers: function() {
+        const num1 = Math.floor(Math.random() * 21) - 10;
+        const num2 = Math.floor(Math.random() * 21) - 10;
+        const diff = num1 - num2;
+        
+        return {
+            question: `Subtract: ${num1} - ${num2}`,
+            answer: diff.toString(),
+            hint: "Subtracting is the same as adding the opposite",
+            explanation: `${num1} - ${num2} = ${num1} + (${-num2}) = ${diff}`
+        };
+    },
+    
+    // Lesson 5.7: The Coordinate Plane
+    generateCoordinatePlane: function() {
+        const x = Math.floor(Math.random() * 11) - 5;
+        const y = Math.floor(Math.random() * 11) - 5;
+        
+        let quadrant;
+        if (x > 0 && y > 0) quadrant = "I";
+        else if (x < 0 && y > 0) quadrant = "II";
+        else if (x < 0 && y < 0) quadrant = "III";
+        else if (x > 0 && y < 0) quadrant = "IV";
+        else if (x === 0 && y !== 0) quadrant = "y-axis";
+        else if (x !== 0 && y === 0) quadrant = "x-axis";
+        else quadrant = "origin";
+        
+        return {
+            question: `In which quadrant or axis is the point (${x}, ${y})?`,
+            answer: quadrant.includes("Quadrant") ? quadrant : (quadrant === "origin" ? "Origin" : `On the ${quadrant}`),
+            hint: "Check the signs: (+,+)=I, (-,+)=II, (-,-)=III, (+,-)=IV",
+            explanation: `(${x}, ${y}): x is ${x >= 0 ? "positive" : "negative"}, y is ${y >= 0 ? "positive" : "negative"}, so ${quadrant.includes("Quadrant") ? quadrant : quadrant}`
+        };
+    },
+    
+    // Lesson 5.8: Distance on the Coordinate Plane
+    generateDistance: function() {
+        const types = ['horizontal', 'vertical'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        
+        if (type === 'horizontal') {
+            const y = Math.floor(Math.random() * 11) - 5;
+            const x1 = Math.floor(Math.random() * 11) - 5;
+            const x2 = Math.floor(Math.random() * 11) - 5;
+            const distance = Math.abs(x2 - x1);
+            
+            return {
+                question: `Find the distance between points (${x1}, ${y}) and (${x2}, ${y})`,
+                answer: `${distance} units`,
+                hint: "Same y-coordinate means horizontal line, find |x₂ - x₁|",
+                explanation: `Distance = |${x2} - ${x1}| = ${distance} units`
+            };
+        } else {
+            const x = Math.floor(Math.random() * 11) - 5;
+            const y1 = Math.floor(Math.random() * 11) - 5;
+            const y2 = Math.floor(Math.random() * 11) - 5;
+            const distance = Math.abs(y2 - y1);
+            
+            return {
+                question: `Find the distance between points (${x}, ${y1}) and (${x}, ${y2})`,
+                answer: `${distance} units`,
+                hint: "Same x-coordinate means vertical line, find |y₂ - y₁|",
+                explanation: `Distance = |${y2} - ${y1}| = ${distance} units`
+            };
+        }
     }
 };
