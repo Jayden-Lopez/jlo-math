@@ -486,19 +486,51 @@ function buildPathModeUI(container) {
     const stage = learningPath[currentStage - 1];
     const recommended = getRecommendedTopic();
     
-    // NEW: Add chapter selector at the top
+    // Check mastery status for current chapter
+    let chapterMastery = null;
+    if (window.MasteryTracker) {
+        chapterMastery = window.MasteryTracker.checkChapterMastery(currentStage, userData, learningPath);
+    }
+    
+    // NEW: Add chapter selector at the top with lock indicators
     let html = `
         <div style="background: #f0f9ff; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
             <h3>📚 Select Your Current Chapter</h3>
             <p style="margin-bottom: 15px;">What chapter is your class working on?</p>
             <select id="chapterSelect" onchange="setCurrentChapter(this.value)" 
                     style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 2px solid #667eea;">
-                ${learningPath.map((chapter, index) => `
-                    <option value="${index + 1}" ${currentStage === index + 1 ? 'selected' : ''}>
-                        ${chapter.name}
-                    </option>
-                `).join('')}
+                ${learningPath.map((chapter, index) => {
+                    const chapterNum = index + 1;
+                    const unlockStatus = window.MasteryTracker ? 
+                        window.MasteryTracker.isChapterUnlocked(chapterNum, userData, learningPath) : 
+                        { unlocked: true };
+                    const lockIcon = unlockStatus.unlocked ? '' : '🔒 ';
+                    
+                    return `
+                        <option value="${chapterNum}" 
+                                ${currentStage === chapterNum ? 'selected' : ''}
+                                ${!unlockStatus.unlocked ? 'disabled' : ''}>
+                            ${lockIcon}${chapter.name}
+                        </option>
+                    `;
+                }).join('')}
             </select>
+            
+            ${chapterMastery && chapterMastery.topicsNeeded.length > 0 ? `
+                <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
+                    <h4>📋 To Complete This Chapter:</h4>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        ${chapterMastery.topicsNeeded.map(topic => 
+                            `<li style="margin: 5px 0;"><strong>${topic.name}:</strong> ${topic.status}</li>`
+                        ).join('')}
+                    </ul>
+                </div>
+            ` : chapterMastery && chapterMastery.mastered ? `
+                <div style="margin-top: 15px; padding: 15px; background: #d1fae5; border-radius: 10px; border: 2px solid #10b981;">
+                    <h4>🎉 Chapter ${currentStage} Complete!</h4>
+                    <p style="margin: 10px 0;">All topics mastered. Ready to advance!</p>
+                </div>
+            ` : ''}
             
             <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 10px;">
                 <h4>Lessons in ${stage.name}:</h4>
@@ -522,12 +554,11 @@ function buildPathModeUI(container) {
                             height: 100%; border-radius: 5px; transition: width 0.5s;"></div>
             </div>
             
-            ${recommended ? `
+            ${chapterMastery ? `
                 <div style="background: rgba(255,255,255,0.3); padding: 10px; border-radius: 10px; margin-top: 10px;">
-                    <strong>Next Up:</strong> ${recommended.name} 
-                    (${recommended.completed}/${recommended.required} completed)
+                    <strong>Progress:</strong> ${chapterMastery.completedTopics}/${chapterMastery.totalTopics} topics mastered
                 </div>
-            ` : '<div style="padding: 10px;">🏆 Chapter completed! Move to next chapter or practice more.</div>'}
+            ` : ''}
         </div>
     `;
     
@@ -582,49 +613,53 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
     const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
     const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
     
-    // Check mastery using MasteryTracker if available
+    // Check mastery using MasteryTracker
     let masteryHTML = '';
+    let isMastered = false;
     if (window.MasteryTracker) {
         const mastery = window.MasteryTracker.checkMastery(key, userData);
+        isMastered = mastery.mastered;
+        
         if (mastery.mastered) {
             masteryHTML = '<div style="background: gold; color: #333; padding: 5px; border-radius: 10px; margin-top: 5px; font-weight: bold;">🏆 MASTERED!</div>';
             card.className += ' mastered';
         } else {
-            masteryHTML = `<div style="font-size: 0.8em; color: #fff; margin-top: 5px; opacity: 0.9;">${mastery.progress.message}</div>`;
+            masteryHTML = `<div style="font-size: 0.8em; color: #666; margin-top: 5px; padding: 5px; background: #f3f4f6; border-radius: 5px;">${mastery.progress.message}</div>`;
         }
     }
     
-    // Determine availability and styling based on current chapter
+    // Determine availability based on chapter system
     let isAvailable = !userData.pathMode;
     let isRecommended = false;
     let stageInfo = null;
+    let lockReason = '';
     
     if (userData.pathMode) {
-        // Check if this topic is in the current chapter
-        const currentChapterData = learningPath[currentStage - 1];
-        const topicInCurrentChapter = currentChapterData?.topics.find(t => t.key === key);
-        
-        if (topicInCurrentChapter) {
-            isAvailable = true;
-            isRecommended = recommended && recommended.key === key;
-            stageInfo = {
-                stage: currentStage,
-                required: topicInCurrentChapter.required
-            };
-        } else {
-            // Check if it's in any chapter for display purposes
-            for (let i = 0; i < learningPath.length; i++) {
-                const checkStage = learningPath[i];
-                const topicInStage = checkStage.topics.find(t => t.key === key);
-                if (topicInStage) {
-                    stageInfo = {
-                        stage: i + 1,
-                        required: topicInStage.required
-                    };
-                    // Available if in current or previous chapters
+        // Find which chapter this topic belongs to
+        for (let i = 0; i < learningPath.length; i++) {
+            const checkStage = learningPath[i];
+            const topicInStage = checkStage.topics.find(t => t.key === key);
+            if (topicInStage) {
+                stageInfo = {
+                    stage: i + 1,
+                    required: topicInStage.required
+                };
+                
+                // Check if this chapter is unlocked
+                if (window.MasteryTracker) {
+                    const unlockStatus = window.MasteryTracker.isChapterUnlocked(i + 1, userData, learningPath);
+                    isAvailable = unlockStatus.unlocked;
+                    if (!unlockStatus.unlocked) {
+                        lockReason = unlockStatus.reason;
+                    }
+                } else {
+                    // Fallback: available if in current or previous chapters
                     isAvailable = (i + 1) <= currentStage;
-                    break;
                 }
+                
+                // Check if it's the recommended topic
+                isRecommended = recommended && recommended.key === key;
+                break;
             }
         }
     }
@@ -632,36 +667,48 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
     // Apply styling
     if (isLocked) {
         card.className += ' locked';
+    } else if (!isAvailable) {
+        card.className += ' locked';
+        card.style.opacity = '0.5';
+        card.style.border = '2px solid #e5e7eb';
+    } else if (isMastered) {
+        card.style.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)';
+        card.style.color = 'white';
     } else if (isRecommended) {
         card.className += ' recommended';
         card.style.border = '3px solid #667eea';
         card.style.boxShadow = '0 0 20px rgba(102, 126, 234, 0.3)';
-    } else if (!isAvailable) {
-        card.className += ' locked';
-        card.style.opacity = '0.5';
     } else if (progress.completed >= 10) {
-        card.className += ' completed';
-    } else if (progress.completed > 0) {
         card.className += ' in-progress';
     }
     
     // Build card content
     card.innerHTML = `
         ${isRecommended ? '<div style="position: absolute; top: -10px; right: -10px; background: #667eea; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8em;">NEXT</div>' : ''}
-        <div class="topic-name">${topic.icon} ${topic.name} ${isLocked ? '🔒' : !isAvailable ? '🔒' : ''}</div>
+        ${isMastered ? '<div style="position: absolute; top: -10px; left: -10px; font-size: 1.5em;">🏆</div>' : ''}
+        ${!isAvailable && !isLocked ? '<div style="position: absolute; top: 10px; right: 10px; font-size: 1.5em;">🔒</div>' : ''}
+        <div class="topic-name">${topic.icon} ${topic.name}</div>
         <div class="topic-progress">Completed: ${progress.completed}${stageInfo ? `/${stageInfo.required}` : ''}</div>
         <div class="topic-accuracy">Accuracy: ${accuracy}%</div>
         ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Chapter ${stageInfo.stage}</div>` : ''}
         ${masteryHTML}
+        ${!isAvailable && lockReason ? `<div style="font-size: 0.75em; color: #ef4444; margin-top: 5px; font-weight: bold;">🔒 ${lockReason}</div>` : ''}
     `;
     
     // Set click handler
     if (!isLocked && isAvailable) {
         card.onclick = () => startTopic(key);
+        card.style.cursor = 'pointer';
     } else if (isLocked) {
         card.onclick = () => alert("This topic is locked by parent controls");
+        card.style.cursor = 'not-allowed';
     } else {
-        card.onclick = () => alert(`This topic is in Chapter ${stageInfo?.stage}. Switch to that chapter to practice.`);
+        card.onclick = () => {
+            if (stageInfo) {
+                alert(`🔒 This topic is in Chapter ${stageInfo.stage}.\n\n${lockReason}\n\nMaster the previous chapter to unlock this one!`);
+            }
+        };
+        card.style.cursor = 'not-allowed';
     }
     
     return card;
@@ -820,6 +867,7 @@ function checkAnswer() {
     
     trackIXLProgress();
     saveUserData();
+    checkAndCelebrateMastery();
     updateStats();
     updateDailyProgress();
     
@@ -982,6 +1030,37 @@ function updateDailyProgress() {
                 Daily Goal: ${userData.completedToday}/${userData.dailyGoal} problems
             </div>
         `;
+    }
+}
+
+// NEW: Check and celebrate mastery achievements
+function checkAndCelebrateMastery() {
+    if (!window.MasteryTracker) return;
+    
+    const currentChapter = userData.currentChapter || userData.currentStage || 1;
+    const mastery = window.MasteryTracker.checkChapterMastery(currentChapter, userData, learningPath);
+    
+    // Check if we just completed the chapter
+    if (mastery.mastered && !userData.completedChapters) {
+        userData.completedChapters = [];
+    }
+    
+    if (mastery.mastered && !userData.completedChapters.includes(currentChapter)) {
+        userData.completedChapters.push(currentChapter);
+        saveUserData();
+        
+        // Show celebration
+        setTimeout(() => {
+            alert(`🎉🏆 CHAPTER ${currentChapter} MASTERED! 🏆🎉
+
+${mastery.chapterName}
+
+All ${mastery.totalTopics} topics completed with 80%+ accuracy!
+
+${currentChapter < learningPath.length ? 
+    `Chapter ${currentChapter + 1} is now unlocked! 🔓` : 
+    'You\'ve completed all chapters! 🌟'}`);
+        }, 500);
     }
 }
 
