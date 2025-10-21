@@ -458,8 +458,28 @@ function getRecommendedTopic() {
 
 // NEW: Chapter selector function
 function setCurrentChapter(chapterNumber) {
-    userData.currentStage = parseInt(chapterNumber);
-    userData.currentChapter = parseInt(chapterNumber);
+    const newChapter = parseInt(chapterNumber);
+    
+    // Check if trying to advance beyond mastered chapters
+    if (window.MasteryTracker && newChapter > userData.currentChapter) {
+        // Check if previous chapter is mastered
+        const previousMastery = window.MasteryTracker.checkChapterMastery(
+            newChapter - 1, 
+            userData, 
+            learningPath
+        );
+        
+        if (!previousMastery.mastered) {
+            alert(`⚠️ Cannot advance to Chapter ${newChapter} yet!\n\nYou must first master Chapter ${newChapter - 1}:\n\n${previousMastery.topicsNeeded.map(t => `• ${t.name}: ${t.status}`).join('\n')}`);
+            
+            // Reset dropdown to current chapter
+            document.getElementById('chapterSelect').value = userData.currentChapter;
+            return;
+        }
+    }
+    
+    userData.currentStage = newChapter;
+    userData.currentChapter = newChapter;
     saveUserData();
     initializeTopics();
 }
