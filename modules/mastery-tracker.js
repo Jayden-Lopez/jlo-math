@@ -132,12 +132,23 @@ window.MasteryTracker = (function() {
             };
         }
         
-        // Check if this is an earlier chapter (allow review)
-        // Allow up to current chapter for review/practice
-        if (chapterNum <= userData.currentChapter) {
+        // Lock all chapters beyond the highest mastered chapter
+        // Find the highest mastered chapter
+        let highestMastered = 1;
+        for (let i = 1; i < learningPath.length; i++) {
+            const mastery = checkChapterMastery(i, userData, learningPath);
+            if (mastery.mastered) {
+                highestMastered = i;
+            } else {
+                break; // Stop at first unmastered chapter
+            }
+        }
+        
+        // Allow access up to one chapter beyond highest mastered (current working chapter)
+        if (chapterNum <= highestMastered + 1) {
             return { 
                 unlocked: true, 
-                reason: "Available for current practice" 
+                reason: "Available for practice" 
             };
         }
         
