@@ -121,14 +121,6 @@ window.MasteryTracker = (function() {
             };
         }
         
-        // Current chapter is always unlocked (teacher may assign it)
-        if (chapterNum === userData.currentChapter) {
-            return { 
-                unlocked: true, 
-                reason: "Current chapter assignment" 
-            };
-        }
-        
         // Check if previous chapter is mastered
         const previousChapter = chapterNum - 1;
         const previousMastery = checkChapterMastery(previousChapter, userData, learningPath);
@@ -141,10 +133,11 @@ window.MasteryTracker = (function() {
         }
         
         // Check if this is an earlier chapter (allow review)
-        if (chapterNum < userData.currentChapter) {
+        // Allow up to current chapter for review/practice
+        if (chapterNum <= userData.currentChapter) {
             return { 
                 unlocked: true, 
-                reason: "Earlier chapter - available for review" 
+                reason: "Available for current practice" 
             };
         }
         
