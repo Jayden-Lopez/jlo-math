@@ -62,7 +62,7 @@ const topics = {
     ratios: { name: "Ch 1: Ratios & Rates", icon: "⚖️", generator: window.RatiosGenerator },
     decimals: { name: "Ch 2: Decimals & Percents", icon: "💯", generator: window.DecimalsGenerator },
     operations: { name: "Ch 3: Multi-Digit Operations", icon: "➕", generator: window.OperationsGenerator },
-    fractions: { name: "Ch 4: Multiply/Divide Fractions", icon: "🍕", generator: window.FractionsGenerator },
+    fractions: { name: "Ch 4: Fractions", icon: "🍕", generator: window.FractionsGenerator },
     mixedNumbers: { name: "Ch 4: Mixed Numbers", icon: "🔢", generator: window.MixedNumbersGenerator },
     integers: { name: "Ch 5: Integers", icon: "❄️", generator: window.IntegersGenerator },
     expressions: { name: "Ch 6: Expressions", icon: "🧮", generator: window.ExpressionsGenerator },
