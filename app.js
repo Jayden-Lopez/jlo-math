@@ -42,8 +42,8 @@ let userData = {
     ixlHistory: [],
     startDate: new Date().toISOString(),
     levelHistory: [],
-    currentStage: 2, // Start at Chapter 2 (where Jordan's class likely is)
-    currentChapter: 2, // Track current textbook chapter
+    currentStage: 3, // Start at Chapter 3 (where Jordan's class is)
+    currentChapter: 3, // Track current textbook chapter
     pathMode: true,
     version: APP_VERSION
 };
