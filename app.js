@@ -427,10 +427,8 @@ function getCurrentStage() {
                 const checkStatus = window.MasteryTracker.isChapterUnlocked(i, userData, learningPath);
                 if (checkStatus.unlocked) {
                     currentStage = i;
-                    // Update userData to correct the issue
-                    userData.currentStage = i;
-                    userData.currentChapter = i;
-                    saveUserData();
+                    // Note: Don't modify userData here to avoid infinite loop
+                    // The caller should update userData if needed
                     break;
                 }
             }
