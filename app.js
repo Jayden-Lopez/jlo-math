@@ -630,17 +630,20 @@ function createTopicCards() {
 function createTopicCard(key, topic, progress, currentStage, recommended) {
     const card = document.createElement('div');
     card.className = 'topic-card';
-    
+
     const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
     const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
-    
+
+    // IXL Practice is ALWAYS available (never locked)
+    const isIXLPractice = key === 'ixlPractice';
+
     // Check mastery using MasteryTracker
     let masteryHTML = '';
     let isMastered = false;
-    if (window.MasteryTracker) {
+    if (window.MasteryTracker && !isIXLPractice) {
         const mastery = window.MasteryTracker.checkMastery(key, userData);
         isMastered = mastery.mastered;
-        
+
         if (mastery.mastered) {
             masteryHTML = '<div style="background: gold; color: #333; padding: 5px; border-radius: 10px; margin-top: 5px; font-weight: bold;">🏆 MASTERED!</div>';
             card.className += ' mastered';
@@ -648,14 +651,14 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
             masteryHTML = `<div style="font-size: 0.8em; color: #666; margin-top: 5px; padding: 5px; background: #f3f4f6; border-radius: 5px;">${mastery.progress.message}</div>`;
         }
     }
-    
+
     // Determine availability based on chapter system
-    let isAvailable = !userData.pathMode;
+    let isAvailable = !userData.pathMode || isIXLPractice; // IXL Practice always available
     let isRecommended = false;
     let stageInfo = null;
     let lockReason = '';
-    
-    if (userData.pathMode) {
+
+    if (userData.pathMode && !isIXLPractice) {
         // Find which chapter this topic belongs to
         for (let i = 0; i < learningPath.length; i++) {
             const checkStage = learningPath[i];
@@ -665,7 +668,7 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
                     stage: i + 1,
                     required: topicInStage.required
                 };
-                
+
                 // Check if this chapter is unlocked
                 if (window.MasteryTracker) {
                     const unlockStatus = window.MasteryTracker.isChapterUnlocked(i + 1, userData, learningPath);
@@ -677,12 +680,17 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
                     // Fallback: available if in current or previous chapters
                     isAvailable = (i + 1) <= currentStage;
                 }
-                
+
                 // Check if it's the recommended topic
                 isRecommended = recommended && recommended.key === key;
                 break;
             }
         }
+    }
+
+    // Add special styling for IXL Practice
+    if (isIXLPractice) {
+        masteryHTML = '<div style="background: #667eea; color: white; padding: 5px; border-radius: 10px; margin-top: 5px; font-weight: bold;">⚡ Always Available</div>';
     }
     
     // Apply styling
@@ -740,7 +748,21 @@ function startTopic(topicKey) {
     currentTopic = topicKey;
     currentQuestionIndex = 0;
     sessionQuestions = [];
-    
+
+    // Update currentChapter based on which topic was selected (unless it's IXL Practice)
+    if (topicKey !== 'ixlPractice') {
+        for (let i = 0; i < learningPath.length; i++) {
+            const stage = learningPath[i];
+            const topicInStage = stage.topics.find(t => t.key === topicKey);
+            if (topicInStage) {
+                userData.currentChapter = i + 1;
+                userData.currentStage = i + 1;
+                saveUserData();
+                break;
+            }
+        }
+    }
+
     const generator = topics[topicKey].generator;
     if (generator && generator.generate) {
         for (let i = 0; i < questionsPerSession; i++) {
@@ -750,10 +772,10 @@ function startTopic(topicKey) {
         console.error(`No generator found for ${topicKey}`);
         return;
     }
-    
+
     document.getElementById('topicSelection').style.display = 'none';
     document.getElementById('questionContainer').style.display = 'block';
-    
+
     showQuestion();
 }
 
