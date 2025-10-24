@@ -59,6 +59,7 @@ let parentSettings = {
 
 // Topic Configuration - Aligned with Glencoe chapters
 const topics = {
+    ixlPractice: { name: "IXL Targeted Practice", icon: "🎯", generator: window.IXLPracticeGenerator },
     ratios: { name: "Ch 1: Ratios & Rates", icon: "⚖️", generator: window.RatiosGenerator },
     decimals: { name: "Ch 2: Decimals & Percents", icon: "💯", generator: window.DecimalsGenerator },
     operations: { name: "Ch 3: Multi-Digit Operations", icon: "➕", generator: window.OperationsGenerator },
