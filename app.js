@@ -449,32 +449,56 @@ function isStageCompleted(stageNum) {
 }
 
 function getRecommendedTopic() {
-    const currentStage = getCurrentStage();
-    const stage = learningPath[currentStage - 1];
-    
-    if (!stage) return null;
-    
-    for (const topic of stage.topics) {
-        const progress = userData.topicProgress[topic.key] || { completed: 0 };
-        if (progress.completed < topic.required) {
-            return {
-                key: topic.key,
-                name: topic.name,
-                completed: progress.completed,
-                required: topic.required,
-                stage: stage.name
-            };
+    // Use iteration instead of recursion to prevent stack overflow
+    let stageNum = getCurrentStage();
+    const maxIterations = learningPath.length; // Safety limit
+    let iterations = 0;
+
+    while (stageNum <= learningPath.length && iterations < maxIterations) {
+        iterations++;
+        const stage = learningPath[stageNum - 1];
+
+        if (!stage) return null;
+
+        // Look for incomplete topics in current stage
+        for (const topic of stage.topics) {
+            const progress = userData.topicProgress[topic.key] || { completed: 0 };
+            if (progress.completed < topic.required) {
+                return {
+                    key: topic.key,
+                    name: topic.name,
+                    completed: progress.completed,
+                    required: topic.required,
+                    stage: stage.name
+                };
+            }
+        }
+
+        // Current stage is complete, try next stage
+        if (stageNum < learningPath.length) {
+            stageNum++;
+            // Only update userData if this stage is actually unlocked
+            if (window.MasteryTracker) {
+                const unlockStatus = window.MasteryTracker.isChapterUnlocked(stageNum, userData, learningPath);
+                if (unlockStatus.unlocked) {
+                    userData.currentStage = stageNum;
+                    userData.currentChapter = stageNum;
+                    saveUserData();
+                } else {
+                    // Can't advance to locked stage, stop here
+                    break;
+                }
+            } else {
+                userData.currentStage = stageNum;
+                userData.currentChapter = stageNum;
+                saveUserData();
+            }
+        } else {
+            // Reached end of learning path
+            break;
         }
     }
-    
-    // Move to next stage if current is complete
-    if (currentStage < learningPath.length) {
-        userData.currentStage = currentStage + 1;
-        userData.currentChapter = currentStage + 1;
-        saveUserData();
-        return getRecommendedTopic();
-    }
-    
+
     return null;
 }
 
