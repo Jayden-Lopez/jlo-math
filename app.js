@@ -460,29 +460,95 @@ function getRecommendedTopic() {
 // NEW: Chapter selector function
 function setCurrentChapter(chapterNumber) {
     const newChapter = parseInt(chapterNumber);
-    
+
     // Check if trying to advance beyond mastered chapters
     if (window.MasteryTracker && newChapter > userData.currentChapter) {
         // Check if previous chapter is mastered
         const previousMastery = window.MasteryTracker.checkChapterMastery(
-            newChapter - 1, 
-            userData, 
+            newChapter - 1,
+            userData,
             learningPath
         );
-        
+
         if (!previousMastery.mastered) {
             alert(`⚠️ Cannot advance to Chapter ${newChapter} yet!\n\nYou must first master Chapter ${newChapter - 1}:\n\n${previousMastery.topicsNeeded.map(t => `• ${t.name}: ${t.status}`).join('\n')}`);
-            
+
             // Reset dropdown to current chapter
             document.getElementById('chapterSelect').value = userData.currentChapter;
             return;
         }
     }
-    
+
     userData.currentStage = newChapter;
     userData.currentChapter = newChapter;
     saveUserData();
     initializeTopics();
+}
+
+// Show chapter progress in a modal window
+function showChapterProgress(chapterNum) {
+    if (!chapterNum) {
+        // User selected the placeholder option, do nothing
+        return;
+    }
+
+    const chapterNumber = parseInt(chapterNum);
+    const stage = learningPath[chapterNumber - 1];
+
+    if (!stage) return;
+
+    let chapterMastery = null;
+    if (window.MasteryTracker) {
+        chapterMastery = window.MasteryTracker.checkChapterMastery(chapterNumber, userData, learningPath);
+    }
+
+    // Create modal content
+    const modalContent = `
+        <div style="max-width: 800px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="color: #667eea; margin-bottom: 10px;">${stage.name}</h2>
+            <p style="color: #6b7280; margin-bottom: 20px;">${stage.description}</p>
+
+            ${generateChapterDetailedProgress(chapterNumber, stage, chapterMastery)}
+        </div>
+    `;
+
+    // Get or create modal
+    let modal = document.getElementById('chapterProgressModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'chapterProgressModal';
+        modal.className = 'modal';
+        modal.innerHTML = `
+            <div class="modal-content" style="margin: 20px auto; padding: 30px; max-width: 90%; background: white; border-radius: 20px;">
+                <span class="close" onclick="closeChapterProgressModal()" style="float: right; font-size: 28px; font-weight: bold; cursor: pointer; color: #999;">&times;</span>
+                <div id="chapterProgressContent"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close modal when clicking outside
+        modal.onclick = function(event) {
+            if (event.target === modal) {
+                closeChapterProgressModal();
+            }
+        };
+    }
+
+    // Update content and show modal
+    document.getElementById('chapterProgressContent').innerHTML = modalContent;
+    modal.style.display = 'flex';
+
+    // Reset dropdown to placeholder
+    setTimeout(() => {
+        document.getElementById('chapterSelect').value = '';
+    }, 100);
+}
+
+function closeChapterProgressModal() {
+    const modal = document.getElementById('chapterProgressModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Initialize topics with mastery display
@@ -748,13 +814,12 @@ function buildPathModeUI(container) {
         chapterMastery = window.MasteryTracker.checkChapterMastery(currentStage, userData, learningPath);
     }
     
-    // Enhanced Chapter Overview with Detailed Progress
+    // Chapter overview dropdown - minimal space usage
     let html = `
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
-            <h3>📚 Chapter Overview & Progress</h3>
-            <p style="margin-bottom: 15px;">Select a chapter to view details:</p>
-            <select id="chapterSelect" onchange="setCurrentChapter(this.value)"
-                    style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 2px solid #667eea;">
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 15px; margin-bottom: 20px;">
+            <select id="chapterSelect" onchange="showChapterProgress(this.value)"
+                    style="width: 100%; padding: 12px; font-size: 16px; border-radius: 8px; border: 2px solid #667eea;">
+                <option value="">📚 Choose chapter to view update</option>
                 ${learningPath.map((chapter, index) => {
                     const chapterNum = index + 1;
                     const unlockStatus = window.MasteryTracker ?
@@ -764,17 +829,12 @@ function buildPathModeUI(container) {
 
                     return `
                         <option value="${chapterNum}"
-                                ${currentStage === chapterNum ? 'selected' : ''}
                                 ${!unlockStatus.unlocked ? 'disabled' : ''}>
                             ${lockIcon}${chapter.name}
                         </option>
                     `;
                 }).join('')}
             </select>
-
-            <div style="margin-top: 20px; border-top: 2px solid #cbd5e0; padding-top: 20px;">
-                ${generateChapterDetailedProgress(currentStage, stage, chapterMastery)}
-            </div>
         </div>
     `;
     
