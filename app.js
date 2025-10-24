@@ -414,7 +414,30 @@ function checkDailyReset() {
 
 // Learning Path Functions
 function getCurrentStage() {
-    return userData.currentStage || 1;
+    let currentStage = userData.currentStage || 1;
+
+    // Validate that the current stage is unlocked
+    // If it's locked, find the highest unlocked chapter
+    if (window.MasteryTracker) {
+        const unlockStatus = window.MasteryTracker.isChapterUnlocked(currentStage, userData, learningPath);
+
+        if (!unlockStatus.unlocked) {
+            // Current stage is locked, find the highest unlocked chapter
+            for (let i = learningPath.length; i >= 1; i--) {
+                const checkStatus = window.MasteryTracker.isChapterUnlocked(i, userData, learningPath);
+                if (checkStatus.unlocked) {
+                    currentStage = i;
+                    // Update userData to correct the issue
+                    userData.currentStage = i;
+                    userData.currentChapter = i;
+                    saveUserData();
+                    break;
+                }
+            }
+        }
+    }
+
+    return currentStage;
 }
 
 function isStageCompleted(stageNum) {
