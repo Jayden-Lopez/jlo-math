@@ -502,33 +502,268 @@ function initializeTopics() {
     updateDailyProgress();
 }
 
+function generateChapterDetailedProgress(chapterNum, stage, chapterMastery) {
+    if (!stage) return '<p>Chapter not found</p>';
+
+    let html = '';
+
+    // Topic Progress Section
+    html += '<h4 style="color: #667eea; margin-bottom: 15px;">📊 Topic Progress:</h4>';
+
+    stage.topics.forEach(topic => {
+        const topicData = topics[topic.key];
+        const progress = userData.topicProgress[topic.key] || { completed: 0, attempts: 0 };
+        const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
+        const percentComplete = Math.min(100, Math.round((progress.completed / topic.required) * 100));
+
+        // Determine status
+        let status = '';
+        let statusColor = '';
+        let statusIcon = '';
+        if (window.MasteryTracker) {
+            const mastery = window.MasteryTracker.checkMastery(topic.key, userData);
+            if (mastery.mastered) {
+                status = 'Mastered!';
+                statusColor = '#10b981';
+                statusIcon = '✅';
+            } else if (progress.completed >= topic.required * 0.7) {
+                status = 'Almost there!';
+                statusColor = '#f59e0b';
+                statusIcon = '⚠️';
+            } else if (progress.completed > 0) {
+                status = 'In progress';
+                statusColor = '#3b82f6';
+                statusIcon = '📝';
+            } else {
+                status = 'Not started';
+                statusColor = '#9ca3af';
+                statusIcon = '❌';
+            }
+        }
+
+        html += `
+            <div style="background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid ${statusColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="color: #2d3748;">${statusIcon} ${topicData.icon} ${topicData.name}</strong>
+                    <span style="background: ${statusColor}; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold;">
+                        ${status}
+                    </span>
+                </div>
+                <div style="font-size: 0.9em; color: #4a5568; margin-bottom: 8px;">
+                    Progress: ${progress.completed}/${topic.required} completed (${percentComplete}%) • Accuracy: ${accuracy}%
+                </div>
+                <div style="background: #e5e7eb; height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div style="background: ${statusColor}; width: ${percentComplete}%; height: 100%; transition: width 0.3s;"></div>
+                </div>
+                ${progress.completed < topic.required ? `
+                    <div style="font-size: 0.85em; color: #6b7280; margin-top: 8px;">
+                        ⏱️ ${topic.required - progress.completed} more problem${topic.required - progress.completed !== 1 ? 's' : ''} needed
+                        ${accuracy < 80 ? ` • Need ${80 - accuracy}% higher accuracy` : ''}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    });
+
+    // Lessons Covered Section
+    html += '<h4 style="color: #667eea; margin: 20px 0 15px 0;">📚 Lessons Covered:</h4>';
+    html += '<div style="background: white; padding: 15px; border-radius: 10px;">';
+    html += '<ul style="list-style: none; padding: 0; margin: 0;">';
+
+    stage.lessons.forEach((lesson, index) => {
+        // Simple heuristic: mark lessons as complete based on overall chapter progress
+        const lessonProgress = chapterMastery ? (chapterMastery.completedTopics / chapterMastery.totalTopics) : 0;
+        const lessonIndex = index / stage.lessons.length;
+
+        let lessonIcon = '';
+        let lessonStyle = '';
+        if (lessonIndex < lessonProgress) {
+            lessonIcon = '✅';
+            lessonStyle = 'color: #10b981;';
+        } else if (lessonIndex < lessonProgress + 0.3) {
+            lessonIcon = '⚠️';
+            lessonStyle = 'color: #f59e0b;';
+        } else {
+            lessonIcon = '○';
+            lessonStyle = 'color: #9ca3af;';
+        }
+
+        html += `<li style="padding: 8px 0; border-bottom: 1px solid #f3f4f6; ${lessonStyle}">
+            ${lessonIcon} ${lesson}
+        </li>`;
+    });
+
+    html += '</ul></div>';
+
+    // Recent Activity Section
+    const recentActivity = getRecentActivityForChapter(chapterNum);
+    html += '<h4 style="color: #667eea; margin: 20px 0 15px 0;">📈 Recent Activity:</h4>';
+    html += `
+        <div style="background: white; padding: 15px; border-radius: 10px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <div style="font-size: 0.85em; color: #6b7280;">Last Practiced:</div>
+                    <div style="font-size: 1.1em; font-weight: bold; color: #2d3748;">${recentActivity.lastPracticed}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85em; color: #6b7280;">This Week:</div>
+                    <div style="font-size: 1.1em; font-weight: bold; color: #2d3748;">${recentActivity.thisWeek} problems</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85em; color: #6b7280;">Best Accuracy:</div>
+                    <div style="font-size: 1.1em; font-weight: bold; color: #2d3748;">${recentActivity.bestAccuracy}%</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.85em; color: #6b7280;">Time to Master:</div>
+                    <div style="font-size: 1.1em; font-weight: bold; color: #2d3748;">${recentActivity.timeToMaster}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Recommendation Section
+    const recommendation = getChapterRecommendation(chapterNum, stage, chapterMastery);
+    if (recommendation) {
+        html += `
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; margin-top: 20px;">
+                <h4 style="margin-bottom: 10px;">💡 Recommendation:</h4>
+                <p style="margin: 0; font-size: 1.05em;">${recommendation}</p>
+            </div>
+        `;
+    }
+
+    return html;
+}
+
+function getRecentActivityForChapter(chapterNum) {
+    const stage = learningPath[chapterNum - 1];
+    if (!stage) return { lastPracticed: 'Never', thisWeek: 0, bestAccuracy: 0, timeToMaster: 'Unknown' };
+
+    let lastPracticed = null;
+    let thisWeekCount = 0;
+    let bestAccuracy = 0;
+    let totalNeeded = 0;
+    let totalCompleted = 0;
+
+    const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    stage.topics.forEach(topic => {
+        const progress = userData.topicProgress[topic.key] || { completed: 0, attempts: 0, lastActivity: null };
+
+        if (progress.lastActivity) {
+            const activityDate = new Date(progress.lastActivity);
+            if (!lastPracticed || activityDate > lastPracticed) {
+                lastPracticed = activityDate;
+            }
+            if (activityDate.getTime() > oneWeekAgo) {
+                thisWeekCount += progress.completed;
+            }
+        }
+
+        const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
+        if (accuracy > bestAccuracy) bestAccuracy = accuracy;
+
+        totalNeeded += topic.required;
+        totalCompleted += Math.min(progress.completed, topic.required);
+    });
+
+    const remaining = totalNeeded - totalCompleted;
+    let timeToMaster = 'Unknown';
+    if (remaining <= 0) {
+        timeToMaster = 'Complete!';
+    } else if (remaining <= 10) {
+        timeToMaster = '~20 min';
+    } else if (remaining <= 25) {
+        timeToMaster = '~45 min';
+    } else if (remaining <= 50) {
+        timeToMaster = '~90 min';
+    } else {
+        timeToMaster = `~${Math.ceil(remaining / 30)} sessions`;
+    }
+
+    return {
+        lastPracticed: lastPracticed ? formatTimeAgo(lastPracticed) : 'Never',
+        thisWeek: thisWeekCount,
+        bestAccuracy: bestAccuracy,
+        timeToMaster: timeToMaster
+    };
+}
+
+function getChapterRecommendation(chapterNum, stage, chapterMastery) {
+    if (!chapterMastery) return null;
+
+    if (chapterMastery.mastered) {
+        return `🎉 Chapter ${chapterNum} is complete! Ready to advance to the next chapter.`;
+    }
+
+    // Find the topic that needs the most work
+    let needsMostWork = null;
+    let lowestProgress = Infinity;
+
+    stage.topics.forEach(topic => {
+        const progress = userData.topicProgress[topic.key] || { completed: 0, attempts: 0 };
+        const percentComplete = progress.completed / topic.required;
+        const accuracy = progress.attempts > 0 ? (progress.completed / progress.attempts) : 0;
+        const score = percentComplete + (accuracy * 0.5); // Combined score
+
+        if (score < lowestProgress) {
+            lowestProgress = score;
+            needsMostWork = topic;
+        }
+    });
+
+    if (needsMostWork) {
+        const topicData = topics[needsMostWork.key];
+        const progress = userData.topicProgress[needsMostWork.key] || { completed: 0 };
+        const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
+
+        if (accuracy < 70) {
+            return `Focus on ${topicData.name} to improve accuracy. Try IXL Practice for targeted skill work.`;
+        } else {
+            return `Keep practicing ${topicData.name} - you're making good progress! ${needsMostWork.required - progress.completed} more to go.`;
+        }
+    }
+
+    return 'Keep up the great work! Practice any topic to continue progressing.';
+}
+
+function formatTimeAgo(date) {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)} days ago`;
+    return date.toLocaleDateString();
+}
+
 function buildPathModeUI(container) {
     const currentStage = getCurrentStage();
     const stage = learningPath[currentStage - 1];
     const recommended = getRecommendedTopic();
-    
+
     // Check mastery status for current chapter
     let chapterMastery = null;
     if (window.MasteryTracker) {
         chapterMastery = window.MasteryTracker.checkChapterMastery(currentStage, userData, learningPath);
     }
     
-    // NEW: Add chapter selector at the top with lock indicators
+    // Enhanced Chapter Overview with Detailed Progress
     let html = `
         <div style="background: #f0f9ff; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
-            <h3>📚 Select Your Current Chapter</h3>
-            <p style="margin-bottom: 15px;">What chapter is your class working on?</p>
-            <select id="chapterSelect" onchange="setCurrentChapter(this.value)" 
+            <h3>📚 Chapter Overview & Progress</h3>
+            <p style="margin-bottom: 15px;">Select a chapter to view details:</p>
+            <select id="chapterSelect" onchange="setCurrentChapter(this.value)"
                     style="width: 100%; padding: 10px; font-size: 16px; border-radius: 5px; border: 2px solid #667eea;">
                 ${learningPath.map((chapter, index) => {
                     const chapterNum = index + 1;
-                    const unlockStatus = window.MasteryTracker ? 
-                        window.MasteryTracker.isChapterUnlocked(chapterNum, userData, learningPath) : 
+                    const unlockStatus = window.MasteryTracker ?
+                        window.MasteryTracker.isChapterUnlocked(chapterNum, userData, learningPath) :
                         { unlocked: true };
                     const lockIcon = unlockStatus.unlocked ? '' : '🔒 ';
-                    
+
                     return `
-                        <option value="${chapterNum}" 
+                        <option value="${chapterNum}"
                                 ${currentStage === chapterNum ? 'selected' : ''}
                                 ${!unlockStatus.unlocked ? 'disabled' : ''}>
                             ${lockIcon}${chapter.name}
@@ -536,30 +771,9 @@ function buildPathModeUI(container) {
                     `;
                 }).join('')}
             </select>
-            
-            ${chapterMastery && chapterMastery.topicsNeeded.length > 0 ? `
-                <div style="margin-top: 15px; padding: 15px; background: #fff3cd; border-radius: 10px; border: 2px solid #ffc107;">
-                    <h4>📋 To Complete This Chapter:</h4>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        ${chapterMastery.topicsNeeded.map(topic => 
-                            `<li style="margin: 5px 0;"><strong>${topic.name}:</strong> ${topic.status}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-            ` : chapterMastery && chapterMastery.mastered ? `
-                <div style="margin-top: 15px; padding: 15px; background: #d1fae5; border-radius: 10px; border: 2px solid #10b981;">
-                    <h4>🎉 Chapter ${currentStage} Complete!</h4>
-                    <p style="margin: 10px 0;">All topics mastered. Ready to advance!</p>
-                </div>
-            ` : ''}
-            
-            <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 10px;">
-                <h4>Lessons in ${stage.name}:</h4>
-                <ul style="margin: 10px 0; padding-left: 20px;">
-                    ${stage.lessons.map(lesson => 
-                        `<li style="margin: 5px 0;">${lesson}</li>`
-                    ).join('')}
-                </ul>
+
+            <div style="margin-top: 20px; border-top: 2px solid #cbd5e0; padding-top: 20px;">
+                ${generateChapterDetailedProgress(currentStage, stage, chapterMastery)}
             </div>
         </div>
     `;
@@ -870,10 +1084,11 @@ function checkAnswer() {
     userData.totalAttempts++;
     
     if (!userData.topicProgress[currentTopic]) {
-        userData.topicProgress[currentTopic] = { completed: 0, attempts: 0, accuracy: 0 };
+        userData.topicProgress[currentTopic] = { completed: 0, attempts: 0, accuracy: 0, lastActivity: null };
     }
     userData.topicProgress[currentTopic].attempts++;
-    
+    userData.topicProgress[currentTopic].lastActivity = new Date().toISOString();
+
     if (isCorrect) {
         userData.correctCount++;
         userData.topicProgress[currentTopic].completed++;
@@ -882,7 +1097,7 @@ function checkAnswer() {
     } else {
         currentStreak = 0;
     }
-    
+
     userData.topicProgress[currentTopic].accuracy = Math.round(
         (userData.topicProgress[currentTopic].completed / userData.topicProgress[currentTopic].attempts) * 100
     );
