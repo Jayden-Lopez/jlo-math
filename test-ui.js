@@ -13,6 +13,22 @@ let selectedAnswer = null;
  * Toggle between practice mode and test mode
  */
 function toggleMode() {
+    console.log('toggleMode called, testMode:', testMode);
+
+    // Check if required modules are loaded
+    if (!window.learningPath) {
+        alert('Learning path not loaded yet. Please wait a moment and try again.');
+        console.error('window.learningPath is not defined');
+        return;
+    }
+
+    if (!window.TestSimulation) {
+        alert('Test simulation module not loaded yet. Please wait a moment and try again.');
+        console.error('window.TestSimulation is not defined');
+        return;
+    }
+
+    console.log('All modules loaded. Switching to', testMode ? 'practice' : 'test', 'mode');
     testMode = !testMode;
 
     const topicSelection = document.getElementById('topicSelection');
