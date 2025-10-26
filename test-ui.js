@@ -3,16 +3,36 @@
  * Handles all UI interactions for the test simulation module
  */
 
+console.log('test-ui.js is loading...');
+
 // Test UI state
 let testMode = false;
-let currentQuestion = null;
-let testTimerInterval = null;
-let selectedAnswer = null;
+let currentTestQuestion = null;
+let testModeTimerInterval = null;
+let selectedTestAnswer = null;
+
+console.log('test-ui.js variables declared');
 
 /**
  * Toggle between practice mode and test mode
  */
 function toggleMode() {
+    console.log('toggleMode called, testMode:', testMode);
+
+    // Check if required modules are loaded
+    if (!window.learningPath) {
+        alert('Learning path not loaded yet. Please wait a moment and try again.');
+        console.error('window.learningPath is not defined');
+        return;
+    }
+
+    if (!window.TestSimulation) {
+        alert('Test simulation module not loaded yet. Please wait a moment and try again.');
+        console.error('window.TestSimulation is not defined');
+        return;
+    }
+
+    console.log('All modules loaded. Switching to', testMode ? 'practice' : 'test', 'mode');
     testMode = !testMode;
 
     const topicSelection = document.getElementById('topicSelection');
@@ -44,9 +64,9 @@ function toggleMode() {
         modeToggleBtn.style.background = 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)';
 
         // Stop test timer if running
-        if (testTimerInterval) {
-            clearInterval(testTimerInterval);
-            testTimerInterval = null;
+        if (testModeTimerInterval) {
+            clearInterval(testModeTimerInterval);
+            testModeTimerInterval = null;
         }
     }
 }
@@ -137,11 +157,11 @@ function startChapterTest(chapterNum) {
  * Start the test timer
  */
 function startTestTimer() {
-    if (testTimerInterval) {
-        clearInterval(testTimerInterval);
+    if (testModeTimerInterval) {
+        clearInterval(testModeTimerInterval);
     }
 
-    testTimerInterval = setInterval(() => {
+    testModeTimerInterval = setInterval(() => {
         const progress = window.TestSimulation.getProgress();
         if (progress) {
             const timeStr = window.TestSimulation.formatTime(progress.timeElapsed);
@@ -154,20 +174,20 @@ function startTestTimer() {
  * Show current test question
  */
 function showTestQuestion() {
-    currentQuestion = window.TestSimulation.getCurrentQuestion();
-    if (!currentQuestion) {
+    currentTestQuestion = window.TestSimulation.getCurrentQuestion();
+    if (!currentTestQuestion) {
         // Test is over
         finishTest();
         return;
     }
 
-    selectedAnswer = null;
+    selectedTestAnswer = null;
 
     const progress = window.TestSimulation.getProgress();
     document.getElementById('testProgress').textContent =
         `Question ${progress.currentQuestion} of ${progress.totalQuestions}`;
 
-    document.getElementById('testQuestionText').innerHTML = currentQuestion.question;
+    document.getElementById('testQuestionText').innerHTML = currentTestQuestion.question;
 
     // Clear feedback
     document.getElementById('testFeedbackArea').innerHTML = '';
@@ -176,12 +196,12 @@ function showTestQuestion() {
     const answerSection = document.getElementById('testAnswerSection');
     answerSection.innerHTML = '';
 
-    if (currentQuestion.options) {
+    if (currentTestQuestion.options) {
         // Multiple choice
         const mcDiv = document.createElement('div');
         mcDiv.className = 'mc-options';
 
-        currentQuestion.options.forEach((option, index) => {
+        currentTestQuestion.options.forEach((option, index) => {
             const optionDiv = document.createElement('div');
             optionDiv.className = 'mc-option';
             optionDiv.textContent = option;
@@ -230,7 +250,7 @@ function selectTestOption(index, element) {
 
     // Select this option
     element.classList.add('selected');
-    selectedAnswer = index;
+    selectedTestAnswer = index;
 }
 
 /**
@@ -239,12 +259,12 @@ function selectTestOption(index, element) {
 function submitTestAnswer() {
     let userAnswer;
 
-    if (currentQuestion.options) {
-        if (selectedAnswer === null) {
+    if (currentTestQuestion.options) {
+        if (selectedTestAnswer === null) {
             alert('Please select an answer');
             return;
         }
-        userAnswer = selectedAnswer;
+        userAnswer = selectedTestAnswer;
     } else {
         const input = document.getElementById('testAnswerInput');
         if (!input || !input.value.trim()) {
@@ -310,7 +330,7 @@ function showTestFeedback(result) {
  * Show hint for current test question
  */
 function showTestHint() {
-    if (!currentQuestion || !currentQuestion.hint) {
+    if (!currentTestQuestion || !currentTestQuestion.hint) {
         alert('No hint available for this question');
         return;
     }
@@ -318,7 +338,7 @@ function showTestHint() {
     const feedbackArea = document.getElementById('testFeedbackArea');
     const hintDiv = document.createElement('div');
     hintDiv.className = 'hint-box';
-    hintDiv.innerHTML = `<strong>💡 Hint:</strong><br>${currentQuestion.hint}`;
+    hintDiv.innerHTML = `<strong>💡 Hint:</strong><br>${currentTestQuestion.hint}`;
 
     feedbackArea.innerHTML = '';
     feedbackArea.appendChild(hintDiv);
@@ -343,9 +363,9 @@ function endTestEarly() {
  */
 function finishTest() {
     // Stop timer
-    if (testTimerInterval) {
-        clearInterval(testTimerInterval);
-        testTimerInterval = null;
+    if (testModeTimerInterval) {
+        clearInterval(testModeTimerInterval);
+        testModeTimerInterval = null;
     }
 
     // Get results
@@ -466,3 +486,11 @@ function backToTestSelection() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Test UI Controller loaded');
 });
+
+// Expose functions to window for onclick handlers
+window.toggleMode = toggleMode;
+window.startChapterTest = startChapterTest;
+window.submitTestAnswer = submitTestAnswer;
+window.showTestHint = showTestHint;
+window.endTestEarly = endTestEarly;
+window.backToTestSelection = backToTestSelection;
