@@ -3,11 +3,15 @@
  * Handles all UI interactions for the test simulation module
  */
 
+console.log('test-ui.js is loading...');
+
 // Test UI state
 let testMode = false;
 let currentTestQuestion = null;
 let testModeTimerInterval = null;
 let selectedTestAnswer = null;
+
+console.log('test-ui.js variables declared');
 
 /**
  * Toggle between practice mode and test mode
@@ -482,3 +486,11 @@ function backToTestSelection() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Test UI Controller loaded');
 });
+
+// Expose functions to window for onclick handlers
+window.toggleMode = toggleMode;
+window.startChapterTest = startChapterTest;
+window.submitTestAnswer = submitTestAnswer;
+window.showTestHint = showTestHint;
+window.endTestEarly = endTestEarly;
+window.backToTestSelection = backToTestSelection;
