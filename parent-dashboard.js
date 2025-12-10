@@ -317,6 +317,24 @@ window.ParentDashboard = {
                     Session Started: ${parentSettings.initialized ? 'Yes' : 'First Time - Please Change PIN!'}
                 </p>
             </div>
+
+            <div style="background: #fff9e6; border-radius: 10px; padding: 15px; margin: 15px 0;">
+                <h3>📝 Detailed Activity Log</h3>
+                <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">
+                    See exactly what Jordan worked on, what he got right/wrong, and when he used hints
+                </p>
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button class="btn btn-small" onclick="ParentDashboard.showActivityLog('today')"
+                            style="padding: 8px 15px; background: #48bb78;">Today</button>
+                    <button class="btn btn-small" onclick="ParentDashboard.showActivityLog('week')"
+                            style="padding: 8px 15px; background: #667eea;">This Week</button>
+                    <button class="btn btn-small" onclick="ParentDashboard.showActivityLog('all')"
+                            style="padding: 8px 15px; background: #9ca3af;">All Time</button>
+                </div>
+                <div id="activityLogContent" style="max-height: 500px; overflow-y: auto;">
+                    <p style="color: #999; font-style: italic;">Click a button above to view activity</p>
+                </div>
+            </div>
         `;
         
         // Mark as initialized
@@ -568,32 +586,142 @@ window.ParentDashboard = {
         const newPIN = document.getElementById('newPIN').value;
         const confirmPIN = document.getElementById('confirmPIN').value;
         const errorDiv = document.getElementById('pinChangeError');
-        
+
         if (currentPIN.length !== 4 || newPIN.length !== 4 || confirmPIN.length !== 4) {
             errorDiv.textContent = 'All PINs must be 4 digits';
             return;
         }
-        
+
         if (window.hashPIN(currentPIN) !== window.parentSettings.pinHash) {
             errorDiv.textContent = 'Current PIN is incorrect';
             return;
         }
-        
+
         if (newPIN !== confirmPIN) {
             errorDiv.textContent = 'New PINs do not match';
             return;
         }
-        
+
         if (newPIN === currentPIN) {
             errorDiv.textContent = 'New PIN must be different from current PIN';
             return;
         }
-        
+
         window.parentSettings.pinHash = window.hashPIN(newPIN);
         window.parentSettings.lastPinChange = new Date().toISOString();
         window.saveParentSettings();
-        
+
         alert('PIN changed successfully!');
         window.showParentControls();
+    },
+
+    // Show activity log filtered by time period
+    showActivityLog: function(period) {
+        const userData = window.userData;
+        const activityLog = userData.activityLog || [];
+        const contentDiv = document.getElementById('activityLogContent');
+
+        if (activityLog.length === 0) {
+            contentDiv.innerHTML = '<p style="color: #999; font-style: italic;">No activity recorded yet</p>';
+            return;
+        }
+
+        // Filter by time period
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        let filteredLog = activityLog.filter(entry => {
+            const entryDate = new Date(entry.timestamp);
+            if (period === 'today') {
+                return entryDate >= today;
+            } else if (period === 'week') {
+                return entryDate >= weekAgo;
+            } else {
+                return true; // all
+            }
+        });
+
+        // Sort by timestamp, newest first
+        filteredLog.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        if (filteredLog.length === 0) {
+            contentDiv.innerHTML = `<p style="color: #999; font-style: italic;">No activity in this time period</p>`;
+            return;
+        }
+
+        // Group by date
+        const groupedByDate = {};
+        filteredLog.forEach(entry => {
+            const date = new Date(entry.timestamp).toLocaleDateString();
+            if (!groupedByDate[date]) {
+                groupedByDate[date] = [];
+            }
+            groupedByDate[date].push(entry);
+        });
+
+        // Build HTML
+        let html = '';
+        Object.keys(groupedByDate).forEach(date => {
+            const entries = groupedByDate[date];
+            const correctCount = entries.filter(e => e.isCorrect).length;
+            const incorrectCount = entries.length - correctCount;
+            const hintCount = entries.filter(e => e.hintUsed).length;
+
+            html += `
+                <div style="margin-bottom: 20px;">
+                    <div style="background: #667eea; color: white; padding: 10px; border-radius: 8px 8px 0 0;
+                                display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="font-size: 1.1em;">📅 ${date}</strong>
+                        <span style="font-size: 0.9em;">
+                            ✅ ${correctCount} | ❌ ${incorrectCount} | 💡 ${hintCount} hints
+                        </span>
+                    </div>
+                    <div style="background: white; padding: 10px; border: 1px solid #e5e7eb; border-radius: 0 0 8px 8px;">
+            `;
+
+            entries.forEach(entry => {
+                const time = new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const statusIcon = entry.isCorrect ? '✅' : '❌';
+                const statusColor = entry.isCorrect ? '#48bb78' : '#e53e3e';
+
+                html += `
+                    <div style="margin: 10px 0; padding: 12px; background: ${entry.isCorrect ? '#f0fff4' : '#fff5f5'};
+                                border-left: 4px solid ${statusColor}; border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <strong style="color: ${statusColor};">${statusIcon} ${entry.topicName}</strong>
+                                <span style="font-size: 0.85em; color: #666; margin-left: 10px;">
+                                    ${time} • ${entry.timeSpent}s
+                                    ${entry.hintUsed ? ' • 💡 Used hint' : ''}
+                                </span>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 5px;">
+                            <strong>Question:</strong> ${entry.question}
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.9em;">
+                            <div>
+                                <strong>Jordan's Answer:</strong>
+                                <span style="color: ${statusColor}; font-weight: bold;">${entry.userAnswer}</span>
+                            </div>
+                            ${!entry.isCorrect ? `
+                                <div>
+                                    <strong>Correct Answer:</strong>
+                                    <span style="color: #48bb78; font-weight: bold;">${entry.correctAnswer}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+        });
+
+        contentDiv.innerHTML = html;
     }
 };
