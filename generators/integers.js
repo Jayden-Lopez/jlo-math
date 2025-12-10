@@ -161,13 +161,18 @@ window.IntegersGenerator = {
     generateDistance: function() {
         const types = ['horizontal', 'vertical'];
         const type = types[Math.floor(Math.random() * types.length)];
-        
+
         if (type === 'horizontal') {
             const y = Math.floor(Math.random() * 11) - 5;
             const x1 = Math.floor(Math.random() * 11) - 5;
             const x2 = Math.floor(Math.random() * 11) - 5;
             const distance = Math.abs(x2 - x1);
-            
+
+            // Regenerate if points are the same (distance would be 0)
+            if (distance === 0) {
+                return this.generateDistance();
+            }
+
             return {
                 question: `Find the distance between points (${x1}, ${y}) and (${x2}, ${y})`,
                 answer: `${distance} units`,
@@ -179,7 +184,12 @@ window.IntegersGenerator = {
             const y1 = Math.floor(Math.random() * 11) - 5;
             const y2 = Math.floor(Math.random() * 11) - 5;
             const distance = Math.abs(y2 - y1);
-            
+
+            // Regenerate if points are the same (distance would be 0)
+            if (distance === 0) {
+                return this.generateDistance();
+            }
+
             return {
                 question: `Find the distance between points (${x}, ${y1}) and (${x}, ${y2})`,
                 answer: `${distance} units`,
