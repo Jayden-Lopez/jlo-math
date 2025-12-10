@@ -28,6 +28,8 @@ let timerInterval = null;
 let currentStreak = 0;
 let parentAccessAttempts = 0;
 let lockoutTime = null;
+let currentQuestionStartTime = null;
+let currentQuestionHintUsed = false;
 
 // User Progress Data with defaults
 let userData = {
@@ -45,6 +47,7 @@ let userData = {
     currentStage: 3, // Start at Chapter 3 (where Jordan's class is)
     currentChapter: 3, // Track current textbook chapter
     pathMode: true,
+    activityLog: [], // Detailed log of all questions attempted
     version: APP_VERSION
 };
 
@@ -1117,10 +1120,12 @@ function showQuestion() {
         endSession();
         return;
     }
-    
+
     currentQuestion = sessionQuestions[currentQuestionIndex];
-    
-    document.getElementById('questionNumber').textContent = 
+    currentQuestionStartTime = Date.now();
+    currentQuestionHintUsed = false;
+
+    document.getElementById('questionNumber').textContent =
         `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
     
     document.getElementById('questionText').textContent = currentQuestion.question;
@@ -1165,7 +1170,8 @@ function selectMCOption(index) {
 
 function checkAnswer() {
     let isCorrect = false;
-    
+    let userAnswer = '';
+
     if (currentQuestion.options) {
         const selected = document.querySelector('.mc-option.selected');
         if (!selected) {
@@ -1173,20 +1179,21 @@ function checkAnswer() {
             return;
         }
         const selectedIndex = parseInt(selected.dataset.index);
+        userAnswer = currentQuestion.options[selectedIndex];
         isCorrect = (selectedIndex === currentQuestion.correct);
     } else {
         const input = document.getElementById('answerInput');
-        let userAnswer = input.value.trim();
-        
+        userAnswer = input.value.trim();
+
         if (!userAnswer) {
             alert("Please enter an answer!");
             return;
         }
-        
+
         // Normalize spaces in both answers (replace multiple spaces with single space)
         userAnswer = userAnswer.replace(/\s+/g, ' ');
         let correctAnswer = currentQuestion.answer.toString().replace(/\s+/g, ' ');
-        
+
         // Check if this is a fraction or mixed number answer
         if (correctAnswer.includes('/') || userAnswer.includes('/')) {
             // Direct string comparison for fractions/mixed numbers
@@ -1197,6 +1204,31 @@ function checkAnswer() {
             const correctNum = parseFloat(correctAnswer);
             isCorrect = Math.abs(numericAnswer - correctNum) < 0.01;
         }
+    }
+
+    // Calculate time taken for this question
+    const timeSpent = currentQuestionStartTime ? Math.round((Date.now() - currentQuestionStartTime) / 1000) : 0;
+
+    // Log this activity
+    if (!userData.activityLog) {
+        userData.activityLog = [];
+    }
+
+    userData.activityLog.push({
+        timestamp: new Date().toISOString(),
+        topic: currentTopic,
+        topicName: topics[currentTopic]?.name || currentTopic,
+        question: currentQuestion.question,
+        userAnswer: userAnswer,
+        correctAnswer: currentQuestion.answer.toString(),
+        isCorrect: isCorrect,
+        hintUsed: currentQuestionHintUsed,
+        timeSpent: timeSpent
+    });
+
+    // Keep only last 500 entries to prevent data bloat
+    if (userData.activityLog.length > 500) {
+        userData.activityLog = userData.activityLog.slice(-500);
     }
     
     // Update statistics
@@ -1304,8 +1336,9 @@ function nextQuestion() {
 function showHint() {
     const feedbackArea = document.getElementById('feedbackArea');
     const existingHint = document.querySelector('.hint-box');
-    
+
     if (!existingHint && currentQuestion.hint) {
+        currentQuestionHintUsed = true;
         const hintDiv = document.createElement('div');
         hintDiv.className = 'hint-box';
         hintDiv.innerHTML = `<strong>💡 Hint:</strong><br>${currentQuestion.hint.replace(/\n/g, '<br>')}`;
