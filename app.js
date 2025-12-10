@@ -950,7 +950,21 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
     const card = document.createElement('div');
     card.className = 'topic-card';
 
-    const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
+    // Check if topic is locked by parent controls (topic lock or chapter lock)
+    let isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
+
+    // Also check if the chapter containing this topic is locked
+    if (!isLocked && parentSettings.lockedChapters) {
+        for (let i = 0; i < learningPath.length; i++) {
+            const checkStage = learningPath[i];
+            const topicInStage = checkStage.topics.find(t => t.key === key);
+            if (topicInStage && parentSettings.lockedChapters.includes(i + 1)) {
+                isLocked = true;
+                break;
+            }
+        }
+    }
+
     const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
 
     // IXL Practice is ALWAYS available (never locked)
@@ -1048,7 +1062,7 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
         card.onclick = () => startTopic(key);
         card.style.cursor = 'pointer';
     } else if (isLocked) {
-        card.onclick = () => alert("This topic is locked by parent controls");
+        card.onclick = () => alert("🔒 This topic is locked by parent controls.\n\nAsk a parent to unlock it from the Parent Dashboard.");
         card.style.cursor = 'not-allowed';
     } else {
         card.onclick = () => {

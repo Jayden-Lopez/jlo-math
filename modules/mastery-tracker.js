@@ -113,25 +113,35 @@ window.MasteryTracker = (function() {
      * @returns {object} Lock status with reasoning
      */
     function isChapterUnlocked(chapterNum, userData, learningPath) {
+        // Check if parent has manually unlocked this chapter
+        if (window.parentSettings && window.parentSettings.manuallyUnlockedChapters) {
+            if (window.parentSettings.manuallyUnlockedChapters.includes(chapterNum)) {
+                return {
+                    unlocked: true,
+                    reason: "Unlocked by parent"
+                };
+            }
+        }
+
         // Chapter 1 is always unlocked
         if (chapterNum === 1) {
-            return { 
-                unlocked: true, 
-                reason: "First chapter - always available" 
+            return {
+                unlocked: true,
+                reason: "First chapter - always available"
             };
         }
-        
+
         // Check if previous chapter is mastered
         const previousChapter = chapterNum - 1;
         const previousMastery = checkChapterMastery(previousChapter, userData, learningPath);
-        
+
         if (previousMastery.mastered) {
-            return { 
-                unlocked: true, 
-                reason: "Previous chapter mastered" 
+            return {
+                unlocked: true,
+                reason: "Previous chapter mastered"
             };
         }
-        
+
         // Lock all chapters beyond the highest mastered chapter
         // Find the highest mastered chapter
         let highestMastered = 1;
@@ -143,18 +153,18 @@ window.MasteryTracker = (function() {
                 break; // Stop at first unmastered chapter
             }
         }
-        
+
         // Allow access up to one chapter beyond highest mastered (current working chapter)
         if (chapterNum <= highestMastered + 1) {
-            return { 
-                unlocked: true, 
-                reason: "Available for practice" 
+            return {
+                unlocked: true,
+                reason: "Available for practice"
             };
         }
-        
+
         // Lock future chapters until previous is mastered
-        return { 
-            unlocked: false, 
+        return {
+            unlocked: false,
             reason: `Complete Chapter ${previousChapter} first`,
             blockingChapter: previousChapter,
             stillNeeded: previousMastery.topicsNeeded

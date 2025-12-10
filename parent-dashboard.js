@@ -45,23 +45,119 @@ window.ParentDashboard = {
             `;
         }
         
+        // Build chapter statistics
+        let chapterStats = '';
+        const chapters = window.learningPath || [];
+        for (let i = 0; i < chapters.length; i++) {
+            const chapter = chapters[i];
+            const chapterNum = i + 1;
+            const isLocked = parentSettings.lockedChapters && parentSettings.lockedChapters.includes(chapterNum);
+
+            // Check if chapter is accessible based on mastery
+            const unlockStatus = window.MasteryTracker ?
+                window.MasteryTracker.isChapterUnlocked(chapterNum, userData, chapters) :
+                { unlocked: true, reason: "Mastery tracking disabled" };
+
+            const isManuallyUnlocked = parentSettings.manuallyUnlockedChapters &&
+                                      parentSettings.manuallyUnlockedChapters.includes(chapterNum);
+
+            // Check chapter mastery
+            const chapterMastery = window.MasteryTracker ?
+                window.MasteryTracker.checkChapterMastery(chapterNum, userData, chapters) :
+                { mastered: false };
+
+            // Calculate chapter progress
+            let totalCompleted = 0;
+            let totalAttempts = 0;
+            for (const topicInfo of chapter.topics) {
+                const progress = userData.topicProgress?.[topicInfo.key] || { completed: 0, attempts: 0 };
+                totalCompleted += progress.completed;
+                totalAttempts += progress.attempts;
+            }
+            const chapterAccuracy = totalAttempts > 0 ? Math.round((totalCompleted / totalAttempts) * 100) : 0;
+
+            // Status badges
+            let statusBadge = '';
+            if (chapterMastery.mastered) {
+                statusBadge = '<span style="background: #48bb78; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.85em; margin-left: 10px;">✓ Mastered</span>';
+            } else if (isManuallyUnlocked) {
+                statusBadge = '<span style="background: #ed8936; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.85em; margin-left: 10px;">⚠ Force Unlocked</span>';
+            } else if (!unlockStatus.unlocked) {
+                statusBadge = '<span style="background: #e53e3e; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.85em; margin-left: 10px;">🔒 Locked</span>';
+            } else {
+                statusBadge = '<span style="background: #667eea; color: white; padding: 3px 8px; border-radius: 5px; font-size: 0.85em; margin-left: 10px;">📖 Available</span>';
+            }
+
+            chapterStats += `
+                <div style="margin: 10px 0; padding: 15px; background: ${isLocked ? '#ffe6e6' : '#f0f0f0'};
+                            border-radius: 10px; border-left: 4px solid ${isLocked ? '#e53e3e' : chapterMastery.mastered ? '#48bb78' : '#667eea'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="flex: 1;">
+                            <div>
+                                <strong style="font-size: 1.1em;">${chapter.name} ${isLocked ? '🔒' : ''}</strong>
+                                ${statusBadge}
+                            </div>
+                            <span style="font-size: 0.9em; color: #666; display: block; margin-top: 5px;">
+                                ${chapter.description}
+                            </span>
+                            ${!unlockStatus.unlocked && !isManuallyUnlocked ?
+                                `<span style="font-size: 0.85em; color: #e53e3e; display: block; margin-top: 5px; font-weight: bold;">
+                                    ⚠ ${unlockStatus.reason}
+                                </span>` : ''}
+                            <span style="font-size: 0.85em; color: #888; display: block; margin-top: 5px;">
+                                Topics: ${chapter.topics.map(t => topics[t.key]?.name || t.name).join(', ')}
+                            </span>
+                            <div style="background: #e2e8f0; height: 10px; border-radius: 5px; margin-top: 8px;">
+                                <div style="background: linear-gradient(90deg, #667eea, #764ba2);
+                                            width: ${Math.min(chapterAccuracy, 100)}%; height: 100%;
+                                            border-radius: 5px; transition: width 0.3s;"></div>
+                            </div>
+                            <span style="font-size: 0.85em; color: #666; margin-top: 3px; display: block;">
+                                ${totalCompleted} completed | ${totalAttempts} attempts | ${chapterAccuracy}% accuracy
+                            </span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 8px; margin-left: 20px;">
+                            ${!unlockStatus.unlocked && !isManuallyUnlocked ? `
+                                <button class="btn btn-small"
+                                        onclick="ParentDashboard.forceUnlockChapter(${chapterNum})"
+                                        style="padding: 8px 15px; font-size: 0.9em; background: #ed8936; white-space: nowrap;">
+                                    ⚡ Force Unlock
+                                </button>
+                            ` : isManuallyUnlocked ? `
+                                <button class="btn btn-small"
+                                        onclick="ParentDashboard.removeForcedUnlock(${chapterNum})"
+                                        style="padding: 8px 15px; font-size: 0.9em; background: #718096; white-space: nowrap;">
+                                    ↩ Remove Force
+                                </button>
+                            ` : ''}
+                            <button class="btn btn-small ${isLocked ? 'btn-unlock' : 'btn-lock'}"
+                                    onclick="ParentDashboard.toggleChapterLock(${chapterNum})"
+                                    style="padding: 8px 15px; font-size: 0.9em; ${isLocked ? 'background: #48bb78;' : ''} white-space: nowrap;">
+                                ${isLocked ? '🔓 Unlock Access' : '🔒 Lock Access'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Build topic statistics
         let topicStats = '';
         for (const [key, topic] of Object.entries(topics)) {
             const progress = userData.topicProgress?.[key] || { completed: 0, attempts: 0, accuracy: 0 };
-            const topicAccuracy = progress.attempts > 0 ? 
+            const topicAccuracy = progress.attempts > 0 ?
                 Math.round((progress.completed / progress.attempts) * 100) : 0;
             const isLocked = parentSettings.lockedTopics && parentSettings.lockedTopics.includes(key);
-            
+
             let skillLevel = '';
             if (progress.completed === 0) skillLevel = '⚪ Not Started';
             else if (progress.completed < 5) skillLevel = '🔵 Beginning';
             else if (progress.completed < 10) skillLevel = '🟢 Developing';
             else if (progress.completed < 20) skillLevel = '🟡 Proficient';
             else skillLevel = '🟣 Mastered';
-            
+
             topicStats += `
-                <div style="margin: 10px 0; padding: 15px; background: #f0f0f0; border-radius: 10px; 
+                <div style="margin: 10px 0; padding: 15px; background: #f0f0f0; border-radius: 10px;
                             display: flex; justify-content: space-between; align-items: center;">
                     <div style="flex: 1;">
                         <strong>${topic.icon} ${topic.name} ${isLocked ? '🔒' : ''}</strong><br>
@@ -69,18 +165,18 @@ window.ParentDashboard = {
                             ${skillLevel} | ${progress.completed} completed | ${progress.attempts} attempts | ${topicAccuracy}% accuracy
                         </span>
                         <div style="background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 5px;">
-                            <div style="background: linear-gradient(90deg, #667eea, #764ba2); 
-                                        width: ${Math.min(topicAccuracy, 100)}%; height: 100%; 
+                            <div style="background: linear-gradient(90deg, #667eea, #764ba2);
+                                        width: ${Math.min(topicAccuracy, 100)}%; height: 100%;
                                         border-radius: 4px; transition: width 0.3s;"></div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="btn btn-small ${isLocked ? 'btn-unlock' : 'btn-lock'}" 
-                                onclick="ParentDashboard.toggleTopicLock('${key}')" 
+                        <button class="btn btn-small ${isLocked ? 'btn-unlock' : 'btn-lock'}"
+                                onclick="ParentDashboard.toggleTopicLock('${key}')"
                                 style="padding: 5px 10px; font-size: 0.9em;">
                             ${isLocked ? 'Unlock' : 'Lock'}
                         </button>
-                        <button class="btn btn-small btn-reset" onclick="ParentDashboard.resetTopic('${key}')" 
+                        <button class="btn btn-small btn-reset" onclick="ParentDashboard.resetTopic('${key}')"
                                 style="padding: 5px 10px; font-size: 0.9em; background: #f56565;">
                             Reset
                         </button>
@@ -163,7 +259,17 @@ window.ParentDashboard = {
             </div>
             
             ${pathStatus}
-            
+
+            <div style="background: #e8f4fd; border-radius: 10px; padding: 15px; margin: 15px 0;">
+                <h3>📖 Chapter Controls</h3>
+                <div style="font-size: 0.9em; color: #666; margin-bottom: 15px; background: white; padding: 12px; border-radius: 8px;">
+                    <strong>Two types of chapter controls:</strong><br>
+                    • <strong>⚡ Force Unlock:</strong> Override mastery requirements to give access to locked chapters (useful when teacher assigns specific topics)<br>
+                    • <strong>🔒 Lock Access:</strong> Completely block access to a chapter regardless of mastery
+                </div>
+                ${chapterStats}
+            </div>
+
             <div style="background: #fef5e7; border-radius: 10px; padding: 15px; margin: 15px 0;">
                 <h3>🎯 Daily Goal</h3>
                 <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
@@ -268,16 +374,73 @@ window.ParentDashboard = {
         if (!parentSettings.lockedTopics) {
             parentSettings.lockedTopics = [];
         }
-        
+
         const index = parentSettings.lockedTopics.indexOf(topicKey);
         if (index > -1) {
             parentSettings.lockedTopics.splice(index, 1);
         } else {
             parentSettings.lockedTopics.push(topicKey);
         }
-        
+
         window.saveParentSettings();
         window.showParentControls();
+    },
+
+    // Toggle chapter lock
+    toggleChapterLock: function(chapterNum) {
+        const parentSettings = window.parentSettings;
+        if (!parentSettings.lockedChapters) {
+            parentSettings.lockedChapters = [];
+        }
+
+        const index = parentSettings.lockedChapters.indexOf(chapterNum);
+        if (index > -1) {
+            parentSettings.lockedChapters.splice(index, 1);
+            alert(`Chapter ${chapterNum} access has been unlocked!`);
+        } else {
+            parentSettings.lockedChapters.push(chapterNum);
+            alert(`Chapter ${chapterNum} access has been locked!`);
+        }
+
+        window.saveParentSettings();
+        window.showParentControls();
+    },
+
+    // Force unlock a chapter (bypass mastery requirements)
+    forceUnlockChapter: function(chapterNum) {
+        const chapterName = window.learningPath[chapterNum - 1]?.name || `Chapter ${chapterNum}`;
+
+        if (confirm(`⚡ Force unlock ${chapterName}?\n\nThis will allow your son to access this chapter even though he hasn't mastered the previous chapter.\n\nThis is useful if he needs to work on specific topics that his teacher assigned.`)) {
+            const parentSettings = window.parentSettings;
+            if (!parentSettings.manuallyUnlockedChapters) {
+                parentSettings.manuallyUnlockedChapters = [];
+            }
+
+            if (!parentSettings.manuallyUnlockedChapters.includes(chapterNum)) {
+                parentSettings.manuallyUnlockedChapters.push(chapterNum);
+                window.saveParentSettings();
+                alert(`✓ ${chapterName} has been force unlocked!\n\nYour son can now access this chapter.`);
+                window.showParentControls();
+            }
+        }
+    },
+
+    // Remove forced unlock (return to normal mastery-based progression)
+    removeForcedUnlock: function(chapterNum) {
+        const chapterName = window.learningPath[chapterNum - 1]?.name || `Chapter ${chapterNum}`;
+
+        if (confirm(`Remove force unlock for ${chapterName}?\n\nThe chapter will only be accessible if the previous chapter has been mastered.`)) {
+            const parentSettings = window.parentSettings;
+            if (parentSettings.manuallyUnlockedChapters) {
+                const index = parentSettings.manuallyUnlockedChapters.indexOf(chapterNum);
+                if (index > -1) {
+                    parentSettings.manuallyUnlockedChapters.splice(index, 1);
+                    window.saveParentSettings();
+                    alert(`✓ Force unlock removed for ${chapterName}.\n\nNormal mastery progression will apply.`);
+                    window.showParentControls();
+                }
+            }
+        }
     },
 
     // Reset specific topic
