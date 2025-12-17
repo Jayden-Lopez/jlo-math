@@ -21,7 +21,7 @@ const db = firebase.firestore();
 let currentTopic = '';
 let currentQuestion = null;
 let currentQuestionIndex = 0;
-let questionsPerSession = 5;
+let questionsPerSession = 10; // Default, can be overridden by parent settings
 let sessionQuestions = [];
 let startTime = null;
 let timerInterval = null;
@@ -330,6 +330,10 @@ async function loadParentSettings() {
             parentSettings = doc.data();
             console.log('Loaded from Firebase:', parentSettings);
             localStorage.setItem('parentSettingsBackup', JSON.stringify(parentSettings));
+            // Apply questions per session setting
+            if (parentSettings.questionsPerSession) {
+                questionsPerSession = parentSettings.questionsPerSession;
+            }
             return;
         }
     } catch (error) {
@@ -342,7 +346,11 @@ async function loadParentSettings() {
         try {
             parentSettings = JSON.parse(localData);
             console.log('Loaded from localStorage:', parentSettings);
-            
+            // Apply questions per session setting
+            if (parentSettings.questionsPerSession) {
+                questionsPerSession = parentSettings.questionsPerSession;
+            }
+
             // If we have local data, try to sync it to Firebase
             if (parentSettings.pinHash) {
                 saveParentSettings().catch(err => console.log('Could not sync to Firebase:', err));

@@ -271,14 +271,28 @@ window.ParentDashboard = {
             </div>
 
             <div style="background: #fef5e7; border-radius: 10px; padding: 15px; margin: 15px 0;">
-                <h3>🎯 Daily Goal</h3>
-                <div style="display: flex; align-items: center; gap: 15px; margin-top: 10px;">
-                    <label>Problems per day:</label>
-                    <input type="number" id="dailyGoal" value="${userData.dailyGoal}" min="5" max="100" 
-                           style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 5px;">
-                    <button class="btn btn-small" onclick="ParentDashboard.updateDailyGoal()" 
-                            style="padding: 5px 15px; background: #48bb78;">Update</button>
-                    <span style="margin-left: auto;">Today's Progress: ${userData.completedToday}/${userData.dailyGoal}</span>
+                <h3>🎯 Practice Settings</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">Questions per Session:</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="number" id="questionsPerSession" value="${parentSettings.questionsPerSession || 10}" min="5" max="25"
+                                   style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                            <button class="btn btn-small" onclick="ParentDashboard.updateQuestionsPerSession()"
+                                    style="padding: 8px 15px; background: #667eea;">Save</button>
+                        </div>
+                        <span style="font-size: 0.85em; color: #666; margin-top: 5px; display: block;">How many questions in each practice round</span>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: bold;">Daily Goal:</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="number" id="dailyGoal" value="${userData.dailyGoal}" min="5" max="100"
+                                   style="width: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 5px;">
+                            <button class="btn btn-small" onclick="ParentDashboard.updateDailyGoal()"
+                                    style="padding: 8px 15px; background: #48bb78;">Save</button>
+                        </div>
+                        <span style="font-size: 0.85em; color: #666; margin-top: 5px; display: block;">Today: ${userData.completedToday}/${userData.dailyGoal} completed</span>
+                    </div>
                 </div>
             </div>
             
@@ -534,6 +548,19 @@ window.ParentDashboard = {
                 window.showParentControls();
                 alert("All progress has been reset!");
             }
+        }
+    },
+
+    // Update questions per session
+    updateQuestionsPerSession: function() {
+        const newValue = parseInt(document.getElementById('questionsPerSession').value);
+        if (newValue >= 5 && newValue <= 25) {
+            window.parentSettings.questionsPerSession = newValue;
+            window.questionsPerSession = newValue;
+            window.saveParentSettings();
+            alert(`Questions per session updated to ${newValue}!`);
+        } else {
+            alert("Questions per session must be between 5 and 25.");
         }
     },
 
