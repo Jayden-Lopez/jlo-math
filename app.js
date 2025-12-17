@@ -149,15 +149,17 @@ const learningPath = [
         name: "Chapter 5: Integers and the Coordinate Plane",
         description: "Positive and negative numbers, coordinate graphing",
         topics: [
-            { key: 'integers', required: 20, name: 'Integer Operations' }
+            { key: 'integers', required: 25, name: 'Integer Operations & Graphing' }
         ],
         lessons: [
-            "5.1 Integers and Opposites",
+            "5.1 Integers and Opposites (Number Line)",
             "5.2 Absolute Value",
             "5.3 Compare and Order Integers",
             "5.4 Add Integers",
             "5.5 Subtract Integers",
-            "5.6 Distance on the Coordinate Plane"
+            "5.6 The Coordinate Plane (Plot & Read Points)",
+            "5.7 Graph on the Coordinate Plane (Tables & Patterns)",
+            "5.8 Distance on the Coordinate Plane"
         ]
     },
     {
@@ -185,10 +187,13 @@ const learningPath = [
             { key: 'algebra', required: 20, name: 'Solving Equations' }
         ],
         lessons: [
-            "7.1 Solve One-Step Addition and Subtraction Equations",
-            "7.2 Solve One-Step Multiplication and Division Equations",
-            "7.3 Solve Two-Step Equations",
-            "7.4 Write and Solve Equations"
+            "7.1 Equations",
+            "7.2 Solve One-Step Addition Equations",
+            "7.3 Solve One-Step Subtraction Equations",
+            "7.4 Solve One-Step Multiplication Equations",
+            "7.5 Solve One-Step Division Equations",
+            "7.6 Solve Two-Step Equations",
+            "7.7 Write and Solve Equations"
         ]
     },
     {
@@ -215,12 +220,11 @@ const learningPath = [
             { key: 'geometry', required: 20, name: 'Area Calculations' }
         ],
         lessons: [
-            "9.1 Area of Rectangles",
-            "9.2 Area of Parallelograms",
-            "9.3 Area of Triangles",
-            "9.4 Area of Trapezoids",
-            "9.5 Area of Composite Figures",
-            "9.6 Area of Irregular Figures"
+            "9.1 Area of Parallelograms",
+            "9.2 Area of Triangles",
+            "9.3 Area of Trapezoids",
+            "9.4 Polygons on the Coordinate Plane",
+            "9.5 Area of Composite Figures"
         ]
     },
     {
@@ -232,11 +236,10 @@ const learningPath = [
         ],
         lessons: [
             "10.1 Volume of Rectangular Prisms",
-            "10.2 Volume of Triangular Prisms",
-            "10.3 Volume of Pyramids",
-            "10.4 Surface Area of Rectangular Prisms",
-            "10.5 Surface Area of Triangular Prisms",
-            "10.6 Surface Area of Pyramids"
+            "10.2 Surface Area of Rectangular Prisms",
+            "10.3 Volume of Triangular Prisms",
+            "10.4 Surface Area of Triangular Prisms",
+            "10.5 Volume of Pyramids"
         ]
     },
     {
@@ -970,6 +973,22 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
 
     const accuracy = progress.attempts > 0 ? Math.round((progress.completed / progress.attempts) * 100) : 0;
 
+    // Check for lesson-based progress (e.g., Chapter 5 integers)
+    let currentLessonInfo = null;
+    const generator = topic.generator;
+    if (generator && generator.lessons && generator.getCurrentLesson) {
+        const lessonIndex = generator.getCurrentLesson();
+        const lesson = generator.lessons[lessonIndex];
+        if (lesson) {
+            currentLessonInfo = {
+                current: lessonIndex + 1,
+                total: generator.lessons.length,
+                name: lesson.name,
+                id: lesson.id
+            };
+        }
+    }
+
     // IXL Practice is ALWAYS available (never locked)
     const isIXLPractice = key === 'ixlPractice';
 
@@ -1056,6 +1075,15 @@ function createTopicCard(key, topic, progress, currentStage, recommended) {
         <div class="topic-progress">Completed: ${progress.completed}${stageInfo ? `/${stageInfo.required}` : ''}</div>
         <div class="topic-accuracy">Accuracy: ${accuracy}%</div>
         ${stageInfo && userData.pathMode ? `<div style="font-size: 0.8em; margin-top: 5px; opacity: 0.7;">Chapter ${stageInfo.stage}</div>` : ''}
+        ${currentLessonInfo ? `
+            <div style="font-size: 0.75em; margin-top: 8px; padding: 6px; background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); border-radius: 8px; color: #4338ca;">
+                <strong>📚 Current:</strong> ${currentLessonInfo.id} ${currentLessonInfo.name}
+                <div style="margin-top: 4px; background: #c7d2fe; height: 4px; border-radius: 2px;">
+                    <div style="background: #4338ca; width: ${(currentLessonInfo.current / currentLessonInfo.total) * 100}%; height: 100%; border-radius: 2px;"></div>
+                </div>
+                <div style="font-size: 0.9em; opacity: 0.8; margin-top: 2px;">Lesson ${currentLessonInfo.current} of ${currentLessonInfo.total}</div>
+            </div>
+        ` : ''}
         ${masteryHTML}
         ${!isAvailable && lockReason ? `<div style="font-size: 0.75em; color: #ef4444; margin-top: 5px; font-weight: bold;">🔒 ${lockReason}</div>` : ''}
     `;
@@ -1125,9 +1153,13 @@ function showQuestion() {
     currentQuestionStartTime = Date.now();
     currentQuestionHintUsed = false;
 
-    document.getElementById('questionNumber').textContent =
-        `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
-    
+    // Show question number and lesson info if available
+    let questionHeader = `Question ${currentQuestionIndex + 1} of ${questionsPerSession}`;
+    if (currentQuestion.lesson) {
+        questionHeader += ` • Lesson ${currentQuestion.lesson}`;
+    }
+    document.getElementById('questionNumber').textContent = questionHeader;
+
     document.getElementById('questionText').textContent = currentQuestion.question;
     
     document.getElementById('feedbackArea').innerHTML = '';
@@ -1262,6 +1294,19 @@ function checkAnswer() {
             setTimeout(() => {
                 alert(`🎉🏆 AMAZING! You've mastered ${topics[currentTopic].name}! 🏆🎉`);
             }, 1000);
+        }
+    }
+
+    // Check lesson progression for chapters with lesson tracking
+    if (currentQuestion.lesson) {
+        const generator = topics[currentTopic]?.generator;
+        if (generator && generator.checkLessonProgress) {
+            const progressResult = generator.checkLessonProgress(currentQuestion.lesson, isCorrect);
+            if (progressResult && progressResult.advanced) {
+                setTimeout(() => {
+                    alert(`🎯 Great work! You've unlocked the next lesson:\n\n${progressResult.newLesson.id} ${progressResult.newLesson.name}`);
+                }, 1500);
+            }
         }
     }
     
