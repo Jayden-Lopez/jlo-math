@@ -1,38 +1,70 @@
 // decimals.js - Glencoe Math Course 1, Chapter 2: Fractions, Decimals, and Percents
-// For Jordan - 6th grade, current chapter in class
+// For Jordan - 6th grade
+// Lessons follow Glencoe Course 1 Chapter 2 sequence
 
 window.DecimalsGenerator = {
-    generate: function() {
-        const lessonTypes = [
-            'decimalsToFractions',
-            'fractionsToDecimals',
-            'percentsAndFractions',
-            'percentsAndDecimals',
-            'percentOfNumber',
-            'compareDecimals',
-            'comparePercents'
-        ];
-        
-        const type = lessonTypes[Math.floor(Math.random() * lessonTypes.length)];
-        
+    // Lesson structure for sequential learning
+    lessons: [
+        { id: '2.1', name: 'Decimals and Fractions', types: ['decimalsToFractions', 'fractionsToDecimals'] },
+        { id: '2.2', name: 'Percents and Fractions', types: ['percentsAndFractions'] },
+        { id: '2.3', name: 'Percents and Decimals', types: ['percentsAndDecimals'] },
+        { id: '2.4', name: 'Percent of a Number', types: ['percentOfNumber'] },
+        { id: '2.5', name: 'Compare and Order', types: ['compareDecimals', 'comparePercents', 'orderNumbers'] }
+    ],
+
+    getCurrentLesson: function() {
+        const userData = window.userData;
+        if (!userData) return 0;
+        const chapterProgress = userData.lessonProgress?.['chapter2'] || { currentLesson: 0 };
+        return Math.min(chapterProgress.currentLesson || 0, this.lessons.length - 1);
+    },
+
+    generate: function(specificLesson = null) {
+        const currentLessonIndex = specificLesson !== null ? specificLesson : this.getCurrentLesson();
+
+        let lessonIndex;
+        if (Math.random() < 0.6 || currentLessonIndex === 0) {
+            lessonIndex = currentLessonIndex;
+        } else {
+            lessonIndex = Math.floor(Math.random() * currentLessonIndex);
+        }
+
+        const lesson = this.lessons[lessonIndex];
+        const type = lesson.types[Math.floor(Math.random() * lesson.types.length)];
+
+        let problem;
         switch(type) {
             case 'decimalsToFractions':
-                return this.generateDecimalsToFractions();
+                problem = this.generateDecimalsToFractions();
+                break;
             case 'fractionsToDecimals':
-                return this.generateFractionsToDecimals();
+                problem = this.generateFractionsToDecimals();
+                break;
             case 'percentsAndFractions':
-                return this.generatePercentsAndFractions();
+                problem = this.generatePercentsAndFractions();
+                break;
             case 'percentsAndDecimals':
-                return this.generatePercentsAndDecimals();
+                problem = this.generatePercentsAndDecimals();
+                break;
             case 'percentOfNumber':
-                return this.generatePercentOfNumber();
+                problem = this.generatePercentOfNumber();
+                break;
             case 'compareDecimals':
-                return this.generateCompareDecimals();
+                problem = this.generateCompareDecimals();
+                break;
             case 'comparePercents':
-                return this.generateComparePercents();
+                problem = this.generateComparePercents();
+                break;
+            case 'orderNumbers':
+                problem = this.generateOrderNumbers();
+                break;
             default:
-                return this.generateCompareDecimals();
+                problem = this.generateCompareDecimals();
         }
+
+        problem.lesson = lesson.id;
+        problem.lessonName = lesson.name;
+        return problem;
     },
     
     // Lesson 2.1: Decimals and Fractions
@@ -227,11 +259,11 @@ window.DecimalsGenerator = {
                 };
             }
         ];
-        
+
         const format = formats[Math.floor(Math.random() * formats.length)]();
         const symbol = format.value1 > format.value2 ? ">" :
                        format.value1 < format.value2 ? "<" : "=";
-        
+
         return {
             question: `Compare: ${format.item1} ___ ${format.item2}`,
             answer: symbol,
@@ -240,5 +272,72 @@ window.DecimalsGenerator = {
             hint: "Convert both to the same form (decimals or percents) to compare",
             explanation: format.explanation + `, so ${format.item1} ${symbol} ${format.item2}`
         };
+    },
+
+    // Lesson 2.5: Order Numbers (mixed formats)
+    generateOrderNumbers: function() {
+        // Create a mix of decimals, fractions, and percents
+        const values = [
+            { display: '0.25', value: 0.25 },
+            { display: '1/2', value: 0.5 },
+            { display: '75%', value: 0.75 },
+            { display: '0.1', value: 0.1 },
+            { display: '3/4', value: 0.75 },
+            { display: '40%', value: 0.4 },
+            { display: '0.6', value: 0.6 },
+            { display: '1/4', value: 0.25 },
+            { display: '80%', value: 0.8 },
+            { display: '0.5', value: 0.5 }
+        ];
+
+        // Pick 4 random values
+        const shuffled = [...values].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 4);
+
+        // Sort by value for the answer
+        const sorted = [...selected].sort((a, b) => a.value - b.value);
+        const question = selected.map(v => v.display).join(', ');
+        const answer = sorted.map(v => v.display).join(', ');
+
+        return {
+            question: `Order from least to greatest: ${question}`,
+            answer: answer,
+            hint: "Convert all to decimals to compare: fractions ÷, percents ÷ 100",
+            explanation: `Converting to decimals: ${sorted.map(v => `${v.display} = ${v.value}`).join(', ')}\nOrdered: ${answer}`
+        };
+    },
+
+    checkLessonProgress: function(lessonId, isCorrect) {
+        const userData = window.userData;
+        if (!userData) return;
+
+        if (!userData.lessonProgress) userData.lessonProgress = {};
+        if (!userData.lessonProgress['chapter2']) {
+            userData.lessonProgress['chapter2'] = { currentLesson: 0, lessonMastery: {} };
+        }
+
+        const progress = userData.lessonProgress['chapter2'];
+        if (!progress.lessonMastery[lessonId]) {
+            progress.lessonMastery[lessonId] = { correct: 0, attempts: 0, streak: 0 };
+        }
+
+        const mastery = progress.lessonMastery[lessonId];
+        mastery.attempts++;
+        if (isCorrect) {
+            mastery.correct++;
+            mastery.streak++;
+        } else {
+            mastery.streak = 0;
+        }
+
+        const accuracy = mastery.attempts > 0 ? mastery.correct / mastery.attempts : 0;
+        const isMastered = mastery.streak >= 5 || (accuracy >= 0.8 && mastery.attempts >= 10);
+
+        const currentLessonIndex = this.lessons.findIndex(l => l.id === lessonId);
+        if (isMastered && currentLessonIndex === progress.currentLesson && currentLessonIndex < this.lessons.length - 1) {
+            progress.currentLesson = currentLessonIndex + 1;
+            return { advanced: true, newLesson: this.lessons[currentLessonIndex + 1] };
+        }
+        return { advanced: false };
     }
 };

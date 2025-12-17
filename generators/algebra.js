@@ -1,42 +1,184 @@
-// algebra.js - Glencoe Math Course 1, Algebraic Thinking & Expressions
-// Combines algebra and expressions topics
-// For Jordan - 6th grade (currently at level 480)
+// algebra.js - Glencoe Math Course 1, Chapter 7: Equations
+// For Jordan - 6th grade
+// Lessons follow Glencoe Course 1 Chapter 7 sequence
 
 window.AlgebraGenerator = {
-    generate: function() {
-        const lessonTypes = [
-            'writeExpression',
-            'evaluateExpression',
-            'simplifyExpression',
-            'solveOneStep',
-            'solveTwoStep',
-            'inequality',
-            'patterns',
-            'functions'
-        ];
-        
-        const type = lessonTypes[Math.floor(Math.random() * lessonTypes.length)];
-        
-        switch(type) {
-            case 'writeExpression':
-                return this.generateWriteExpression();
-            case 'evaluateExpression':
-                return this.generateEvaluateExpression();
-            case 'simplifyExpression':
-                return this.generateSimplifyExpression();
-            case 'solveOneStep':
-                return this.generateSolveOneStep();
-            case 'solveTwoStep':
-                return this.generateSolveTwoStep();
-            case 'inequality':
-                return this.generateInequality();
-            case 'patterns':
-                return this.generatePatterns();
-            case 'functions':
-                return this.generateFunctions();
-            default:
-                return this.generateSolveOneStep();
+    // Lesson structure for sequential learning
+    lessons: [
+        { id: '7.1', name: 'Equations', types: ['writeEquation'] },
+        { id: '7.2', name: 'Solve One-Step Addition Equations', types: ['solveAddition'] },
+        { id: '7.3', name: 'Solve One-Step Subtraction Equations', types: ['solveSubtraction'] },
+        { id: '7.4', name: 'Solve One-Step Multiplication Equations', types: ['solveMultiplication'] },
+        { id: '7.5', name: 'Solve One-Step Division Equations', types: ['solveDivision'] },
+        { id: '7.6', name: 'Solve Two-Step Equations', types: ['solveTwoStep'] },
+        { id: '7.7', name: 'Write and Solve Equations', types: ['wordProblemEquation'] }
+    ],
+
+    getCurrentLesson: function() {
+        const userData = window.userData;
+        if (!userData) return 0;
+        const chapterProgress = userData.lessonProgress?.['chapter7'] || { currentLesson: 0 };
+        return Math.min(chapterProgress.currentLesson || 0, this.lessons.length - 1);
+    },
+
+    generate: function(specificLesson = null) {
+        const currentLessonIndex = specificLesson !== null ? specificLesson : this.getCurrentLesson();
+
+        let lessonIndex;
+        if (Math.random() < 0.6 || currentLessonIndex === 0) {
+            lessonIndex = currentLessonIndex;
+        } else {
+            lessonIndex = Math.floor(Math.random() * currentLessonIndex);
         }
+
+        const lesson = this.lessons[lessonIndex];
+        const type = lesson.types[Math.floor(Math.random() * lesson.types.length)];
+
+        let problem;
+        switch(type) {
+            case 'writeEquation':
+                problem = this.generateWriteEquation();
+                break;
+            case 'solveAddition':
+                problem = this.generateSolveAddition();
+                break;
+            case 'solveSubtraction':
+                problem = this.generateSolveSubtraction();
+                break;
+            case 'solveMultiplication':
+                problem = this.generateSolveMultiplication();
+                break;
+            case 'solveDivision':
+                problem = this.generateSolveDivision();
+                break;
+            case 'solveTwoStep':
+                problem = this.generateSolveTwoStep();
+                break;
+            case 'wordProblemEquation':
+                problem = this.generateWordProblemEquation();
+                break;
+            default:
+                problem = this.generateSolveAddition();
+        }
+
+        problem.lesson = lesson.id;
+        problem.lessonName = lesson.name;
+        return problem;
+    },
+
+    // Lesson 7.1: Write Equations
+    generateWriteEquation: function() {
+        const situations = [
+            { words: "A number plus 5 equals 12", equation: "x + 5 = 12", hint: "Plus means addition" },
+            { words: "A number minus 3 equals 7", equation: "x - 3 = 7", hint: "Minus means subtraction" },
+            { words: "4 times a number equals 20", equation: "4x = 20", hint: "Times means multiplication" },
+            { words: "A number divided by 2 equals 6", equation: "x/2 = 6", hint: "Divided by means division" },
+            { words: "Twice a number plus 1 equals 9", equation: "2x + 1 = 9", hint: "Twice means multiply by 2" },
+            { words: "The sum of a number and 8 is 15", equation: "x + 8 = 15", hint: "Sum means addition" }
+        ];
+
+        const situation = situations[Math.floor(Math.random() * situations.length)];
+
+        return {
+            question: `Write an equation for: "${situation.words}"`,
+            answer: situation.equation,
+            hint: situation.hint,
+            explanation: `"${situation.words}" translates to ${situation.equation}`
+        };
+    },
+
+    // Lesson 7.2: Solve One-Step Addition Equations
+    generateSolveAddition: function() {
+        const a = Math.floor(Math.random() * 15) + 5;
+        const b = Math.floor(Math.random() * 25) + 10;
+
+        return {
+            question: `Solve: x + ${a} = ${b}`,
+            answer: (b - a).toString(),
+            hint: `Subtract ${a} from both sides`,
+            explanation: `x + ${a} = ${b}\nx = ${b} - ${a}\nx = ${b - a}`
+        };
+    },
+
+    // Lesson 7.3: Solve One-Step Subtraction Equations
+    generateSolveSubtraction: function() {
+        const a = Math.floor(Math.random() * 15) + 5;
+        const b = Math.floor(Math.random() * 20) + 5;
+
+        return {
+            question: `Solve: x - ${a} = ${b}`,
+            answer: (a + b).toString(),
+            hint: `Add ${a} to both sides`,
+            explanation: `x - ${a} = ${b}\nx = ${b} + ${a}\nx = ${a + b}`
+        };
+    },
+
+    // Lesson 7.4: Solve One-Step Multiplication Equations
+    generateSolveMultiplication: function() {
+        const a = Math.floor(Math.random() * 9) + 2;
+        const x = Math.floor(Math.random() * 12) + 2;
+        const b = a * x;
+
+        return {
+            question: `Solve: ${a}x = ${b}`,
+            answer: x.toString(),
+            hint: `Divide both sides by ${a}`,
+            explanation: `${a}x = ${b}\nx = ${b} ÷ ${a}\nx = ${x}`
+        };
+    },
+
+    // Lesson 7.5: Solve One-Step Division Equations
+    generateSolveDivision: function() {
+        const a = Math.floor(Math.random() * 8) + 2;
+        const b = Math.floor(Math.random() * 10) + 2;
+
+        return {
+            question: `Solve: x/${a} = ${b}`,
+            answer: (a * b).toString(),
+            hint: `Multiply both sides by ${a}`,
+            explanation: `x/${a} = ${b}\nx = ${b} × ${a}\nx = ${a * b}`
+        };
+    },
+
+    // Lesson 7.7: Word Problem Equations
+    generateWordProblemEquation: function() {
+        const problems = [
+            () => {
+                const spent = Math.floor(Math.random() * 20) + 10;
+                const left = Math.floor(Math.random() * 30) + 5;
+                const total = spent + left;
+                return {
+                    question: `Jordan had some money. He spent $${spent} and has $${left} left. How much did he start with?\n(Write and solve an equation)`,
+                    answer: `$${total}`,
+                    hint: `Let x = starting amount. Then x - ${spent} = ${left}`,
+                    explanation: `x - ${spent} = ${left}\nx = ${left} + ${spent}\nx = $${total}`
+                };
+            },
+            () => {
+                const perItem = Math.floor(Math.random() * 5) + 2;
+                const total = perItem * (Math.floor(Math.random() * 8) + 3);
+                const count = total / perItem;
+                return {
+                    question: `Each pencil costs $${perItem}. Jordan spent $${total} on pencils. How many did he buy?`,
+                    answer: `${count} pencils`,
+                    hint: `Let x = number of pencils. Then ${perItem}x = ${total}`,
+                    explanation: `${perItem}x = ${total}\nx = ${total} ÷ ${perItem}\nx = ${count} pencils`
+                };
+            },
+            () => {
+                const add = Math.floor(Math.random() * 15) + 5;
+                const result = Math.floor(Math.random() * 30) + 20;
+                const original = result - add;
+                return {
+                    question: `Jordan collected ${add} more cards and now has ${result} cards. How many did he have before?`,
+                    answer: `${original} cards`,
+                    hint: `Let x = original cards. Then x + ${add} = ${result}`,
+                    explanation: `x + ${add} = ${result}\nx = ${result} - ${add}\nx = ${original} cards`
+                };
+            }
+        ];
+
+        return problems[Math.floor(Math.random() * problems.length)]();
     },
     
     // Write Algebraic Expressions
@@ -295,11 +437,11 @@ window.AlgebraGenerator = {
             { rule: "3x + 1", desc: "multiply by 3, then add 1" },
             { rule: "x/2", desc: "divide by 2" }
         ];
-        
+
         const selectedRule = rules[Math.floor(Math.random() * rules.length)];
         const input = Math.floor(Math.random() * 10) + 1;
         let output;
-        
+
         // Calculate output based on rule
         switch(selectedRule.rule) {
             case "x + 3": output = input + 3; break;
@@ -308,15 +450,48 @@ window.AlgebraGenerator = {
             case "3x + 1": output = 3 * input + 1; break;
             case "x/2": output = input / 2; break;
         }
-        
+
         return {
             question: `If the function rule is "${selectedRule.desc}", what is the output when input = ${input}?`,
             answer: output.toString(),
             hint: `Apply the rule: ${selectedRule.desc}`,
             explanation: `Input: ${input}\nRule: ${selectedRule.desc}\nOutput: ${output}`
         };
+    },
+
+    checkLessonProgress: function(lessonId, isCorrect) {
+        const userData = window.userData;
+        if (!userData) return;
+
+        if (!userData.lessonProgress) userData.lessonProgress = {};
+        if (!userData.lessonProgress['chapter7']) {
+            userData.lessonProgress['chapter7'] = { currentLesson: 0, lessonMastery: {} };
+        }
+
+        const progress = userData.lessonProgress['chapter7'];
+        if (!progress.lessonMastery[lessonId]) {
+            progress.lessonMastery[lessonId] = { correct: 0, attempts: 0, streak: 0 };
+        }
+
+        const mastery = progress.lessonMastery[lessonId];
+        mastery.attempts++;
+        if (isCorrect) {
+            mastery.correct++;
+            mastery.streak++;
+        } else {
+            mastery.streak = 0;
+        }
+
+        const accuracy = mastery.attempts > 0 ? mastery.correct / mastery.attempts : 0;
+        const isMastered = mastery.streak >= 5 || (accuracy >= 0.8 && mastery.attempts >= 10);
+
+        const currentLessonIndex = this.lessons.findIndex(l => l.id === lessonId);
+        if (isMastered && currentLessonIndex === progress.currentLesson && currentLessonIndex < this.lessons.length - 1) {
+            progress.currentLesson = currentLessonIndex + 1;
+            return { advanced: true, newLesson: this.lessons[currentLessonIndex + 1] };
+        }
+        return { advanced: false };
     }
 };
 
-// Also make expressions generator point to algebra for compatibility
-window.ExpressionsGenerator = window.AlgebraGenerator;
+// Note: ExpressionsGenerator is defined separately in expressions.js for Chapter 6

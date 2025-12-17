@@ -1,38 +1,73 @@
 // ratios.js - Glencoe Math Course 1, Chapter 1: Ratios and Rates
-// For Jordan - 6th grade, current chapter in class
+// For Jordan - 6th grade
+// Lessons follow Glencoe Course 1 Chapter 1 sequence
 
 window.RatiosGenerator = {
-    generate: function() {
-        const lessonTypes = [
-            'factors',
-            'ratios',
-            'rates',
-            'ratioTables',
-            'graphRatios',
-            'equivalentRatios',
-            'unitRates'
-        ];
-        
-        const type = lessonTypes[Math.floor(Math.random() * lessonTypes.length)];
-        
+    // Lesson structure for sequential learning
+    lessons: [
+        { id: '1.1', name: 'Factors and Multiples', types: ['factors'] },
+        { id: '1.2', name: 'Ratios', types: ['ratios'] },
+        { id: '1.3', name: 'Rates', types: ['rates'] },
+        { id: '1.4', name: 'Ratio Tables', types: ['ratioTables'] },
+        { id: '1.5', name: 'Graph Ratios', types: ['graphRatios'] },
+        { id: '1.6', name: 'Equivalent Ratios', types: ['equivalentRatios'] },
+        { id: '1.7', name: 'Ratio and Rate Problems', types: ['unitRates', 'rateWordProblems'] }
+    ],
+
+    getCurrentLesson: function() {
+        const userData = window.userData;
+        if (!userData) return 0;
+        const chapterProgress = userData.lessonProgress?.['chapter1'] || { currentLesson: 0 };
+        return Math.min(chapterProgress.currentLesson || 0, this.lessons.length - 1);
+    },
+
+    generate: function(specificLesson = null) {
+        const currentLessonIndex = specificLesson !== null ? specificLesson : this.getCurrentLesson();
+
+        // Weight toward current lesson (60%) with review (40%)
+        let lessonIndex;
+        if (Math.random() < 0.6 || currentLessonIndex === 0) {
+            lessonIndex = currentLessonIndex;
+        } else {
+            lessonIndex = Math.floor(Math.random() * currentLessonIndex);
+        }
+
+        const lesson = this.lessons[lessonIndex];
+        const type = lesson.types[Math.floor(Math.random() * lesson.types.length)];
+
+        let problem;
         switch(type) {
             case 'factors':
-                return this.generateFactors();
+                problem = this.generateFactors();
+                break;
             case 'ratios':
-                return this.generateRatios();
+                problem = this.generateRatios();
+                break;
             case 'rates':
-                return this.generateRates();
+                problem = this.generateRates();
+                break;
             case 'ratioTables':
-                return this.generateRatioTables();
+                problem = this.generateRatioTables();
+                break;
             case 'graphRatios':
-                return this.generateGraphRatios();
+                problem = this.generateGraphRatios();
+                break;
             case 'equivalentRatios':
-                return this.generateEquivalentRatios();
+                problem = this.generateEquivalentRatios();
+                break;
             case 'unitRates':
-                return this.generateUnitRates();
+                problem = this.generateUnitRates();
+                break;
+            case 'rateWordProblems':
+                problem = this.generateRateWordProblems();
+                break;
             default:
-                return this.generateRatios();
+                problem = this.generateRatios();
         }
+
+        problem.lesson = lesson.id;
+        problem.lessonName = lesson.name;
+        return problem;
     },
     
     // Lesson 1.1: Factors and Multiples
@@ -251,5 +286,79 @@ window.RatiosGenerator = {
             if (n % i === 0) factors.push(i);
         }
         return factors;
+    },
+
+    // Lesson 1.7: Rate Word Problems
+    generateRateWordProblems: function() {
+        const problems = [
+            () => {
+                const rate = Math.floor(Math.random() * 10) + 5;
+                const hours = Math.floor(Math.random() * 6) + 2;
+                const total = rate * hours;
+                return {
+                    question: `Jordan can read ${rate} pages per hour. How many pages can he read in ${hours} hours?`,
+                    answer: `${total} pages`,
+                    hint: "Multiply the rate by the time",
+                    explanation: `${rate} pages/hour × ${hours} hours = ${total} pages`
+                };
+            },
+            () => {
+                const miles = Math.floor(Math.random() * 100) + 50;
+                const gallons = Math.floor(Math.random() * 4) + 2;
+                const mpg = miles / gallons;
+                return {
+                    question: `A car travels ${miles} miles on ${gallons} gallons of gas. How many miles per gallon does it get?`,
+                    answer: `${mpg} mpg`,
+                    hint: "Divide miles by gallons",
+                    explanation: `${miles} miles ÷ ${gallons} gallons = ${mpg} miles per gallon`
+                };
+            },
+            () => {
+                const price = Math.floor(Math.random() * 8) + 2;
+                const quantity = Math.floor(Math.random() * 10) + 5;
+                const total = price * quantity;
+                return {
+                    question: `Apples cost $${price} per pound. How much do ${quantity} pounds cost?`,
+                    answer: `$${total}`,
+                    hint: "Multiply price per pound by number of pounds",
+                    explanation: `$${price}/pound × ${quantity} pounds = $${total}`
+                };
+            }
+        ];
+        return problems[Math.floor(Math.random() * problems.length)]();
+    },
+
+    checkLessonProgress: function(lessonId, isCorrect) {
+        const userData = window.userData;
+        if (!userData) return;
+
+        if (!userData.lessonProgress) userData.lessonProgress = {};
+        if (!userData.lessonProgress['chapter1']) {
+            userData.lessonProgress['chapter1'] = { currentLesson: 0, lessonMastery: {} };
+        }
+
+        const progress = userData.lessonProgress['chapter1'];
+        if (!progress.lessonMastery[lessonId]) {
+            progress.lessonMastery[lessonId] = { correct: 0, attempts: 0, streak: 0 };
+        }
+
+        const mastery = progress.lessonMastery[lessonId];
+        mastery.attempts++;
+        if (isCorrect) {
+            mastery.correct++;
+            mastery.streak++;
+        } else {
+            mastery.streak = 0;
+        }
+
+        const accuracy = mastery.attempts > 0 ? mastery.correct / mastery.attempts : 0;
+        const isMastered = mastery.streak >= 5 || (accuracy >= 0.8 && mastery.attempts >= 10);
+
+        const currentLessonIndex = this.lessons.findIndex(l => l.id === lessonId);
+        if (isMastered && currentLessonIndex === progress.currentLesson && currentLessonIndex < this.lessons.length - 1) {
+            progress.currentLesson = currentLessonIndex + 1;
+            return { advanced: true, newLesson: this.lessons[currentLessonIndex + 1] };
+        }
+        return { advanced: false };
     }
 };

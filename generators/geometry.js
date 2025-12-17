@@ -1,47 +1,167 @@
-// geometry.js - Glencoe Math Course 1, Geometry Topics (Chapters 5-6)
-// For Jordan - 6th grade (currently at level 460, improved from 380!)
+// geometry.js - Glencoe Math Course 1, Chapters 9-10: Area & Volume
+// For Jordan - 6th grade
+// Lessons follow Glencoe Course 1 Chapters 9-10 sequence
 
 window.GeometryGenerator = {
-    generate: function() {
-        const lessonTypes = [
-            'angles',
-            'triangles',
-            'quadrilaterals',
-            'perimeter',
-            'areaRectangle',
-            'areaTriangle',
-            'areaComplex',
-            'volumePrism',
-            'volumePyramid',
-            'surfaceArea'
-        ];
-        
-        const type = lessonTypes[Math.floor(Math.random() * lessonTypes.length)];
-        
-        switch(type) {
-            case 'angles':
-                return this.generateAngles();
-            case 'triangles':
-                return this.generateTriangles();
-            case 'quadrilaterals':
-                return this.generateQuadrilaterals();
-            case 'perimeter':
-                return this.generatePerimeter();
-            case 'areaRectangle':
-                return this.generateAreaRectangle();
-            case 'areaTriangle':
-                return this.generateAreaTriangle();
-            case 'areaComplex':
-                return this.generateAreaComplex();
-            case 'volumePrism':
-                return this.generateVolumePrism();
-            case 'volumePyramid':
-                return this.generateVolumePyramid();
-            case 'surfaceArea':
-                return this.generateSurfaceArea();
-            default:
-                return this.generatePerimeter();
+    // Lesson structure for sequential learning (Chapters 9 & 10 combined)
+    lessons: [
+        { id: '9.1', name: 'Area of Parallelograms', types: ['areaParallelogram'] },
+        { id: '9.2', name: 'Area of Triangles', types: ['areaTriangle'] },
+        { id: '9.3', name: 'Area of Trapezoids', types: ['areaTrapezoid'] },
+        { id: '9.4', name: 'Polygons on the Coordinate Plane', types: ['polygonCoordinate'] },
+        { id: '9.5', name: 'Area of Composite Figures', types: ['areaComplex'] },
+        { id: '10.1', name: 'Volume of Rectangular Prisms', types: ['volumePrism'] },
+        { id: '10.2', name: 'Surface Area of Rectangular Prisms', types: ['surfaceArea'] },
+        { id: '10.3', name: 'Volume of Triangular Prisms', types: ['volumeTriangularPrism'] },
+        { id: '10.4', name: 'Surface Area of Triangular Prisms', types: ['surfaceAreaTriangular'] },
+        { id: '10.5', name: 'Volume of Pyramids', types: ['volumePyramid'] }
+    ],
+
+    getCurrentLesson: function() {
+        const userData = window.userData;
+        if (!userData) return 0;
+        const chapterProgress = userData.lessonProgress?.['chapter9'] || { currentLesson: 0 };
+        return Math.min(chapterProgress.currentLesson || 0, this.lessons.length - 1);
+    },
+
+    generate: function(specificLesson = null) {
+        const currentLessonIndex = specificLesson !== null ? specificLesson : this.getCurrentLesson();
+
+        let lessonIndex;
+        if (Math.random() < 0.6 || currentLessonIndex === 0) {
+            lessonIndex = currentLessonIndex;
+        } else {
+            lessonIndex = Math.floor(Math.random() * currentLessonIndex);
         }
+
+        const lesson = this.lessons[lessonIndex];
+        const type = lesson.types[Math.floor(Math.random() * lesson.types.length)];
+
+        let problem;
+        switch(type) {
+            case 'areaParallelogram':
+                problem = this.generateAreaParallelogram();
+                break;
+            case 'areaTriangle':
+                problem = this.generateAreaTriangle();
+                break;
+            case 'areaTrapezoid':
+                problem = this.generateAreaTrapezoid();
+                break;
+            case 'polygonCoordinate':
+                problem = this.generatePolygonCoordinate();
+                break;
+            case 'areaComplex':
+                problem = this.generateAreaComplex();
+                break;
+            case 'volumePrism':
+                problem = this.generateVolumePrism();
+                break;
+            case 'surfaceArea':
+                problem = this.generateSurfaceArea();
+                break;
+            case 'volumeTriangularPrism':
+                problem = this.generateVolumeTriangularPrism();
+                break;
+            case 'surfaceAreaTriangular':
+                problem = this.generateSurfaceAreaTriangular();
+                break;
+            case 'volumePyramid':
+                problem = this.generateVolumePyramid();
+                break;
+            default:
+                problem = this.generateAreaTriangle();
+        }
+
+        problem.lesson = lesson.id;
+        problem.lessonName = lesson.name;
+        return problem;
+    },
+
+    // Lesson 9.1: Area of Parallelograms
+    generateAreaParallelogram: function() {
+        const base = Math.floor(Math.random() * 12) + 4;
+        const height = Math.floor(Math.random() * 10) + 3;
+        const area = base * height;
+
+        return {
+            question: `Find the area of a parallelogram with base = ${base} cm and height = ${height} cm`,
+            answer: `${area} square cm`,
+            hint: "Area of parallelogram = base × height",
+            explanation: `A = base × height = ${base} × ${height} = ${area} square cm`
+        };
+    },
+
+    // Lesson 9.3: Area of Trapezoids
+    generateAreaTrapezoid: function() {
+        const b1 = Math.floor(Math.random() * 10) + 4;
+        const b2 = Math.floor(Math.random() * 10) + 4;
+        const height = Math.floor(Math.random() * 8) + 3;
+        const area = ((b1 + b2) * height) / 2;
+
+        return {
+            question: `Find the area of a trapezoid with bases ${b1} m and ${b2} m, and height ${height} m`,
+            answer: `${area} square meters`,
+            hint: "Area = ½ × (base₁ + base₂) × height",
+            explanation: `A = ½ × (${b1} + ${b2}) × ${height} = ½ × ${b1 + b2} × ${height} = ${area} square meters`
+        };
+    },
+
+    // Lesson 9.4: Polygons on Coordinate Plane
+    generatePolygonCoordinate: function() {
+        // Simple rectangle on coordinate plane
+        const x1 = Math.floor(Math.random() * 3) + 1;
+        const y1 = Math.floor(Math.random() * 3) + 1;
+        const width = Math.floor(Math.random() * 6) + 2;
+        const height = Math.floor(Math.random() * 5) + 2;
+
+        const x2 = x1 + width;
+        const y2 = y1 + height;
+
+        const area = width * height;
+
+        return {
+            question: `A rectangle has corners at (${x1}, ${y1}), (${x2}, ${y1}), (${x2}, ${y2}), and (${x1}, ${y2}).\nFind its area.`,
+            answer: `${area} square units`,
+            hint: "Find the length and width by counting units on each side",
+            explanation: `Width = ${x2} - ${x1} = ${width}, Height = ${y2} - ${y1} = ${height}\nArea = ${width} × ${height} = ${area} square units`
+        };
+    },
+
+    // Lesson 10.3: Volume of Triangular Prisms
+    generateVolumeTriangularPrism: function() {
+        const base = Math.floor(Math.random() * 8) + 3;
+        const triHeight = Math.floor(Math.random() * 6) + 3;
+        const length = Math.floor(Math.random() * 10) + 4;
+        const triangleArea = (base * triHeight) / 2;
+        const volume = triangleArea * length;
+
+        return {
+            question: `Find the volume of a triangular prism:\nTriangle base = ${base} cm, triangle height = ${triHeight} cm, prism length = ${length} cm`,
+            answer: `${volume} cubic cm`,
+            hint: "V = (½ × base × height) × length = triangle area × length",
+            explanation: `Triangle area = ½ × ${base} × ${triHeight} = ${triangleArea} sq cm\nVolume = ${triangleArea} × ${length} = ${volume} cubic cm`
+        };
+    },
+
+    // Lesson 10.4: Surface Area of Triangular Prisms
+    generateSurfaceAreaTriangular: function() {
+        const base = Math.floor(Math.random() * 6) + 3;
+        const triHeight = Math.floor(Math.random() * 5) + 3;
+        const length = Math.floor(Math.random() * 8) + 4;
+        // Simplified: assume right triangle with legs = base and triHeight
+        const hyp = Math.round(Math.sqrt(base * base + triHeight * triHeight));
+
+        const triangleArea = (base * triHeight) / 2;
+        // 2 triangles + 3 rectangles (base×length, triHeight×length, hyp×length)
+        const sa = 2 * triangleArea + (base * length) + (triHeight * length) + (hyp * length);
+
+        return {
+            question: `A triangular prism has triangle base = ${base} cm, triangle height = ${triHeight} cm, and length = ${length} cm.\nFind the surface area. (The third side of the triangle is approximately ${hyp} cm)`,
+            answer: `${sa} square cm`,
+            hint: "SA = 2(triangle areas) + 3(rectangle areas)",
+            explanation: `2 triangles = 2 × ${triangleArea} = ${2 * triangleArea}\n3 rectangles = ${base * length} + ${triHeight * length} + ${hyp * length}\nTotal SA = ${sa} square cm`
+        };
     },
     
     // Basic Angle Concepts
@@ -263,14 +383,48 @@ window.GeometryGenerator = {
         const length = Math.floor(Math.random() * 8) + 2;
         const width = Math.floor(Math.random() * 6) + 2;
         const height = Math.floor(Math.random() * 5) + 2;
-        
+
         const sa = 2 * (length * width + length * height + width * height);
-        
+
         return {
             question: `Find the surface area of a rectangular prism: length = ${length} cm, width = ${width} cm, height = ${height} cm`,
             answer: `${sa} square cm`,
             hint: "SA = 2(lw + lh + wh)",
             explanation: `SA = 2(${length}×${width} + ${length}×${height} + ${width}×${height}) = 2(${length*width} + ${length*height} + ${width*height}) = ${sa} square cm`
         };
+    },
+
+    checkLessonProgress: function(lessonId, isCorrect) {
+        const userData = window.userData;
+        if (!userData) return;
+
+        if (!userData.lessonProgress) userData.lessonProgress = {};
+        if (!userData.lessonProgress['chapter9']) {
+            userData.lessonProgress['chapter9'] = { currentLesson: 0, lessonMastery: {} };
+        }
+
+        const progress = userData.lessonProgress['chapter9'];
+        if (!progress.lessonMastery[lessonId]) {
+            progress.lessonMastery[lessonId] = { correct: 0, attempts: 0, streak: 0 };
+        }
+
+        const mastery = progress.lessonMastery[lessonId];
+        mastery.attempts++;
+        if (isCorrect) {
+            mastery.correct++;
+            mastery.streak++;
+        } else {
+            mastery.streak = 0;
+        }
+
+        const accuracy = mastery.attempts > 0 ? mastery.correct / mastery.attempts : 0;
+        const isMastered = mastery.streak >= 5 || (accuracy >= 0.8 && mastery.attempts >= 10);
+
+        const currentLessonIndex = this.lessons.findIndex(l => l.id === lessonId);
+        if (isMastered && currentLessonIndex === progress.currentLesson && currentLessonIndex < this.lessons.length - 1) {
+            progress.currentLesson = currentLessonIndex + 1;
+            return { advanced: true, newLesson: this.lessons[currentLessonIndex + 1] };
+        }
+        return { advanced: false };
     }
 };

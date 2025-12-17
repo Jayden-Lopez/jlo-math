@@ -1,41 +1,77 @@
 // operations.js - Glencoe Math Course 1, Chapter 3: Compute with Multi-Digit Numbers
-// Aligned with Jordan's textbook for 6th grade
+// For Jordan - 6th grade
+// Lessons follow Glencoe Course 1 Chapter 3 sequence
 
 window.OperationsGenerator = {
-    generate: function() {
-        const problemTypes = [
-            'addDecimals',
-            'subtractDecimals', 
-            'multiplyWholeNumbers',
-            'divideWholeNumbers',
-            'multiplyDecimals',
-            'divideDecimals',
-            'estimateProducts',
-            'estimateSums'
-        ];
-        
-        const type = problemTypes[Math.floor(Math.random() * problemTypes.length)];
-        
+    // Lesson structure for sequential learning
+    lessons: [
+        { id: '3.1', name: 'Add and Subtract Decimals', types: ['addDecimals', 'subtractDecimals'] },
+        { id: '3.2', name: 'Estimate Products', types: ['estimateProducts', 'estimateSums'] },
+        { id: '3.3', name: 'Multiply Decimals', types: ['multiplyDecimals', 'multiplyWholeNumbers'] },
+        { id: '3.4', name: 'Divide Multi-Digit Numbers', types: ['divideWholeNumbers'] },
+        { id: '3.5', name: 'Divide Decimals', types: ['divideDecimals'] },
+        { id: '3.6', name: 'Add/Subtract Fractions (Unlike Denominators)', types: ['addFractionsUnlike', 'subtractFractionsUnlike'] }
+    ],
+
+    getCurrentLesson: function() {
+        const userData = window.userData;
+        if (!userData) return 0;
+        const chapterProgress = userData.lessonProgress?.['chapter3'] || { currentLesson: 0 };
+        return Math.min(chapterProgress.currentLesson || 0, this.lessons.length - 1);
+    },
+
+    generate: function(specificLesson = null) {
+        const currentLessonIndex = specificLesson !== null ? specificLesson : this.getCurrentLesson();
+
+        let lessonIndex;
+        if (Math.random() < 0.6 || currentLessonIndex === 0) {
+            lessonIndex = currentLessonIndex;
+        } else {
+            lessonIndex = Math.floor(Math.random() * currentLessonIndex);
+        }
+
+        const lesson = this.lessons[lessonIndex];
+        const type = lesson.types[Math.floor(Math.random() * lesson.types.length)];
+
+        let problem;
         switch(type) {
             case 'addDecimals':
-                return this.generateAddDecimals();
+                problem = this.generateAddDecimals();
+                break;
             case 'subtractDecimals':
-                return this.generateSubtractDecimals();
+                problem = this.generateSubtractDecimals();
+                break;
             case 'multiplyWholeNumbers':
-                return this.generateMultiplyWholeNumbers();
+                problem = this.generateMultiplyWholeNumbers();
+                break;
             case 'divideWholeNumbers':
-                return this.generateDivideWholeNumbers();
+                problem = this.generateDivideWholeNumbers();
+                break;
             case 'multiplyDecimals':
-                return this.generateMultiplyDecimals();
+                problem = this.generateMultiplyDecimals();
+                break;
             case 'divideDecimals':
-                return this.generateDivideDecimals();
+                problem = this.generateDivideDecimals();
+                break;
             case 'estimateProducts':
-                return this.generateEstimateProducts();
+                problem = this.generateEstimateProducts();
+                break;
             case 'estimateSums':
-                return this.generateEstimateSums();
+                problem = this.generateEstimateSums();
+                break;
+            case 'addFractionsUnlike':
+                problem = this.generateAddFractionsUnlike();
+                break;
+            case 'subtractFractionsUnlike':
+                problem = this.generateSubtractFractionsUnlike();
+                break;
             default:
-                return this.generateDivideWholeNumbers();
+                problem = this.generateDivideWholeNumbers();
         }
+
+        problem.lesson = lesson.id;
+        problem.lessonName = lesson.name;
+        return problem;
     },
     
     // Lesson 3.1: Add and Subtract Decimals
@@ -144,12 +180,114 @@ window.OperationsGenerator = {
         const a = Math.floor(Math.random() * 50) + 10;
         const b = Math.floor(Math.random() * 50) + 10;
         const product = a * b;
-        
+
         return {
             question: `Multiply: ${a} × ${b}`,
             answer: product.toString(),
             hint: "Break it down: multiply by ones, then by tens",
             explanation: `${a} × ${b} = ${product}`
         };
+    },
+
+    // Lesson 3.6: Add Fractions with Unlike Denominators
+    generateAddFractionsUnlike: function() {
+        const denominators = [2, 3, 4, 5, 6, 8, 10];
+        const d1 = denominators[Math.floor(Math.random() * denominators.length)];
+        let d2 = denominators[Math.floor(Math.random() * denominators.length)];
+        while (d2 === d1) d2 = denominators[Math.floor(Math.random() * denominators.length)];
+
+        const n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+        const n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+
+        // Find LCD
+        const lcd = this.findLCM(d1, d2);
+        const result_n = (n1 * lcd / d1) + (n2 * lcd / d2);
+        const result_d = lcd;
+
+        // Simplify
+        const g = this.findGCF(result_n, result_d);
+        const final_n = result_n / g;
+        const final_d = result_d / g;
+
+        return {
+            question: `Add: ${n1}/${d1} + ${n2}/${d2}`,
+            answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
+            hint: `Find a common denominator: ${lcd}\nConvert: ${n1}/${d1} = ${n1 * lcd / d1}/${lcd} and ${n2}/${d2} = ${n2 * lcd / d2}/${lcd}`,
+            explanation: `${n1}/${d1} + ${n2}/${d2} = ${n1 * lcd / d1}/${lcd} + ${n2 * lcd / d2}/${lcd} = ${result_n}/${result_d} = ${final_n}/${final_d}`
+        };
+    },
+
+    // Lesson 3.6: Subtract Fractions with Unlike Denominators
+    generateSubtractFractionsUnlike: function() {
+        const denominators = [2, 3, 4, 5, 6, 8];
+        const d1 = denominators[Math.floor(Math.random() * denominators.length)];
+        let d2 = denominators[Math.floor(Math.random() * denominators.length)];
+        while (d2 === d1) d2 = denominators[Math.floor(Math.random() * denominators.length)];
+
+        let n1 = Math.floor(Math.random() * (d1 - 1)) + 1;
+        let n2 = Math.floor(Math.random() * (d2 - 1)) + 1;
+
+        // Ensure first fraction is larger
+        if ((n1 / d1) < (n2 / d2)) {
+            [n1, n2, d1, d2] = [n2, n1, d2, d1];
+        }
+
+        const lcd = this.findLCM(d1, d2);
+        const result_n = (n1 * lcd / d1) - (n2 * lcd / d2);
+        const result_d = lcd;
+
+        const g = this.findGCF(Math.abs(result_n), result_d);
+        const final_n = result_n / g;
+        const final_d = result_d / g;
+
+        return {
+            question: `Subtract: ${n1}/${d1} - ${n2}/${d2}`,
+            answer: final_d === 1 ? `${final_n}` : `${final_n}/${final_d}`,
+            hint: `Find a common denominator: ${lcd}`,
+            explanation: `${n1}/${d1} - ${n2}/${d2} = ${n1 * lcd / d1}/${lcd} - ${n2 * lcd / d2}/${lcd} = ${result_n}/${result_d} = ${final_n}/${final_d}`
+        };
+    },
+
+    // Helper functions
+    findGCF: function(a, b) {
+        return b === 0 ? a : this.findGCF(b, a % b);
+    },
+
+    findLCM: function(a, b) {
+        return (a * b) / this.findGCF(a, b);
+    },
+
+    checkLessonProgress: function(lessonId, isCorrect) {
+        const userData = window.userData;
+        if (!userData) return;
+
+        if (!userData.lessonProgress) userData.lessonProgress = {};
+        if (!userData.lessonProgress['chapter3']) {
+            userData.lessonProgress['chapter3'] = { currentLesson: 0, lessonMastery: {} };
+        }
+
+        const progress = userData.lessonProgress['chapter3'];
+        if (!progress.lessonMastery[lessonId]) {
+            progress.lessonMastery[lessonId] = { correct: 0, attempts: 0, streak: 0 };
+        }
+
+        const mastery = progress.lessonMastery[lessonId];
+        mastery.attempts++;
+        if (isCorrect) {
+            mastery.correct++;
+            mastery.streak++;
+        } else {
+            mastery.streak = 0;
+        }
+
+        const accuracy = mastery.attempts > 0 ? mastery.correct / mastery.attempts : 0;
+        const isMastered = mastery.streak >= 5 || (accuracy >= 0.8 && mastery.attempts >= 10);
+
+        const currentLessonIndex = this.lessons.findIndex(l => l.id === lessonId);
+        if (isMastered && currentLessonIndex === progress.currentLesson && currentLessonIndex < this.lessons.length - 1) {
+            progress.currentLesson = currentLessonIndex + 1;
+            return { advanced: true, newLesson: this.lessons[currentLessonIndex + 1] };
+        }
+        return { advanced: false };
     }
 };
