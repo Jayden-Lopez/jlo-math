@@ -1208,6 +1208,75 @@ function selectMCOption(index) {
     options[index].classList.add('selected');
 }
 
+// Normalize answer for comparison - handles common issues
+function normalizeAnswer(answer) {
+    let normalized = answer.toString().trim();
+
+    // Normalize whitespace
+    normalized = normalized.replace(/\s+/g, ' ');
+
+    // Convert to lowercase for comparison
+    normalized = normalized.toLowerCase();
+
+    // Fix common Roman numeral confusion (lowercase L looks like I)
+    // Replace lowercase 'l' with 'i' when it looks like Roman numerals
+    normalized = normalized.replace(/\bl\b/g, 'i');  // standalone l -> i
+    normalized = normalized.replace(/\bll\b/g, 'ii'); // ll -> ii
+    normalized = normalized.replace(/\blll\b/g, 'iii'); // lll -> iii
+    normalized = normalized.replace(/\blv\b/g, 'iv'); // lv -> iv
+
+    // Also handle within phrases like "quadrant ll" -> "quadrant ii"
+    normalized = normalized.replace(/quadrant\s*l([liv]*)/gi, 'quadrant i$1');
+    normalized = normalized.replace(/the\s+l([liv]*)\b/gi, 'the i$1');
+
+    // Normalize "of the" to "on the" for quadrant answers
+    normalized = normalized.replace(/of the/g, 'on the');
+    normalized = normalized.replace(/in the/g, 'on the');
+
+    // Remove extra spaces around commas
+    normalized = normalized.replace(/\s*,\s*/g, ', ');
+
+    return normalized;
+}
+
+// Check if two answers are equivalent
+function answersMatch(userAnswer, correctAnswer) {
+    const normalizedUser = normalizeAnswer(userAnswer);
+    const normalizedCorrect = normalizeAnswer(correctAnswer);
+
+    // Direct match after normalization
+    if (normalizedUser === normalizedCorrect) {
+        return true;
+    }
+
+    // Check if it's an ordering question (comma-separated values)
+    if (normalizedCorrect.includes(',') && normalizedUser.includes(',')) {
+        const userParts = normalizedUser.split(',').map(s => s.trim());
+        const correctParts = normalizedCorrect.split(',').map(s => s.trim());
+        if (userParts.length === correctParts.length) {
+            const allMatch = userParts.every((part, i) => part === correctParts[i]);
+            if (allMatch) return true;
+
+            // Try numeric comparison for each part
+            const numericMatch = userParts.every((part, i) => {
+                const userNum = parseFloat(part);
+                const correctNum = parseFloat(correctParts[i]);
+                return !isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01;
+            });
+            if (numericMatch) return true;
+        }
+    }
+
+    // Try numeric comparison
+    const userNum = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
+    const correctNum = parseFloat(correctAnswer.replace(/[^\d.-]/g, ''));
+    if (!isNaN(userNum) && !isNaN(correctNum) && Math.abs(userNum - correctNum) < 0.01) {
+        return true;
+    }
+
+    return false;
+}
+
 function checkAnswer() {
     let isCorrect = false;
     let userAnswer = '';
@@ -1230,20 +1299,10 @@ function checkAnswer() {
             return;
         }
 
-        // Normalize spaces in both answers (replace multiple spaces with single space)
-        userAnswer = userAnswer.replace(/\s+/g, ' ');
-        let correctAnswer = currentQuestion.answer.toString().replace(/\s+/g, ' ');
+        let correctAnswer = currentQuestion.answer.toString();
 
-        // Check if this is a fraction or mixed number answer
-        if (correctAnswer.includes('/') || userAnswer.includes('/')) {
-            // Direct string comparison for fractions/mixed numbers
-            isCorrect = (userAnswer === correctAnswer);
-        } else {
-            // For numeric answers, do numeric comparison
-            const numericAnswer = parseFloat(userAnswer.replace(/[^\d.-]/g, ''));
-            const correctNum = parseFloat(correctAnswer);
-            isCorrect = Math.abs(numericAnswer - correctNum) < 0.01;
-        }
+        // Use the improved answer matching
+        isCorrect = answersMatch(userAnswer, correctAnswer);
     }
 
     // Calculate time taken for this question
