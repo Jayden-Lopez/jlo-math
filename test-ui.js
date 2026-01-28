@@ -245,8 +245,10 @@ function showTestQuestion() {
         input.focus();
     }
 
-    // Enable submit button
+    // Reset buttons - show Submit, hide Next
     document.getElementById('testSubmitBtn').disabled = false;
+    document.getElementById('testSubmitBtn').style.display = 'inline-block';
+    document.getElementById('testNextBtn').style.display = 'none';
 }
 
 /**
@@ -290,18 +292,34 @@ function submitTestAnswer() {
     // Show feedback
     showTestFeedback(result);
 
-    // Disable submit button
+    // Disable submit button, show Next button
     document.getElementById('testSubmitBtn').disabled = true;
+    document.getElementById('testSubmitBtn').style.display = 'none';
+    document.getElementById('testNextBtn').style.display = 'inline-block';
+}
 
-    // Auto-advance after 2 seconds
-    setTimeout(() => {
-        const hasMore = window.TestSimulation.nextQuestion();
-        if (hasMore) {
-            showTestQuestion();
-        } else {
-            finishTest();
-        }
-    }, 2000);
+/**
+ * Move to next question (called by Next button)
+ */
+function nextTestQuestion() {
+    // Clear scratchpad for new question
+    if (window.scratchPad && window.scratchPad.ctx && window.scratchPad.canvas) {
+        window.scratchPad.ctx.clearRect(0, 0, window.scratchPad.canvas.width, window.scratchPad.canvas.height);
+        window.scratchPad.drawingHistory = [];
+    }
+
+    // Hide scratchpad container, show button
+    const scratchContainer = document.getElementById('testScratchPadContainer');
+    const scratchBtn = document.getElementById('testScratchPadOpenBtn');
+    if (scratchContainer) scratchContainer.style.display = 'none';
+    if (scratchBtn) scratchBtn.style.display = 'block';
+
+    const hasMore = window.TestSimulation.nextQuestion();
+    if (hasMore) {
+        showTestQuestion();
+    } else {
+        finishTest();
+    }
 }
 
 /**
@@ -658,5 +676,70 @@ window.startChapterTest = startChapterTest;
 window.submitTestAnswer = submitTestAnswer;
 window.showTestHint = showTestHint;
 window.showTestTutorial = showTestTutorial;
+window.nextTestQuestion = nextTestQuestion;
 window.endTestEarly = endTestEarly;
 window.backToTestSelection = backToTestSelection;
+window.showTestScratchPad = showTestScratchPad;
+window.hideTestScratchPad = hideTestScratchPad;
+
+/**
+ * Show scratchpad in test mode
+ */
+function showTestScratchPad() {
+    const container = document.getElementById('testScratchPadContainer');
+    const button = document.getElementById('testScratchPadOpenBtn');
+    if (container && button) {
+        container.style.display = 'block';
+        button.style.display = 'none';
+        // Setup canvas after showing
+        setTimeout(() => {
+            if (window.scratchPad) {
+                window.scratchPad.canvas = document.getElementById('testScratchCanvas');
+                if (window.scratchPad.canvas) {
+                    window.scratchPad.ctx = window.scratchPad.canvas.getContext('2d');
+                    const rect = window.scratchPad.canvas.getBoundingClientRect();
+                    window.scratchPad.canvas.width = rect.width;
+                    window.scratchPad.canvas.height = 300;
+                    window.scratchPad.ctx.lineCap = 'round';
+                    window.scratchPad.ctx.lineJoin = 'round';
+                    window.scratchPad.ctx.lineWidth = window.scratchPad.brushSize;
+                    window.scratchPad.ctx.strokeStyle = window.scratchPad.currentColor;
+
+                    // Add event listeners
+                    window.scratchPad.canvas.onmousedown = (e) => window.scratchPad.startDrawing(e);
+                    window.scratchPad.canvas.onmousemove = (e) => window.scratchPad.draw(e);
+                    window.scratchPad.canvas.onmouseup = () => window.scratchPad.stopDrawing();
+                    window.scratchPad.canvas.onmouseout = () => window.scratchPad.stopDrawing();
+
+                    // Touch events for iPad
+                    window.scratchPad.canvas.ontouchstart = (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        window.scratchPad.startDrawing({ clientX: touch.clientX, clientY: touch.clientY });
+                    };
+                    window.scratchPad.canvas.ontouchmove = (e) => {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        window.scratchPad.draw({ clientX: touch.clientX, clientY: touch.clientY });
+                    };
+                    window.scratchPad.canvas.ontouchend = (e) => {
+                        e.preventDefault();
+                        window.scratchPad.stopDrawing();
+                    };
+                }
+            }
+        }, 100);
+    }
+}
+
+/**
+ * Hide scratchpad in test mode
+ */
+function hideTestScratchPad() {
+    const container = document.getElementById('testScratchPadContainer');
+    const button = document.getElementById('testScratchPadOpenBtn');
+    if (container && button) {
+        container.style.display = 'none';
+        button.style.display = 'block';
+    }
+}
