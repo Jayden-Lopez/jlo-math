@@ -118,10 +118,20 @@ function startChapterTest(chapterNum) {
         return;
     }
 
+    // Calculate recommended questions based on lessons in the chapter
+    // Find the generator for this chapter's topic to count lessons
+    const topicKey = chapter.topics[0]?.key;
+    const generator = topicKey ? window[topicKey.charAt(0).toUpperCase() + topicKey.slice(1) + 'Generator'] ||
+                                 window.ExpressionsGenerator : null;
+    const lessonCount = generator?.lessons?.length || chapter.topics.length;
+    const recommendedQuestions = Math.max(21, lessonCount * 3); // At least 3 per lesson, minimum 21
+
     // Ask user for number of questions
     const numQuestions = prompt(
-        `How many questions would you like?\n\nRecommended: 15-20 questions\nTopics in this chapter: ${chapter.topics.length}`,
-        '15'
+        `How many questions would you like?\n\n` +
+        `Recommended: ${recommendedQuestions} questions (${lessonCount} lessons × 3 each)\n` +
+        `This ensures good coverage of all topics!`,
+        recommendedQuestions.toString()
     );
 
     if (!numQuestions) return;
@@ -304,7 +314,7 @@ function showTestFeedback(result) {
     feedbackDiv.className = `feedback ${result.isCorrect ? 'correct' : 'incorrect'}`;
 
     if (result.isCorrect) {
-        feedbackDiv.innerHTML = `✓ Correct!`;
+        feedbackDiv.innerHTML = `✓ Correct! Great job! 🎉`;
     } else {
         feedbackDiv.innerHTML = `
             ✗ Incorrect<br>
@@ -324,6 +334,21 @@ function showTestFeedback(result) {
         explanationDiv.innerHTML = `<strong>Explanation:</strong><br>${result.explanation}`;
         feedbackArea.appendChild(explanationDiv);
     }
+
+    // If incorrect, offer tutorial help
+    if (!result.isCorrect) {
+        const helpDiv = document.createElement('div');
+        helpDiv.style.cssText = 'margin-top: 15px; padding: 15px; background: #ebf8ff; border-radius: 10px; border-left: 4px solid #4299e1;';
+        helpDiv.innerHTML = `
+            <div style="color: #2b6cb0; font-weight: bold; margin-bottom: 8px;">
+                📚 Need help understanding this?
+            </div>
+            <button onclick="showTestTutorial()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1em;">
+                📖 Show Me a Step-by-Step Tutorial
+            </button>
+        `;
+        feedbackArea.appendChild(helpDiv);
+    }
 }
 
 /**
@@ -342,6 +367,146 @@ function showTestHint() {
 
     feedbackArea.innerHTML = '';
     feedbackArea.appendChild(hintDiv);
+}
+
+/**
+ * Tutorials for each lesson type - step-by-step examples
+ */
+const lessonTutorials = {
+    // Chapter 6: Expressions
+    '6.1': {
+        title: 'Powers and Exponents',
+        steps: [
+            { text: 'An exponent tells you how many times to multiply a number by itself.', example: '2³ means 2 × 2 × 2' },
+            { text: 'The small number (exponent) goes on top. The big number (base) is what you multiply.', example: 'In 5², the base is 5 and the exponent is 2' },
+            { text: 'Multiply step by step:', example: '2³ = 2 × 2 × 2 = 4 × 2 = 8' },
+            { text: 'Another example:', example: '3⁴ = 3 × 3 × 3 × 3 = 9 × 9 = 81' }
+        ],
+        practice: '4² = 4 × 4 = 16'
+    },
+    '6.2': {
+        title: 'Order of Operations (PEMDAS)',
+        steps: [
+            { text: 'Remember PEMDAS - the order you solve math problems:', example: 'P - Parentheses first\nE - Exponents second\nMD - Multiply & Divide (left to right)\nAS - Add & Subtract (left to right)' },
+            { text: 'Step 1: Do parentheses first', example: '(3 + 2) × 4 → 5 × 4' },
+            { text: 'Step 2: Do exponents', example: '5 + 2³ → 5 + 8' },
+            { text: 'Step 3: Multiply and divide from left to right', example: '3 + 4 × 2 → 3 + 8 (NOT 7 × 2!)' },
+            { text: 'Step 4: Add and subtract from left to right', example: '3 + 8 = 11' }
+        ],
+        practice: '2 + 3 × 4 = 2 + 12 = 14 (multiply first!)'
+    },
+    '6.3': {
+        title: 'Writing Algebraic Expressions',
+        steps: [
+            { text: 'Use a variable (like x) to represent "a number"', example: '"a number" → x' },
+            { text: 'Key words for ADDITION: plus, more than, sum, increased by', example: '"5 more than a number" → x + 5' },
+            { text: 'Key words for SUBTRACTION: minus, less than, difference, decreased by', example: '"a number decreased by 3" → x - 3' },
+            { text: 'Key words for MULTIPLICATION: times, product, twice, triple', example: '"twice a number" → 2x' },
+            { text: 'Key words for DIVISION: divided by, quotient, half', example: '"a number divided by 4" → x/4' }
+        ],
+        practice: '"three times a number plus 7" → 3x + 7'
+    },
+    '6.4': {
+        title: 'Evaluating Algebraic Expressions',
+        steps: [
+            { text: 'To evaluate means to find the value when you know what x equals', example: 'Evaluate 2x + 3 when x = 5' },
+            { text: 'Step 1: Write the expression', example: '2x + 3' },
+            { text: 'Step 2: Replace x with the number (use parentheses!)', example: '2(5) + 3' },
+            { text: 'Step 3: Multiply first', example: '10 + 3' },
+            { text: 'Step 4: Then add/subtract', example: '= 13' }
+        ],
+        practice: 'Evaluate 3x - 2 when x = 4:\n3(4) - 2 = 12 - 2 = 10'
+    },
+    '6.5': {
+        title: 'Properties of Operations',
+        steps: [
+            { text: 'Commutative Property: You can swap the order', example: 'Addition: 3 + 5 = 5 + 3\nMultiplication: 4 × 6 = 6 × 4' },
+            { text: 'Associative Property: You can regroup', example: 'Addition: (2 + 3) + 4 = 2 + (3 + 4)\nMultiplication: (2 × 3) × 4 = 2 × (3 × 4)' },
+            { text: 'Identity Property: Special numbers that don\'t change the answer', example: 'Addition: 7 + 0 = 7 (0 is the identity)\nMultiplication: 7 × 1 = 7 (1 is the identity)' },
+            { text: 'Zero Property: Anything times 0 equals 0', example: '5 × 0 = 0' }
+        ],
+        practice: 'Commutative: 8 + 2 = 2 + 8 = 10'
+    },
+    '6.6': {
+        title: 'The Distributive Property',
+        steps: [
+            { text: 'Distributive Property: Multiply the outside number by EACH term inside', example: '3(x + 2) means 3 times x AND 3 times 2' },
+            { text: 'Step 1: Write out what you\'re multiplying', example: '3(x + 4) → 3·x + 3·4' },
+            { text: 'Step 2: Do each multiplication', example: '3·x = 3x and 3·4 = 12' },
+            { text: 'Step 3: Write the final answer', example: '3x + 12' },
+            { text: 'Works with subtraction too!', example: '2(x - 5) = 2x - 10' }
+        ],
+        practice: '4(x + 3) = 4·x + 4·3 = 4x + 12'
+    },
+    '6.7': {
+        title: 'Simplifying Algebraic Expressions',
+        steps: [
+            { text: 'Combine "like terms" - terms with the same variable', example: '3x and 5x are like terms\n3x and 5y are NOT like terms' },
+            { text: 'Step 1: Find the like terms', example: 'In 2x + 5 + 3x, the like terms are 2x and 3x' },
+            { text: 'Step 2: Add or subtract the coefficients (the numbers in front)', example: '2x + 3x = 5x' },
+            { text: 'Step 3: Bring down the other terms', example: '2x + 5 + 3x = 5x + 5' },
+            { text: 'Numbers without variables are like terms too!', example: '3x + 2 + 4x + 5 = 7x + 7' }
+        ],
+        practice: '4x + 3 + 2x + 1 = (4x + 2x) + (3 + 1) = 6x + 4'
+    },
+    // Add generic tutorials for other topics
+    'default': {
+        title: 'Problem Solving Steps',
+        steps: [
+            { text: 'Step 1: Read the problem carefully', example: 'Understand what is being asked' },
+            { text: 'Step 2: Identify what you know', example: 'Write down the given information' },
+            { text: 'Step 3: Choose your strategy', example: 'What operation or formula do you need?' },
+            { text: 'Step 4: Solve step by step', example: 'Show your work!' },
+            { text: 'Step 5: Check your answer', example: 'Does it make sense?' }
+        ],
+        practice: 'Take your time and work through each step!'
+    }
+};
+
+/**
+ * Show tutorial for current question type
+ */
+function showTestTutorial() {
+    if (!currentTestQuestion) {
+        alert('No question loaded');
+        return;
+    }
+
+    // Get the lesson ID from the question
+    const lessonId = currentTestQuestion.lesson || 'default';
+    const tutorial = lessonTutorials[lessonId] || lessonTutorials['default'];
+
+    const feedbackArea = document.getElementById('testFeedbackArea');
+
+    let tutorialHTML = `
+        <div class="tutorial-box" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin-top: 15px;">
+            <h3 style="margin: 0 0 15px 0; font-size: 1.3em;">📖 Tutorial: ${tutorial.title}</h3>
+            <div style="background: rgba(255,255,255,0.95); color: #2d3748; padding: 15px; border-radius: 10px;">
+    `;
+
+    tutorial.steps.forEach((step, index) => {
+        tutorialHTML += `
+            <div style="margin-bottom: 15px; ${index < tutorial.steps.length - 1 ? 'border-bottom: 1px solid #e2e8f0; padding-bottom: 15px;' : ''}">
+                <div style="font-weight: bold; color: #5a67d8; margin-bottom: 5px;">
+                    Step ${index + 1}: ${step.text}
+                </div>
+                <div style="background: #f7fafc; padding: 10px; border-radius: 8px; font-family: monospace; white-space: pre-wrap; color: #2d3748;">
+${step.example}
+                </div>
+            </div>
+        `;
+    });
+
+    tutorialHTML += `
+                <div style="margin-top: 15px; padding: 12px; background: #c6f6d5; border-radius: 8px; border-left: 4px solid #48bb78;">
+                    <strong style="color: #276749;">✏️ Practice Example:</strong>
+                    <div style="margin-top: 5px; font-family: monospace; white-space: pre-wrap; color: #2d3748;">${tutorial.practice}</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    feedbackArea.innerHTML = tutorialHTML;
 }
 
 /**
@@ -492,5 +657,6 @@ window.toggleMode = toggleMode;
 window.startChapterTest = startChapterTest;
 window.submitTestAnswer = submitTestAnswer;
 window.showTestHint = showTestHint;
+window.showTestTutorial = showTestTutorial;
 window.endTestEarly = endTestEarly;
 window.backToTestSelection = backToTestSelection;

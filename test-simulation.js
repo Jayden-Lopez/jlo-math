@@ -118,6 +118,12 @@ window.TestSimulation = (function() {
             }
 
             if (generator && typeof generator.generate === 'function') {
+                // For test simulation, use ALL lessons regardless of progress
+                // This ensures comprehensive test coverage
+                if (generator.lessons && generator.lessons.length > 0) {
+                    const randomLessonIndex = Math.floor(Math.random() * generator.lessons.length);
+                    return generator.generate(randomLessonIndex);
+                }
                 return generator.generate();
             }
         } catch (error) {
