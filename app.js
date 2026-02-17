@@ -5,7 +5,7 @@ const APP_VERSION = '2.0.0';
 
 // Firebase Configuration
 const firebaseConfig = {
-    apiKey: "***REMOVED***",
+    apiKey: "AIzaSyDiSmSBVokse4STiKtq_f4LzTC5vVybhqo",
     authDomain: "jordan-math-practice.firebaseapp.com",
     projectId: "jordan-math-practice",
     storageBucket: "jordan-math-practice.appspot.com",
