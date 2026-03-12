@@ -71,6 +71,7 @@ const topics = {
     integers: { name: "Ch 5: Integers", icon: "❄️", generator: window.IntegersGenerator },
     expressions: { name: "Ch 6: Expressions", icon: "🧮", generator: window.ExpressionsGenerator },
     algebra: { name: "Ch 7: Equations", icon: "🔤", generator: window.AlgebraGenerator },
+    inequalities: { name: "Ch 8: Functions & Inequalities", icon: "⚖️", generator: window.InequalitiesGenerator },
     geometry: { name: "Ch 9-10: Area & Volume", icon: "📐", generator: window.GeometryGenerator },
     measurement: { name: "Measurement Skills", icon: "📏", generator: window.MeasurementGenerator },
     wordProblems: { name: "Word Problems", icon: "📖", generator: window.WordProblemsGenerator }
@@ -201,7 +202,7 @@ const learningPath = [
         name: "Chapter 8: Functions and Inequalities",
         description: "Understand functions and solve inequalities",
         topics: [
-            { key: 'algebra', required: 15, name: 'Functions and Inequalities' }
+            { key: 'inequalities', required: 20, name: 'Functions and Inequalities' }
         ],
         lessons: [
             "8.1 Function Tables",

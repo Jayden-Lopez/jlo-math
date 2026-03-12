@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inequalities with Jordan ⚽</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap');
+  :root {
+    --green: #1a7a3c;
+    --light-green: #2ecc71;
+    --yellow: #f1c40f;
+    --orange: #e67e22;
+    --red: #e74c3c;
+    --white: #f9fdf9;
+    --dark: #0d2b18;
+    --grass: #27ae60;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--dark);
+    color: var(--white);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  /* Soccer field background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        rgba(39,174,96,0.08) 0px, rgba(39,174,96,0.08) 60px,
+        transparent 60px, transparent 120px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  header {
+    text-align: center;
+    padding: 30px 0 20px;
+  }
+  .title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.8rem;
+    color: var(--yellow);
+    text-shadow: 3px 3px 0 var(--green);
+    line-height: 1.1;
+  }
+  .subtitle {
+    color: var(--light-green);
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+  .ball { font-size: 2rem; display: inline-block; animation: spin 3s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* Section cards */
+  .card {
+    background: rgba(255,255,255,0.07);
+    border: 2px solid rgba(46,204,113,0.3);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(4px);
+  }
+  .card-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--yellow);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .card-title .icon { font-size: 1.8rem; }
+  /* Symbol boxes */
+  .symbols-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .symbol-box {
+    background: var(--green);
+    border-radius: 14px;
+    padding: 16px;
+    text-align: center;
+    border: 2px solid var(--light-green);
+    transition: transform 0.2s;
+  }
+  .symbol-box:hover { transform: scale(1.03); }
+  .sym { font-family: 'Fredoka One', cursive; font-size: 2.5rem; color: var(--yellow); }
+  .sym-name { font-size: 1rem; font-weight: 800; color: white; margin: 4px 0; }
+  .sym-tip { font-size: 0.85rem; color: #a8f0c8; }
+  /* Number line */
+  .numline-wrap {
+    background: rgba(0,0,0,0.3);
+    border-radius: 14px;
+    padding: 20px 16px;
+    margin: 16px 0;
+  }
+  .numline-label {
+    font-weight: 800;
+    color: var(--yellow);
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+  .numline {
+    position: relative;
+    height: 60px;
+    display: flex;
+    align-items: center;
+  }
+  .line {
+    position: absolute;
+    left: 0; right: 0;
+    height: 4px;
+    background: #fff;
+    border-radius: 2px;
+  }
+  .line::after, .line::before {
+    content: '▶';
+    position: absolute;
+    right: -14px;
+    top: -9px;
+    color: white;
+    font-size: 1.2rem;
+  }
+  .tick {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+  }
+  .tick-mark {
+    width: 2px; height: 14px;
+    background: white;
+    margin-bottom: 4px;
+  }
+  .tick-num {
+    font-size: 0.75rem;
+    color: #ccc;
+    font-weight: 700;
+  }
+  .dot {
+    position: absolute;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    top: 50%;
+    border: 3px solid white;
+    z-index: 2;
+  }
+  .dot.filled { background: var(--yellow); }
+  .dot.open { background: transparent; }
+  .shade {
+    position: absolute;
+    height: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+    border-radius: 4px;
+    z-index: 1;
+  }
+  .shade.right { background: var(--yellow); }
+  .shade.left { background: var(--light-green); }
+  /* Steps */
+  .steps { display: flex; flex-direction: column; gap: 12px; }
+  .step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: rgba(0,0,0,0.25);
+    border-radius: 12px;
+    padding: 14px;
+    border-left: 4px solid var(--light-green);
+  }
+  .step-num {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.4rem;
+    color: var(--yellow);
+    min-width: 32px;
+    line-height: 1;
+  }
+  .step-text { font-size: 0.95rem; line-height: 1.5; }
+  .step-text strong { color: var(--yellow); }
+  .step-text em { color: var(--light-green); font-style: normal; }
+  /* Practice problems */
+  .problem-card {
+    background: rgba(0,0,0,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 2px solid rgba(241,196,15,0.2);
+    transition: border-color 0.3s;
+  }
+  .problem-card.correct { border-color: var(--light-green); background: rgba(46,204,113,0.1); }
+  .problem-card.wrong { border-color: var(--red); background: rgba(231,76,60,0.1); }
+  .problem-q {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+    color: white;
+  }
+  .options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .opt-btn {
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.2);
+    color: white;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .opt-btn:hover:not(:disabled) {
+    background: rgba(241,196,15,0.2);
+    border-color: var(--yellow);
+    transform: translateY(-2px);
+  }
+  .opt-btn.selected-correct {
+    background: rgba(46,204,113,0.3);
+    border-color: var(--light-green);
+    color: #a8f0c8;
+  }
+  .opt-btn.selected-wrong {
+    background: rgba(231,76,60,0.3);
+    border-color: var(--red);
+    color: #ffa0a0;
+  }
+  .opt-btn.show-correct {
+    background: rgba(46,204,113,0.2);
+    border-color: var(--light-green);
+  }
+  .opt-btn:disabled { cursor: default; }
+  .feedback {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: none;
+  }
+  .feedback.show { display: block; }
+  .feedback.good { background: rgba(46,204,113,0.2); color: #a8f0c8; border-left: 4px solid var(--light-green); }
+  .feedback.bad { background: rgba(231,76,60,0.2); color: #ffa0a0; border-left: 4px solid var(--red); }
+  /* Score */
+  .score-bar {
+    background: rgba(0,0,0,0.4);
+    border-radius: 16px;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    border: 2px solid var(--green);
+  }
+  .score-label { font-weight: 800; color: var(--light-green); font-size: 1rem; }
+  .score-val { font-family: 'Fredoka One', cursive; font-size: 2rem; color: var(--yellow); }
+  /* Trick tip */
+  .tip-box {
+    background: rgba(241,196,15,0.1);
+    border: 2px solid var(--yellow);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 16px 0;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  .tip-box strong { color: var(--yellow); }
+  .pill {
+    display: inline-block;
+    background: var(--green);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    color: var(--yellow);
+    margin: 2px;
+  }
+  .math {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--yellow);
+  }
+  /* Jordan's wrong answers section */
+  .wrong-wrap { }
+  .wrong-item {
+    background: rgba(231,76,60,0.08);
+    border: 2px solid rgba(231,76,60,0.3);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+  .wrong-item .q { font-weight: 800; color: #ffa0a0; margin-bottom: 8px; }
+  .wrong-item .explanation { color: #ddd; font-size: 0.93rem; line-height: 1.6; }
+  .wrong-item .correct-ans { color: var(--light-green); font-weight: 800; margin-top: 8px; }
+  /* Back to main link */
+  .back-link {
+    display: inline-block;
+    background: var(--green);
+    color: var(--yellow);
+    text-decoration: none;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    padding: 10px 24px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+  }
+  .back-link:hover { transform: translateY(-2px); }
+  footer {
+    text-align: center;
+    padding: 30px 0;
+    color: #5a8a6a;
+    font-size: 0.9rem;
+  }
+  @media(max-width: 500px) {
+    .title { font-size: 2rem; }
+    .symbols-grid { grid-template-columns: 1fr; }
+    .options { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-link" href="index.html">⬅ Back to Practice</a>
+  <header>
+    <div class="title"><span class="ball">⚽</span> Inequalities <span class="ball">⚽</span></div>
+    <div class="title" style="font-size:1.5rem; color:white;">with Jordan</div>
+    <div class="subtitle">Master the signs → Score on the test!</div>
+  </header>
+  <div class="score-bar">
+    <div>
+      <div class="score-label">⚽ Goals Scored</div>
+      <div style="color:#aaa; font-size:0.85rem;">Answer practice problems to score!</div>
+    </div>
+    <div class="score-val" id="score">0 / 0</div>
+  </div>
+  <!-- SECTION 1: What are inequalities? -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🎯</span> What IS an Inequality?</div>
+    <p style="line-height:1.7; margin-bottom:14px;">
+      An equation says two things are <strong style="color:var(--yellow)">EQUAL</strong> (like x = 5).<br>
+      An <strong style="color:var(--yellow)">inequality</strong> says one thing is <strong style="color:var(--light-green)">bigger or smaller</strong> than another — like a range of answers instead of just one!
+    </p>
+    <div class="tip-box">
+      🏟️ <strong>Soccer analogy:</strong> "Our team needs MORE THAN 3 goals to win" → that's an inequality! Not just exactly 3 — anything more than 3 works: 4, 5, 10, 100...
+    </div>
+    <div class="symbols-grid">
+      <div class="symbol-box">
+        <div class="sym">&gt;</div>
+        <div class="sym-name">Greater Than</div>
+        <div class="sym-tip">x &gt; 5 means x is MORE than 5<br>(6, 7, 8... but NOT 5)</div>
+      </div>
+      <div class="symbol-box">
+        <div class="sym">&lt;</div>
+        <div class="sym-name">Less Than</div>
+        <div class="sym-tip">x &lt; 5 means x is LESS than 5<br>(4, 3, 2... but NOT 5)</div>
+      </div>
+      <div class="symbol-box">
+        <div class="sym">≥</div>
+        <div class="sym-name">Greater Than OR Equal</div>
+        <div class="sym-tip">x ≥ 5 means 5 OR MORE<br>(5, 6, 7... YES, 5 counts!)</div>
+      </div>
+      <div class="symbol-box">
+        <div class="sym">≤</div>
+        <div class="sym-name">Less Than OR Equal</div>
+        <div class="sym-tip">x ≤ 5 means 5 OR LESS<br>(5, 4, 3... YES, 5 counts!)</div>
+      </div>
+    </div>
+    <div class="tip-box" style="margin-top:14px;">
+      🦈 <strong>Memory trick — The alligator eats the BIGGER number!</strong><br>
+      The open mouth <strong style="color:var(--yellow)">&gt;</strong> or <strong style="color:var(--yellow)">&lt;</strong> always points toward the smaller number. So <strong style="color:var(--yellow)">8 &gt; 3</strong> — the mouth opens toward 8 (the bigger one)!
+    </div>
+  </div>
+  <!-- SECTION 2: Number Lines -->
+  <div class="card">
+    <div class="card-title"><span class="icon">📏</span> Graphing on a Number Line</div>
+    <p style="margin-bottom:16px; line-height:1.6;">
+      Number lines show ALL the answers at once. Two key rules:
+    </p>
+    <div class="tip-box">
+      <strong>🔴 Open circle (○)</strong> = that number is <strong style="color:var(--red)">NOT included</strong> — use with &gt; or &lt;<br>
+      <strong>🟡 Filled circle (●)</strong> = that number <strong style="color:var(--light-green)">IS included</strong> — use with ≥ or ≤
+    </div>
+    <!-- Example 1: x > 3 -->
+    <div class="numline-wrap">
+      <div class="numline-label">Example: x &gt; 3 → open circle, shade to the RIGHT</div>
+      <div class="numline" id="nl1"></div>
+    </div>
+    <!-- Example 2: x ≤ 5 -->
+    <div class="numline-wrap">
+      <div class="numline-label">Example: x ≤ 5 → filled circle, shade to the LEFT</div>
+      <div class="numline" id="nl2"></div>
+    </div>
+    <div class="tip-box">
+      ⚽ <strong>Quick rule:</strong><br>
+      • &gt; or ≥ → shade to the <strong style="color:var(--yellow)">RIGHT</strong> (bigger numbers)<br>
+      • &lt; or ≤ → shade to the <strong style="color:var(--yellow)">LEFT</strong> (smaller numbers)
+    </div>
+  </div>
+  <!-- SECTION 3: Solving Inequalities -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🔑</span> How to SOLVE an Inequality</div>
+    <p style="margin-bottom:14px; line-height:1.6;">It's almost exactly like solving an equation — just keep the sign instead of =</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <strong>Write the inequality:</strong> <em>x − 9 &lt; 14</em><br>
+          (This is problem 21 from your test!)
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <strong>Do the same thing to both sides</strong> to get x alone.<br>
+          Add 9 to both sides: <em>x − 9 + 9 &lt; 14 + 9</em>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <strong>Simplify:</strong> <em>x &lt; 23</em> ✅<br>
+          That's your answer! Any number less than 23 works.
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">
+          <strong>Graph it:</strong> Open circle at 23, shade LEFT (smaller numbers)
+        </div>
+      </div>
+    </div>
+    <div class="tip-box" style="margin-top:16px;">
+      ⚠️ <strong>ONE SPECIAL RULE:</strong> If you multiply or divide by a <strong style="color:var(--red)">NEGATIVE</strong> number, FLIP the sign!<br>
+      Example: <span class="math">−x &lt; 5</span> → divide by −1 → <span class="math">x &gt; −5</span> (sign flipped!)
+    </div>
+  </div>
+  <!-- SECTION 4: Your Test Mistakes -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🔍</span> Let's Fix Your Test Mistakes</div>
+    <div class="wrong-wrap">
+      <div class="wrong-item">
+        <div class="q">Problem 7: c − 7 ≤ 10 — You answered A (c ≤ 3) ❌</div>
+        <div class="explanation">
+          Add 7 to both sides: c − 7 + 7 ≤ 10 + 7<br>
+          → c ≤ 17<br>
+          Jordan picked c ≤ 3 — looks like you subtracted instead of added!
+        </div>
+        <div class="correct-ans">✅ Correct answer: B. c ≤ 17</div>
+      </div>
+      <div class="wrong-item">
+        <div class="q">Problem 8: 4b &gt; 20 — You answered F (b &gt; 5) ✅ — wait, that's right!</div>
+        <div class="explanation">
+          Divide both sides by 4: b &gt; 5 ✔️<br>
+          The test marked it wrong — double-check with your teacher! F says b &gt; 5 which IS correct.
+        </div>
+        <div class="correct-ans">✅ Your answer F (b &gt; 5) looks correct — ask Mrs. Quinones!</div>
+      </div>
+      <div class="wrong-item">
+        <div class="q">Problem 9: d/4 &lt; 16 — You answered A (d &gt; 4) ❌</div>
+        <div class="explanation">
+          Multiply both sides by 4: d &lt; 64<br>
+          Jordan flipped the sign even though we're multiplying by a POSITIVE 4 — don't flip unless it's negative!
+        </div>
+        <div class="correct-ans">✅ Correct answer: C. d &lt; 64</div>
+      </div>
+      <div class="wrong-item">
+        <div class="q">Problem 19: Is 12, 13, or 14 a solution of 4x &gt; 52? — You said x = 13 ❌</div>
+        <div class="explanation">
+          Solve first: divide 52 by 4 → x &gt; 13<br>
+          Test each: 4(12) = 48 (not &gt;52 ❌) | 4(13) = 52 (not &gt;52, equal ❌) | 4(14) = 56 (&gt;52 ✅)<br>
+          x &gt; 13 means 13 does NOT count — only 14 works!
+        </div>
+        <div class="correct-ans">✅ Correct answer: 14</div>
+      </div>
+      <div class="wrong-item">
+        <div class="q">Problem 20: Band practice ≤ 45 min — You wrote x ≤ 45 ✅ (but check the graph!)</div>
+        <div class="explanation">
+          The inequality <em>b ≤ 45</em> is right! The number line needs a FILLED circle at 45 and shade LEFT.
+        </div>
+        <div class="correct-ans">✅ Inequality correct: b ≤ 45 — make sure graph has filled circle at 45!</div>
+      </div>
+    </div>
+  </div>
+  <!-- SECTION 5: Practice Problems -->
+  <div class="card">
+    <div class="card-title"><span class="icon">🥅</span> Practice — Score Goals!</div>
+    <p style="margin-bottom:18px; color:#aaa;">Answer these to lock in your skills. Each correct answer = a goal! ⚽</p>
+    <div id="problems"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button onclick="resetProblems()" style="background:var(--green); border:none; color:var(--yellow); font-family:'Fredoka One',cursive; font-size:1.1rem; padding:12px 30px; border-radius:12px; cursor:pointer; margin-top:6px;">
+        🔄 Try Again
+      </button>
+    </div>
+  </div>
+  <footer>Made for Jordan ⚽ • Chapter 8: Functions & Inequalities</footer>
+</div>
+<script>
+// Draw number lines
+function drawNumberLine(id, dotPos, filled, shadeDir, min, max) {
+  const nl = document.getElementById(id);
+  const width = nl.offsetWidth || 340;
+  const range = max - min;
+  const line = document.createElement('div');
+  line.className = 'line';
+  nl.appendChild(line);
+  // Ticks
+  for (let i = min; i <= max; i++) {
+    const tick = document.createElement('div');
+    tick.className = 'tick';
+    tick.style.left = ((i - min) / range * 88 + 2) + '%';
+    tick.style.top = '50%';
+    tick.style.transform = 'translateX(-50%) translateY(-50%)';
+    tick.innerHTML = `<div class="tick-mark"></div><div class="tick-num">${i}</div>`;
+    nl.appendChild(tick);
+  }
+  // Dot
+  const dotPct = (dotPos - min) / range * 88 + 2;
+  const dot = document.createElement('div');
+  dot.className = 'dot ' + (filled ? 'filled' : 'open');
+  dot.style.left = dotPct + '%';
+  nl.appendChild(dot);
+  // Shade
+  const shade = document.createElement('div');
+  shade.className = 'shade ' + shadeDir;
+  if (shadeDir === 'right') {
+    shade.style.left = dotPct + '%';
+    shade.style.right = '0';
+  } else {
+    shade.style.left = '0';
+    shade.style.right = (100 - dotPct) + '%';
+  }
+  nl.appendChild(shade);
+}
+drawNumberLine('nl1', 3, false, 'right', -1, 8);
+drawNumberLine('nl2', 5, true, 'left', -1, 8);
+// Practice problems
+const problems = [
+  {
+    q: "Solve: x − 9 < 14",
+    opts: ["x < 5", "x < 23", "x > 23", "x > 5"],
+    ans: 1,
+    explain: "Add 9 to both sides: x < 14 + 9 → x < 23. Open circle at 23, shade left!"
+  },
+  {
+    q: "Solve: n/6 ≥ 3",
+    opts: ["n ≥ 18", "n ≥ 2", "n ≤ 18", "n > 18"],
+    ans: 0,
+    explain: "Multiply both sides by 6: n ≥ 18. Filled circle (≥ includes 18), shade right!"
+  },
+  {
+    q: "Which number line matches x ≤ 15?",
+    opts: ["Open circle at 15, shade right", "Filled circle at 15, shade left", "Open circle at 15, shade left", "Filled circle at 15, shade right"],
+    ans: 1,
+    explain: "≤ means filled circle (15 IS included). Shade LEFT because we want smaller numbers."
+  },
+  {
+    q: "Is x = 13 a solution of 4x > 52?",
+    opts: ["Yes, because 4×13 = 52", "No, because 52 is not > 52", "Yes, because 13 > 4", "No, because 13 < 52"],
+    ans: 1,
+    explain: "4 × 13 = 52, but we need GREATER THAN 52, not equal. So 13 does NOT work! Try x = 14: 4×14 = 56 > 52 ✅"
+  },
+  {
+    q: "Band practice will be no longer than 45 minutes. Write the inequality.",
+    opts: ["b > 45", "b < 45", "b ≥ 45", "b ≤ 45"],
+    ans: 3,
+    explain: "\"No longer than\" means at most 45 — that's ≤. So b ≤ 45."
+  },
+  {
+    q: "Solve: c − 7 ≤ 10",
+    opts: ["c ≤ 3", "c ≤ 17", "c ≥ 17", "c < 17"],
+    ans: 1,
+    explain: "Add 7 to BOTH sides: c ≤ 10 + 7 → c ≤ 17. Don't subtract — you need to undo the minus 7!"
+  },
+  {
+    q: "Which inequality is shown: number line has an open circle at 15, shaded to the LEFT?",
+    opts: ["x ≥ 15", "x > 15", "x < 15", "x ≤ 15"],
+    ans: 2,
+    explain: "Open circle = NOT included (so not ≤ or ≥). Shaded LEFT = smaller numbers = less than. Answer: x < 15"
+  }
+];
+let answered = [];
+let correct = 0;
+function renderProblems() {
+  const container = document.getElementById('problems');
+  container.innerHTML = '';
+  answered = new Array(problems.length).fill(false);
+  correct = 0;
+  updateScore();
+  problems.forEach((p, pi) => {
+    const card = document.createElement('div');
+    card.className = 'problem-card';
+    card.id = 'pc-' + pi;
+    const q = document.createElement('div');
+    q.className = 'problem-q';
+    q.textContent = `${pi + 1}. ${p.q}`;
+    card.appendChild(q);
+    const opts = document.createElement('div');
+    opts.className = 'options';
+    p.opts.forEach((opt, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'opt-btn';
+      btn.textContent = opt;
+      btn.id = `btn-${pi}-${oi}`;
+      btn.onclick = () => selectAnswer(pi, oi);
+      opts.appendChild(btn);
+    });
+    card.appendChild(opts);
+    const fb = document.createElement('div');
+    fb.className = 'feedback';
+    fb.id = 'fb-' + pi;
+    card.appendChild(fb);
+    container.appendChild(card);
+  });
+}
+function selectAnswer(pi, oi) {
+  if (answered[pi]) return;
+  answered[pi] = true;
+  const p = problems[pi];
+  const card = document.getElementById('pc-' + pi);
+  const fb = document.getElementById('fb-' + pi);
+  // Disable all buttons
+  for (let i = 0; i < p.opts.length; i++) {
+    const btn = document.getElementById(`btn-${pi}-${i}`);
+    btn.disabled = true;
+    if (i === p.ans) btn.classList.add('show-correct');
+  }
+  const selected = document.getElementById(`btn-${pi}-${oi}`);
+  if (oi === p.ans) {
+    selected.classList.add('selected-correct');
+    card.classList.add('correct');
+    fb.className = 'feedback show good';
+    fb.textContent = '⚽ GOAL! ' + p.explain;
+    correct++;
+  } else {
+    selected.classList.add('selected-wrong');
+    card.classList.add('wrong');
+    fb.className = 'feedback show bad';
+    fb.textContent = '❌ Not quite. ' + p.explain;
+  }
+  updateScore();
+}
+function updateScore() {
+  const total = answered.filter(Boolean).length;
+  document.getElementById('score').textContent = correct + ' / ' + total;
+}
+function resetProblems() {
+  renderProblems();
+}
+renderProblems();
+</script>
+</body>
+</html>
