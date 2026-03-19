@@ -230,6 +230,11 @@
     margin-top: 8px;
   }
   .hint-text { color: #f5a623; font-family: monospace; font-size: 1.1rem; margin-top: 8px; letter-spacing: 3px; }
+  .spelling-input:empty:before {
+    content: attr(aria-placeholder);
+    color: rgba(255,255,255,0.3);
+  }
+  .spelling-input[contenteditable="false"] { opacity: 0.7; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -277,11 +282,11 @@
       </div>
     </div>
     <div class="input-area">
-      <input type="text" class="spelling-input" id="answer"
+      <div class="spelling-input" id="answer" contenteditable="true"
         autocomplete="off" autocorrect="off" autocapitalize="off"
-        spellcheck="false" data-gramm="false"
-        placeholder="Type the word here..."
-        onkeydown="if(event.key==='Enter')checkAnswer()">
+        spellcheck="false" data-gramm="false" inputmode="text"
+        role="textbox" aria-placeholder="Type the word here..."
+        onkeydown="if(event.key==='Enter'){event.preventDefault();checkAnswer();}"></div>
     </div>
     <button class="submit-btn" id="submit-btn" onclick="checkAnswer()">Check</button>
     <button class="hint-btn" id="hint-btn" onclick="giveHint()">Hint (first letter)</button>
@@ -376,9 +381,9 @@ function showWord() {
   document.getElementById('category-tag').innerHTML =
     `<span class="category-tag ${catClasses[cat]}">${catNames[cat]}</span>`;
   const inp = document.getElementById('answer');
-  inp.value = '';
+  inp.textContent = '';
   inp.className = 'spelling-input';
-  inp.disabled = false;
+  inp.contentEditable = 'true';
   inp.focus();
   attempts = 0;
   document.getElementById('feedback').textContent = '';
@@ -440,7 +445,7 @@ function checkAnswer() {
   }
 
   const inp = document.getElementById('answer');
-  const typed = inp.value.trim();
+  const typed = inp.textContent.trim();
   if (!typed) return;
 
   const correct = typed.toLowerCase() === words[current].toLowerCase();
@@ -451,7 +456,7 @@ function checkAnswer() {
     results.push({ word: words[current], typed: typed, correct: true, category: categories[current] });
     inp.className = 'spelling-input correct';
     fb.innerHTML = '<span style="color:#2ecc71;">Correct!</span>';
-    inp.disabled = true;
+    inp.contentEditable = 'false';
     document.getElementById('hint-btn').style.display = 'none';
     document.getElementById('submit-btn').textContent = current < words.length - 1 ? 'Next Word' : 'See Results';
     awaitingNext = true;
@@ -459,7 +464,7 @@ function checkAnswer() {
     // First wrong attempt — let them try again
     inp.className = 'spelling-input wrong';
     fb.innerHTML = '<span style="color:#e74c3c;">Not quite! Try one more time.</span>';
-    inp.value = '';
+    inp.textContent = '';
     inp.focus();
     // Re-play the word to help
     setTimeout(() => speakWord(), 300);
@@ -469,7 +474,7 @@ function checkAnswer() {
     inp.className = 'spelling-input wrong';
     fb.innerHTML = `<span style="color:#e74c3c;">The correct spelling is:</span>
       <div class="correct-answer">${words[current]}</div>`;
-    inp.disabled = true;
+    inp.contentEditable = 'false';
     document.getElementById('hint-btn').style.display = 'none';
     document.getElementById('submit-btn').textContent = current < words.length - 1 ? 'Next Word' : 'See Results';
     awaitingNext = true;
