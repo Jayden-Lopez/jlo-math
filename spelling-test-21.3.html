@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spelling Test - Unit 21.3</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    min-height: 100vh;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  h1 { font-size: 1.8rem; margin-bottom: 5px; }
+  .subtitle { color: #aaa; margin-bottom: 20px; font-size: 0.95rem; }
+  .container {
+    background: rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 30px;
+    max-width: 600px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .word-number {
+    font-size: 1.1rem;
+    color: #aaa;
+    margin-bottom: 15px;
+  }
+  .category-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+  }
+  .cat-pattern { background: #4facfe33; color: #4facfe; }
+  .cat-content { background: #f5a62333; color: #f5a623; }
+  .cat-vocab { background: #7b61ff33; color: #7b61ff; }
+  .play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    border: none;
+    color: #1a1a2e;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 15px 30px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin: 10px auto 20px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    width: 100%;
+    max-width: 300px;
+  }
+  .play-btn:hover { transform: scale(1.03); box-shadow: 0 4px 20px rgba(79,172,254,0.4); }
+  .play-btn:active { transform: scale(0.98); }
+  .play-btn .icon { font-size: 1.5rem; }
+  .speed-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .speed-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 5px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+  .speed-btn.active { background: #4facfe; color: #1a1a2e; font-weight: 600; }
+  .input-area {
+    position: relative;
+    margin-bottom: 15px;
+  }
+  .spelling-input {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 1.4rem;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    background: rgba(0,0,0,0.3);
+    color: #fff;
+    text-align: center;
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .spelling-input:focus { border-color: #4facfe; }
+  .spelling-input.correct { border-color: #2ecc71; background: rgba(46,204,113,0.15); }
+  .spelling-input.wrong { border-color: #e74c3c; background: rgba(231,76,60,0.15); }
+  .submit-btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #a29bfe, #6c5ce7);
+    color: #fff;
+    transition: transform 0.15s;
+  }
+  .submit-btn:hover { transform: scale(1.02); }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .feedback {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 1.1rem;
+    min-height: 30px;
+    font-weight: 600;
+  }
+  .correct-answer {
+    color: #e74c3c;
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    margin-top: 5px;
+  }
+
+  /* Results screen */
+  .results { text-align: center; }
+  .score-circle {
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    border: 6px solid #4facfe;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 20px auto;
+  }
+  .score-num { font-size: 2.5rem; font-weight: 800; }
+  .score-label { font-size: 0.9rem; color: #aaa; }
+  .results-list {
+    text-align: left;
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+  }
+  .result-item.right { background: rgba(46,204,113,0.1); }
+  .result-item.wrong-item { background: rgba(231,76,60,0.1); }
+  .result-icon { font-size: 1.2rem; }
+  .result-word { font-family: 'Courier New', monospace; }
+  .result-typed { color: #e74c3c; font-family: 'Courier New', monospace; font-size: 0.85rem; }
+  .retry-btn {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+    border: none;
+    color: #1a1a2e;
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 14px 40px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 15px;
+  }
+  .missed-btn {
+    background: linear-gradient(135deg, #f5a623, #f7971e);
+    border: none;
+    color: #1a1a2e;
+    font-size: 1rem;
+    font-weight: 700;
+    padding: 12px 30px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  .mode-select {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+  }
+  .mode-btn {
+    padding: 16px;
+    border-radius: 12px;
+    border: 2px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .mode-btn:hover { border-color: #4facfe; background: rgba(79,172,254,0.1); }
+  .mode-btn strong { display: block; font-size: 1.1rem; margin-bottom: 4px; }
+  .mode-btn span { color: #aaa; font-size: 0.85rem; }
+  .hint-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #aaa;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-top: 8px;
+  }
+  .hint-text { color: #f5a623; font-family: monospace; font-size: 1.1rem; margin-top: 8px; letter-spacing: 3px; }
+</style>
+</head>
+<body>
+
+<h1>Spelling Test - Unit 21.3</h1>
+<p class="subtitle">Greek and Latin Roots</p>
+
+<div class="container" id="app">
+  <!-- Start screen -->
+  <div id="start-screen">
+    <p style="text-align:center; margin-bottom: 15px; font-size: 1.05rem;">Hey Jordan! Pick your test mode:</p>
+    <div class="mode-select">
+      <button class="mode-btn" onclick="startTest('all')">
+        <strong>All Words (23)</strong>
+        <span>Pattern + Content + Vocabulary words</span>
+      </button>
+      <button class="mode-btn" onclick="startTest('pattern')">
+        <strong>Pattern Words (12)</strong>
+        <span>automobile, automotive, autographed...</span>
+      </button>
+      <button class="mode-btn" onclick="startTest('content')">
+        <strong>Content Words (7)</strong>
+        <span>finalists, ricochet, footwork...</span>
+      </button>
+      <button class="mode-btn" onclick="startTest('vocab')">
+        <strong>Vocabulary Words (4)</strong>
+        <span>corporate, corporation, expel, repel</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Test screen -->
+  <div id="test-screen" style="display:none;">
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div class="word-number" id="word-number"></div>
+    <div id="category-tag"></div>
+    <div style="text-align:center;">
+      <button class="play-btn" id="play-btn" onclick="speakWord()">
+        <span class="icon">&#128264;</span> Play Word
+      </button>
+      <div class="speed-controls">
+        <button class="speed-btn" onclick="setSpeed(1)" id="speed-1">Normal</button>
+        <button class="speed-btn active" onclick="setSpeed(0.75)" id="speed-0.75">Slow</button>
+        <button class="speed-btn" onclick="setSpeed(0.5)" id="speed-0.5">Slower</button>
+      </div>
+    </div>
+    <div class="input-area">
+      <input type="text" class="spelling-input" id="answer"
+        autocomplete="off" autocorrect="off" autocapitalize="off"
+        spellcheck="false" data-gramm="false"
+        placeholder="Type the word here..."
+        onkeydown="if(event.key==='Enter')checkAnswer()">
+    </div>
+    <button class="submit-btn" id="submit-btn" onclick="checkAnswer()">Check</button>
+    <button class="hint-btn" id="hint-btn" onclick="giveHint()">Hint (first letter)</button>
+    <div class="feedback" id="feedback"></div>
+    <div id="hint-area"></div>
+  </div>
+
+  <!-- Results screen -->
+  <div id="results-screen" style="display:none;"></div>
+</div>
+
+<script>
+const allWords = {
+  pattern: [
+    'automobile','automotive','autographed','circumstances',
+    'multilingual','paralegal','paramedic','paramount',
+    'photographer','semifinal','televised','television'
+  ],
+  content: [
+    'finalists','ricochet','footwork','tiebreaker',
+    'dominating','irretrievable','reverberate'
+  ],
+  vocab: [
+    'corporate','corporation','expel','repel'
+  ]
+};
+
+let words = [];
+let categories = [];
+let current = 0;
+let results = [];
+let speed = 0.75;
+let awaitingNext = false;
+let attempts = 0;
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function startTest(mode) {
+  words = [];
+  categories = [];
+  if (mode === 'all' || mode === 'pattern') {
+    allWords.pattern.forEach(w => { words.push(w); categories.push('pattern'); });
+  }
+  if (mode === 'all' || mode === 'content') {
+    allWords.content.forEach(w => { words.push(w); categories.push('content'); });
+  }
+  if (mode === 'all' || mode === 'vocab') {
+    allWords.vocab.forEach(w => { words.push(w); categories.push('vocab'); });
+  }
+  // Shuffle together
+  let indices = words.map((_, i) => i);
+  shuffle(indices);
+  words = indices.map(i => words[i]);
+  categories = indices.map(i => categories[i]);
+
+  current = 0;
+  results = [];
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('test-screen').style.display = 'block';
+  document.getElementById('results-screen').style.display = 'none';
+  showWord();
+}
+
+function startMissedOnly() {
+  const missed = results.filter(r => !r.correct);
+  words = missed.map(r => r.word);
+  categories = missed.map(r => r.category);
+  let indices = words.map((_, i) => i);
+  shuffle(indices);
+  words = indices.map(i => words[i]);
+  categories = indices.map(i => categories[i]);
+  current = 0;
+  results = [];
+  document.getElementById('results-screen').style.display = 'none';
+  document.getElementById('test-screen').style.display = 'block';
+  showWord();
+}
+
+function showWord() {
+  awaitingNext = false;
+  const pct = (current / words.length) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+  document.getElementById('word-number').textContent = `Word ${current + 1} of ${words.length}`;
+  const cat = categories[current];
+  const catNames = { pattern: 'Pattern Word', content: 'Content Word', vocab: 'Vocabulary Word' };
+  const catClasses = { pattern: 'cat-pattern', content: 'cat-content', vocab: 'cat-vocab' };
+  document.getElementById('category-tag').innerHTML =
+    `<span class="category-tag ${catClasses[cat]}">${catNames[cat]}</span>`;
+  const inp = document.getElementById('answer');
+  inp.value = '';
+  inp.className = 'spelling-input';
+  inp.disabled = false;
+  inp.focus();
+  attempts = 0;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('hint-area').innerHTML = '';
+  document.getElementById('submit-btn').textContent = 'Check';
+  document.getElementById('hint-btn').style.display = 'inline-block';
+  // Auto-play
+  setTimeout(() => speakWord(), 400);
+}
+
+function speakWord() {
+  const utterance = new SpeechSynthesisUtterance(words[current]);
+  utterance.rate = speed;
+  utterance.lang = 'en-US';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+}
+
+function setSpeed(s) {
+  speed = s;
+  document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('speed-' + s).classList.add('active');
+}
+
+function giveHint() {
+  const w = words[current];
+  const hint = w[0] + ' _ '.repeat(w.length - 1).trim();
+  document.getElementById('hint-area').innerHTML =
+    `<div class="hint-text">${w[0]} ${'_ '.repeat(w.length - 1)}</div>
+     <div style="color:#aaa;font-size:0.85rem;margin-top:4px;">${w.length} letters</div>`;
+}
+
+function checkAnswer() {
+  if (awaitingNext) {
+    current++;
+    if (current >= words.length) return showResults();
+    return showWord();
+  }
+
+  const inp = document.getElementById('answer');
+  const typed = inp.value.trim();
+  if (!typed) return;
+
+  const correct = typed.toLowerCase() === words[current].toLowerCase();
+  attempts++;
+
+  const fb = document.getElementById('feedback');
+  if (correct) {
+    results.push({ word: words[current], typed: typed, correct: true, category: categories[current] });
+    inp.className = 'spelling-input correct';
+    fb.innerHTML = '<span style="color:#2ecc71;">Correct!</span>';
+    inp.disabled = true;
+    document.getElementById('hint-btn').style.display = 'none';
+    document.getElementById('submit-btn').textContent = current < words.length - 1 ? 'Next Word' : 'See Results';
+    awaitingNext = true;
+  } else if (attempts === 1) {
+    // First wrong attempt — let them try again
+    inp.className = 'spelling-input wrong';
+    fb.innerHTML = '<span style="color:#e74c3c;">Not quite! Try one more time.</span>';
+    inp.value = '';
+    inp.focus();
+    // Re-play the word to help
+    setTimeout(() => speakWord(), 300);
+  } else {
+    // Second wrong attempt — show the answer
+    results.push({ word: words[current], typed: typed, correct: false, category: categories[current] });
+    inp.className = 'spelling-input wrong';
+    fb.innerHTML = `<span style="color:#e74c3c;">The correct spelling is:</span>
+      <div class="correct-answer">${words[current]}</div>`;
+    inp.disabled = true;
+    document.getElementById('hint-btn').style.display = 'none';
+    document.getElementById('submit-btn').textContent = current < words.length - 1 ? 'Next Word' : 'See Results';
+    awaitingNext = true;
+  }
+}
+
+function showResults() {
+  document.getElementById('test-screen').style.display = 'none';
+  const rs = document.getElementById('results-screen');
+  rs.style.display = 'block';
+
+  const correctCount = results.filter(r => r.correct).length;
+  const total = results.length;
+  const pct = Math.round((correctCount / total) * 100);
+  const missedCount = total - correctCount;
+
+  let listHTML = '';
+  results.forEach(r => {
+    if (r.correct) {
+      listHTML += `<div class="result-item right">
+        <span class="result-icon">&#9989;</span>
+        <span class="result-word">${r.word}</span>
+      </div>`;
+    } else {
+      listHTML += `<div class="result-item wrong-item">
+        <span class="result-icon">&#10060;</span>
+        <span class="result-word">${r.word}</span>
+        <span class="result-typed">(you wrote: ${r.typed})</span>
+      </div>`;
+    }
+  });
+
+  let msg = '';
+  if (pct === 100) msg = "Perfect score! Amazing job, Jordan!";
+  else if (pct >= 80) msg = "Great work, Jordan! Almost there!";
+  else if (pct >= 60) msg = "Good effort! Keep practicing!";
+  else msg = "Keep at it, Jordan! Practice makes perfect!";
+
+  rs.innerHTML = `
+    <div class="results">
+      <h2>Results</h2>
+      <div class="score-circle">
+        <div class="score-num">${pct}%</div>
+        <div class="score-label">${correctCount} / ${total}</div>
+      </div>
+      <p style="font-size:1.1rem;margin-bottom:10px;">${msg}</p>
+      <div class="results-list">${listHTML}</div>
+      <button class="retry-btn" onclick="location.reload()">Start Over</button>
+      ${missedCount > 0 ? '<br><button class="missed-btn" onclick="startMissedOnly()">Practice Missed Words (' + missedCount + ')</button>' : ''}
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
